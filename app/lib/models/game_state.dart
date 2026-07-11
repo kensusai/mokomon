@@ -23,8 +23,12 @@ class GameState {
   bool sound = true;
   int lastSavedMs = 0;
 
+  /// 体色(ARGB)。おえかき画面で変更でき、種族と独立に保持する。
+  int color = speciesList[0].color.toARGB32();
+
   Species get currentSpecies => speciesList[species];
-  String get displayName => currentSpecies.names[stage];
+  String get displayName =>
+      '${currentSpecies.emojis[stage]} ${currentSpecies.names[stage]}';
 
   bool get isSad => hunger < 30 || happy < 30;
 
@@ -83,6 +87,7 @@ class GameState {
         'equipHead': equipHead,
         'equipFace': equipFace,
         'sound': sound,
+        'color': color,
         'last': DateTime.now().millisecondsSinceEpoch,
       };
 
@@ -101,6 +106,7 @@ class GameState {
     equipHead = j['equipHead'];
     equipFace = j['equipFace'];
     sound = j['sound'] ?? true;
+    color = j['color'] ?? speciesList[species].color.toARGB32();
     lastSavedMs = j['last'] ?? 0;
   }
 
@@ -179,6 +185,8 @@ class GameState {
           ? shopItems[a[10]].key
           : null;
       eggTaps = 0;
+      // 模様はあいことばに含まれないため体色も種族の初期色へ戻す(仕様§8)
+      color = speciesList[species].color.toARGB32();
       return true;
     } catch (_) {
       return false;

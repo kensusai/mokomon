@@ -10,7 +10,8 @@ Future<void> main() async {
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   final store = SaveStore();
   final state = await store.load();
-  runApp(MokomonApp(controller: GameController(state, store)));
+  final controller = GameController(state, store)..startDecayTimer();
+  runApp(MokomonApp(controller: controller));
 }
 
 class MokomonApp extends StatelessWidget {
