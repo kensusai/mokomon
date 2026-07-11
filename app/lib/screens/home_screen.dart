@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../logic/game_controller.dart';
 import '../models/game_state.dart';
 import '../widgets/creature_painter.dart';
 
 /// ホーム画面の骨組み。プロトタイプの screen-home に対応。
 /// TODO: たまご表示、なでなで/💨判定、ごはんモーダル、ミニゲーム遷移、
 ///       おえかき、おみせ、ずかん、あいことば、進化カットシーン。
-class HomeScreen extends StatefulWidget {
-  final GameState state;
-  const HomeScreen({super.key, required this.state});
+class HomeScreen extends StatelessWidget {
+  final GameController controller;
+  const HomeScreen({super.key, required this.controller});
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  GameState get s => widget.state;
+  GameState get s => controller.state;
 
   @override
   Widget build(BuildContext context) {
@@ -29,33 +25,30 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _topBar(),
-              Expanded(
-                child: Center(
-                  child: GestureDetector(
-                    onTapDown: (d) {
-                      // TODO: 下部30%タップで💨 / それ以外はなでなで
-                      setState(() {
-                        s.happy = (s.happy + 3).clamp(0, 100);
-                        s.xp += 1;
-                      });
-                      s.save();
-                    },
-                    child: CustomPaint(
-                      size: const Size(260, 260),
-                      painter: CreaturePainter(
-                        speciesIndex: s.species,
-                        stage: s.stage == 0 ? 1 : s.stage,
-                        sad: s.isSad,
+          child: ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) => Column(
+              children: [
+                _topBar(),
+                Expanded(
+                  child: Center(
+                    child: GestureDetector(
+                      // TODO: 下部30%タップで💨 / たまご孵化
+                      onTapDown: (d) => controller.pet(),
+                      child: CustomPaint(
+                        size: const Size(260, 260),
+                        painter: CreaturePainter(
+                          speciesIndex: s.species,
+                          stage: s.stage == 0 ? 1 : s.stage,
+                          sad: s.isSad,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              _bottomCard(),
-            ],
+                _bottomCard(),
+              ],
+            ),
           ),
         ),
       ),

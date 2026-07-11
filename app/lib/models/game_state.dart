@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../data/items.dart';
 import '../data/species.dart';
 
@@ -70,9 +68,7 @@ class GameState {
     happy = max(20, happy - min(40, mins / 4));
   }
 
-  // ---------- 永続化 ----------
-
-  static const _prefsKey = 'mokomon-v1';
+  // ---------- 直列化(保存自体は data/save_store.dart) ----------
 
   Map<String, dynamic> toJson() => {
         'stage': stage,
@@ -106,24 +102,6 @@ class GameState {
     equipFace = j['equipFace'];
     sound = j['sound'] ?? true;
     lastSavedMs = j['last'] ?? 0;
-  }
-
-  Future<void> save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsKey, jsonEncode(toJson()));
-  }
-
-  static Future<GameState> load() async {
-    final s = GameState();
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_prefsKey);
-    if (raw != null) {
-      try {
-        s.loadJson(jsonDecode(raw));
-        s.applyOfflineDecay();
-      } catch (_) {/* 壊れたデータは初期状態で継続 */}
-    }
-    return s;
   }
 
   // ---------- あいことば(パスワード)。docs/game-design.md §8 ----------
