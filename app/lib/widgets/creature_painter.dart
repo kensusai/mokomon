@@ -84,9 +84,8 @@ class CreaturePainter extends CustomPainter {
   }
 
   static Color _shade(Color c, int amt) {
-    int cl(int v) => v.clamp(0, 255);
-    return Color.fromARGB(
-        255, cl(c.red + amt), cl(c.green + amt), cl(c.blue + amt));
+    double cl(double v) => (v + amt / 255.0).clamp(0.0, 1.0);
+    return Color.from(alpha: 1, red: cl(c.r), green: cl(c.g), blue: cl(c.b));
   }
 
   @override

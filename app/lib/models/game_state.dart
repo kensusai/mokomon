@@ -90,7 +90,7 @@ class GameState {
         'last': DateTime.now().millisecondsSinceEpoch,
       };
 
-  void _loadJson(Map<String, dynamic> j) {
+  void loadJson(Map<String, dynamic> j) {
     stage = j['stage'] ?? 0;
     xp = (j['xp'] ?? 0).toDouble();
     coins = j['coins'] ?? 10;
@@ -119,7 +119,7 @@ class GameState {
     final raw = prefs.getString(_prefsKey);
     if (raw != null) {
       try {
-        s._loadJson(jsonDecode(raw));
+        s.loadJson(jsonDecode(raw));
         s.applyOfflineDecay();
       } catch (_) {/* 壊れたデータは初期状態で継続 */}
     }
