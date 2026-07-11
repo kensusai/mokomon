@@ -1,16 +1,14 @@
-# Flutter
+# Flutter / Dart
 app/.dart_tool/
 app/build/
 app/.flutter-plugins*
 app/.packages
-app/pubspec.lock
-app/android/
-app/ios/
-app/linux/
-app/macos/
-app/windows/
-app/web/
-app/test/widget_test.dart
+app/*.iml
+
+# iOS/Android のビルド生成物(flutter create 後の標準 .gitignore も併用推奨)
+app/ios/Pods/
+app/android/.gradle/
+app/android/local.properties
 
 # OS
 .DS_Store
