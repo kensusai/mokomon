@@ -1,0 +1,16 @@
+# Flutter
+app/.dart_tool/
+app/build/
+app/.flutter-plugins*
+app/.packages
+app/pubspec.lock
+app/android/
+app/ios/
+app/linux/
+app/macos/
+app/windows/
+app/web/
+app/test/widget_test.dart
+
+# OS
+.DS_Store
