@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
@@ -49,6 +50,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
   void _choose(int index) {
     if (_locked || _ended) return;
     if (_game.guess(index)) {
+      widget.controller.sfx.play(Sfx.happy);
       _locked = true;
       setState(() {});
       _timers.add(Timer(const Duration(milliseconds: 500), () {
@@ -62,6 +64,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
         }
       }));
     } else {
+      widget.controller.sfx.play(Sfx.wrong);
       setState(() => _shakingIndex = index);
       _shake.forward(from: 0).whenComplete(() {
         if (mounted) setState(() => _shakingIndex = null);

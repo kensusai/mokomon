@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
@@ -66,6 +67,7 @@ class _CatchScreenState extends State<CatchScreen>
     if (_phase != _Phase.running) return;
     final hit = _game.tapAt(d.localPosition.dx, d.localPosition.dy);
     if (hit != null) {
+      widget.controller.sfx.play(Sfx.pop);
       _particleKey.currentState
           ?.spawn(hit.star ? '✨' : '💥', d.localPosition);
       setState(() {});
@@ -120,7 +122,9 @@ class _CatchScreenState extends State<CatchScreen>
               ),
             ),
             if (_phase == _Phase.countdown)
-              GameCountdown(onDone: _start),
+              GameCountdown(
+                  onDone: _start,
+                  onTick: () => widget.controller.sfx.play(Sfx.tap)),
             if (_phase == _Phase.intro)
               GameStartOverlay(
                 title: '🍎 フルーツキャッチ',

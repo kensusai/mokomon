@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../audio/sound_synth.dart';
 import '../data/foods.dart';
 import '../logic/game_controller.dart';
 import '../models/game_state.dart';
@@ -23,8 +24,17 @@ import 'memory_screen.dart';
 import 'paint_screen.dart';
 import 'puzzle_screen.dart';
 
+/// 💨の吹き出し(docs/game-design.md §9)。UIに説明は一切出さない。
+const _puffLines = [
+  '……いまの なあに?',
+  'あれ? へんな おとが した!',
+  '……なにも してないよ?',
+  'ぷぅ♪',
+  'きこえなかった ことに しよう…',
+  'だ、だれかな? いまのは…',
+];
+
 /// ホーム画面。プロトタイプの screen-home に対応。
-/// TODO(Phase 4): サウンドトグル、💨(隠し機能)。
 class HomeScreen extends StatefulWidget {
   final GameController controller;
   const HomeScreen({super.key, required this.controller});
@@ -136,18 +146,50 @@ class _HomeScreenState extends State<HomeScreen> {
           _hint(s.eggTaps == 1 ? 'あれ? なにか きこえる…' : 'ヒビが はいった! もういっかい!');
         case EggTapOutcome.hatched:
           showCelebrate(context,
+              sfx: c.sfx,
               emoji: '🐣',
               title: 'うまれた!',
               desc: '「${s.currentSpecies.names[1]}」が うまれたよ! ごはんを あげて そだてよう!');
       }
       return;
     }
-    // TODO(Phase 4): 下部30%タップ or 6% で💨
+    // 下部30%タップ、またはなでなでの6%で💨(発見型・説明しない)
+    final box =
+        _creatureBoxKey.currentContext?.findRenderObject() as RenderBox?;
+    final low =
+        box != null && d.localPosition.dy / box.size.height > 0.7;
+    if (low || _rng.nextDouble() < 0.06) {
+      _doPuff(box);
+      return;
+    }
     c.pet();
     _creatureKey.currentState?.play(CreatureAnim.bounce);
     _spawnParticleAtGlobal(
         const ['💖', '💛', '⭐'][_rng.nextInt(3)], d.globalPosition);
     _checkEvolve();
+  }
+
+  void _doPuff(RenderBox? creatureBox) {
+    c.puff();
+    _creatureKey.currentState?.play(CreatureAnim.wiggle);
+    _hint(_puffLines[_rng.nextInt(_puffLines.length)]);
+    if (creatureBox == null) return;
+    const emojis = ['💨', '💨', '🌫️'];
+    final field =
+        _particleKey.currentContext?.findRenderObject() as RenderBox?;
+    if (field == null) return;
+    for (var i = 0; i < 3; i++) {
+      final local = Offset(
+        creatureBox.size.width * (0.28 + _rng.nextDouble() * 0.44),
+        creatureBox.size.height * 0.82,
+      );
+      _particleKey.currentState?.spawnPuff(
+        emojis[i],
+        field.globalToLocal(creatureBox.localToGlobal(local)),
+        driftX: (_rng.nextBool() ? -1 : 1) * (24 + _rng.nextDouble() * 36),
+        delay: Duration(milliseconds: i * 120),
+      );
+    }
   }
 
   void _onFeedPressed() {
@@ -197,8 +239,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (newSpecies == null || !mounted) return;
     if (newSpecies == 3) {
       await showCelebrate(context,
-          emoji: '🌟', title: 'なにこれ!?', desc: 'きんいろに かがやく たまごが とどいた…!');
+          sfx: c.sfx,
+          emoji: '🌟',
+          title: 'なにこれ!?',
+          desc: 'きんいろに かがやく たまごが とどいた…!');
     } else {
+      c.sfx.play(Sfx.happy);
       _hint('あたらしい たまごが きたよ! タッチしてみて! 👆');
     }
   }
@@ -286,7 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _iconButton('📖', _onBookPressed),
             const SizedBox(width: 8),
             _iconButton('💾', () => showCodeDialog(context, c)),
-            // TODO(Phase 4): サウンドトグル
+            const SizedBox(width: 8),
+            _iconButton(s.sound ? '🔊' : '🔇', c.toggleSound),
           ],
         ),
       );

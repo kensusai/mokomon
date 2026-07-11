@@ -25,7 +25,7 @@ class MokomonApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        // TODO: M PLUS Rounded 1c をassetsに追加して fontFamily を設定
+        fontFamily: 'MPLUSRounded1c',
         colorSchemeSeed: const Color(0xFF34C98E),
       ),
       home: HomeScreen(controller: controller),

@@ -19,11 +19,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # assets:
-  #   - assets/audio/
-  #   - assets/fonts/
-  # fonts:
-  #   - family: MPLUSRounded1c
-  #     fonts:
-  #       - asset: assets/fonts/MPLUSRounded1c-Bold.ttf
-  #         weight: 700
+  fonts:
+    - family: MPLUSRounded1c
+      fonts:
+        - asset: assets/fonts/MPLUSRounded1c-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/MPLUSRounded1c-ExtraBold.ttf
+          weight: 800

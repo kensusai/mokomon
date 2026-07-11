@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
@@ -40,8 +41,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
       case MemoryFlipResult.ignored:
         return;
       case MemoryFlipResult.first:
+        widget.controller.sfx.play(Sfx.tap);
         setState(() {});
       case MemoryFlipResult.matched:
+        widget.controller.sfx.play(Sfx.pop);
         setState(() {});
         if (_game.finished) {
           _timers.add(Timer(const Duration(milliseconds: 600), () {
@@ -51,6 +54,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
           }));
         }
       case MemoryFlipResult.mismatched:
+        widget.controller.sfx.play(Sfx.wrong);
         setState(() {});
         _timers.add(Timer(const Duration(milliseconds: 750), () {
           if (!mounted) return;

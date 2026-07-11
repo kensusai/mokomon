@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import 'celebrate_overlay.dart';
 import 'confetti.dart';
@@ -52,8 +53,11 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
   void initState() {
     super.initState();
     _shake.forward();
+    widget.controller.sfx.play(Sfx.evoRiser);
     _timers.add(Timer(const Duration(milliseconds: 2150), () {
-      if (mounted) _flash.forward(from: 0);
+      if (!mounted) return;
+      _flash.forward(from: 0);
+      widget.controller.sfx.play(Sfx.shine);
     }));
     _timers.add(Timer(const Duration(milliseconds: 2550), _reveal));
   }
@@ -61,6 +65,7 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
   void _reveal() {
     if (!mounted) return;
     widget.controller.applyEvolution(widget.newStage);
+    widget.controller.sfx.play(Sfx.fanfare);
     setState(() => _revealed = true);
     _pop.forward(from: 0);
   }

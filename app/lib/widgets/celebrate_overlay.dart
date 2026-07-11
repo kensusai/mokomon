@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../audio/sfx_player.dart';
+import '../audio/sound_synth.dart';
 import 'confetti.dart';
 
 /// お祝い全画面オーバーレイ(誕生・金のたまご等)。
@@ -9,7 +11,9 @@ Future<void> showCelebrate(
   required String emoji,
   required String title,
   required String desc,
+  SfxPlayer? sfx,
 }) {
+  sfx?.play(Sfx.fanfare);
   return showDialog(
     context: context,
     barrierDismissible: false,

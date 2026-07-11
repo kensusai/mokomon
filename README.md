@@ -10,8 +10,9 @@ mokomon/
 ├── prototype/        # 検証済みHTMLプロトタイプ(スマホブラウザでそのまま遊べる・仕様の原本)
 ├── docs/
 │   ├── game-design.md    # ゲーム設計書(パラメータ・全仕様。移植はこれを正とする)
+│   ├── frontend.md       # Flutter実装ルール(構成・state方針・共通コンポーネント)
 │   └── store-release.md  # ストア公開ガイド(子ども向け規約・収益化・チェックリスト)
-└── app/              # Flutter アプリ(ストア版)
+└── app/              # Flutter アプリ(ストア版・プロトタイプ全機能を移植済み)
 ```
 
 ## クイックスタート
@@ -19,14 +20,20 @@ mokomon/
 ### プロトタイプを遊ぶ
 `prototype/mokomon.html` をブラウザで開くだけ。
 
-### Flutter版の開発を始める
+### Flutter版を動かす
 ```bash
 cd app
-flutter create .   # android/ ios/ などのプラットフォームファイルを生成
 flutter pub get
-flutter run
+flutter run        # -d macos / -d chrome / 実機
 ```
-詳細は `app/README.md` を参照。
+
+### テスト
+```bash
+cd app
+flutter analyze && flutter test
+```
+
+実装状況: たまご孵化 → ごはん/なでなで → ミニゲーム3種 → 進化カットシーン → ずかん/新しいたまご → きせかえ/おえかき/あいことば/効果音/💨 まで、プロトタイプの全機能を移植済み。
 
 ## 検証で得られた学び(プロトタイプより)
 
@@ -43,3 +50,21 @@ cd mokomon
 git remote add origin git@github.com:<あなたのユーザー名>/mokomon.git
 git push -u origin main
 ```
+
+<!-- agent-ready:begin -->
+## AIエージェント開発
+
+このリポジトリは **agent-ready** 対応です。AIコーディングエージェント向けの設定と手順書は [agent-ready](https://github.com/agent-ready/agent-ready) によって生成されています。
+
+- `CLAUDE.md` — Claude Code 向けプロジェクトガイド
+- `AGENTS.md` — Codex など `AGENTS.md` 対応エージェント向けのルールとワークフロー
+- `.claude/commands/` — Claude Code スラッシュコマンド(`/review`, `/fix-bug`, `/add-feature`, `/test` ほか)
+- `skills/` — 全エージェント共通のタスク手順書
+- `docs/ai-workflow.md` — このリポジトリでのAIエージェントの使い方
+
+適用中の開発プリセット: **クリーンアーキテクチャ, ドキュメント重視, パフォーマンス重視, 継続的リファクタリング, セキュリティ重視, シンプル実装, TDD(テスト駆動開発), 型安全重視**
+
+開発フェーズ別ワークフロー: **プロジェクト概要, ドメイン理解, アーキテクチャ設計, 技術選定, DB設計, CI構築, バックエンド開発, フロントエンド開発, インフラ構築, 監視設計**
+
+スタックが変わったら `npx agent-ready sync` で再生成、`npx agent-ready check` で乖離チェックができます(選択内容は `agent-ready.config.json` に保存されています)。
+<!-- agent-ready:end -->

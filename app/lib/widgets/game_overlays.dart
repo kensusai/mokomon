@@ -101,9 +101,11 @@ class GameEndOverlay extends StatelessWidget {
 }
 
 /// 3・2・1 カウントダウン(700ms間隔)。終わると [onDone]。
+/// [onTick] は数字が出るたびに呼ばれる(効果音用)。
 class GameCountdown extends StatefulWidget {
   final VoidCallback onDone;
-  const GameCountdown({super.key, required this.onDone});
+  final VoidCallback? onTick;
+  const GameCountdown({super.key, required this.onDone, this.onTick});
 
   @override
   State<GameCountdown> createState() => _GameCountdownState();
@@ -116,12 +118,14 @@ class _GameCountdownState extends State<GameCountdown> {
   @override
   void initState() {
     super.initState();
+    widget.onTick?.call();
     _timer = Timer.periodic(const Duration(milliseconds: 700), (_) {
       if (_n <= 1) {
         _timer?.cancel();
         widget.onDone();
       } else {
         setState(() => _n--);
+        widget.onTick?.call();
       }
     });
   }

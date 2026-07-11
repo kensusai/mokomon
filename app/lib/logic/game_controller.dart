@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../audio/sfx_player.dart';
+import '../audio/sound_synth.dart';
 import '../data/foods.dart';
 import '../data/items.dart';
 import '../data/save_store.dart';
@@ -26,6 +28,9 @@ class GameController extends ChangeNotifier {
   final Random _rng;
   Timer? _decayTimer;
 
+  /// 効果音(ミュート設定は state.sound を参照)。
+  late final SfxPlayer sfx = SfxPlayer(enabled: () => state.sound);
+
   /// アプリ起動中の減衰(10秒ごと)。docs/game-design.md §3。
   void startDecayTimer() {
     _decayTimer ??=
@@ -48,6 +53,7 @@ class GameController extends ChangeNotifier {
       _commit();
       return EggTapOutcome.hatched;
     }
+    sfx.play(Sfx.tap);
     _commit();
     return EggTapOutcome.crack;
   }
@@ -56,6 +62,21 @@ class GameController extends ChangeNotifier {
   void pet() {
     state.happy = min(100, state.happy + 3);
     state.xp += 1;
+    sfx.play(Sfx.happy);
+    _commit();
+  }
+
+  /// 💨(隠し機能・名前を付けない)。happy +2。docs/game-design.md §9。
+  void puff() {
+    state.happy = min(100, state.happy + 2);
+    sfx.play(Sfx.puff);
+    _commit();
+  }
+
+  /// サウンドのミュートトグル(設定は保存される)。
+  void toggleSound() {
+    state.sound = !state.sound;
+    sfx.play(Sfx.tap);
     _commit();
   }
 
@@ -69,6 +90,7 @@ class GameController extends ChangeNotifier {
     state.hunger = min(100, state.hunger + food.hunger);
     state.happy = min(100, state.happy + food.happy);
     state.xp += food.xp;
+    sfx.play(Sfx.munch);
     _commit();
     return true;
   }
@@ -79,6 +101,7 @@ class GameController extends ChangeNotifier {
     state.coins += coins;
     state.happy = min(100, state.happy + 12);
     state.xp += 10;
+    sfx.play(Sfx.fanfare);
     _commit();
   }
 
@@ -111,7 +134,18 @@ class GameController extends ChangeNotifier {
   /// 所持済みなら着脱トグル。装備は種族をまたいで維持される。
   ShopTapOutcome tapShopItem(ShopItem item) {
     final outcome = _tapShopItem(item);
-    if (outcome != ShopTapOutcome.notEnoughCoins) _commit();
+    switch (outcome) {
+      case ShopTapOutcome.bought:
+        sfx.play(Sfx.coin);
+      case ShopTapOutcome.equipped:
+        sfx.play(Sfx.happy);
+      case ShopTapOutcome.unequipped:
+        sfx.play(Sfx.tap);
+      case ShopTapOutcome.notEnoughCoins:
+        sfx.play(Sfx.wrong);
+        return outcome; // 状態は変わっていないので保存しない
+    }
+    _commit();
     return outcome;
   }
 
@@ -152,6 +186,7 @@ class GameController extends ChangeNotifier {
     state.pattern = patternBase64;
     state.happy = min(100, state.happy + 8);
     state.xp += 4;
+    sfx.play(Sfx.happy);
     _commit();
   }
 
@@ -163,7 +198,11 @@ class GameController extends ChangeNotifier {
 
   /// あいことばを適用する。成功時のみ状態が置き換わる。
   bool applyCode(String input) {
-    if (!state.loadCode(input)) return false;
+    if (!state.loadCode(input)) {
+      sfx.play(Sfx.wrong);
+      return false;
+    }
+    sfx.play(Sfx.fanfare);
     _commit();
     return true;
   }
@@ -177,6 +216,7 @@ class GameController extends ChangeNotifier {
   @override
   void dispose() {
     _decayTimer?.cancel();
+    sfx.dispose();
     super.dispose();
   }
 }
