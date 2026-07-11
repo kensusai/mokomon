@@ -69,6 +69,15 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
+  /// ミニゲームクリアの共通報酬: コイン+獲得分、happy+12、xp+10。
+  /// docs/game-design.md §5。
+  void finishMinigame(int coins) {
+    state.coins += coins;
+    state.happy = min(100, state.happy + 12);
+    state.xp += 10;
+    _commit();
+  }
+
   /// 進化を確定する。カットシーンのリビール時点で呼ぶこと
   /// (判定は state.evolveCheck())。キング到達でずかん登録。
   void applyEvolution(int newStage) {

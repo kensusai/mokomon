@@ -10,8 +10,12 @@ import '../widgets/celebrate_overlay.dart';
 import '../widgets/creature_view.dart';
 import '../widgets/evolution_overlay.dart';
 import '../widgets/food_sheet.dart';
+import '../widgets/game_chooser.dart';
 import '../widgets/particles.dart';
 import '../widgets/toast.dart';
+import 'catch_screen.dart';
+import 'memory_screen.dart';
+import 'puzzle_screen.dart';
 
 /// ホーム画面。プロトタイプの screen-home に対応。
 /// TODO(Phase 2-4): あそぶ/おえかき/おみせボタン、ずかん/セーブ/サウンド、💨。
@@ -128,6 +132,23 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     showFoodModal(context, c, onFed: _onFed);
+  }
+
+  Future<void> _onPlayPressed() async {
+    if (s.stage == 0) {
+      _hint('まずは たまごを タッチしてみて!');
+      return;
+    }
+    final key = await showGameChooser(context);
+    if (key == null || !mounted) return;
+    final screen = switch (key) {
+      'catch' => CatchScreen(controller: c),
+      'puzzle' => PuzzleScreen(controller: c),
+      _ => MemoryScreen(controller: c),
+    };
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => screen));
+    if (mounted) await _checkEvolve();
   }
 
   void _onFed(Food food) {
@@ -329,7 +350,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: _onFeedPressed,
                   ),
                 ),
-                // TODO(Phase 2-3): あそぶ / おえかき / おみせ ボタン
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _BigButton(
+                    icon: '🎮',
+                    label: 'あそぶ',
+                    sub: 'コインげっと',
+                    colors: const [Color(0xFF34C98E), Color(0xFF1FAE76)],
+                    onTap: _onPlayPressed,
+                  ),
+                ),
+                // TODO(Phase 3): おえかき / おみせ ボタン
               ],
             ),
           ],

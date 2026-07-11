@@ -1,0 +1,178 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+import 'celebrate_overlay.dart';
+
+/// ミニゲーム開始前の説明オーバーレイ(CSS .gameOverlay 相当)。
+class GameStartOverlay extends StatelessWidget {
+  final String title;
+  final String desc;
+  final VoidCallback onStart;
+  final VoidCallback onBack;
+
+  const GameStartOverlay({
+    super.key,
+    required this.title,
+    required this.desc,
+    required this.onStart,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white.withValues(alpha: 0.75),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF3A3F52))),
+          const SizedBox(height: 16),
+          Text(desc,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.7,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF8A90A8))),
+          const SizedBox(height: 16),
+          StartButton(label: 'はじめる!', onPressed: onStart),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: onBack,
+            style: TextButton.styleFrom(
+              backgroundColor: const Color(0xFFEEF0F7),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Text('もどる',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF8A90A8))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ミニゲーム終了オーバーレイ。
+class GameEndOverlay extends StatelessWidget {
+  final String emoji;
+  final String result;
+  final VoidCallback onDone;
+
+  const GameEndOverlay({
+    super.key,
+    required this.emoji,
+    required this.result,
+    required this.onDone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white.withValues(alpha: 0.75),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 56)),
+          const SizedBox(height: 10),
+          Text(result,
+              style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF3A3F52))),
+          const SizedBox(height: 16),
+          StartButton(label: 'やったー!', onPressed: onDone),
+        ],
+      ),
+    );
+  }
+}
+
+/// 3・2・1 カウントダウン(700ms間隔)。終わると [onDone]。
+class GameCountdown extends StatefulWidget {
+  final VoidCallback onDone;
+  const GameCountdown({super.key, required this.onDone});
+
+  @override
+  State<GameCountdown> createState() => _GameCountdownState();
+}
+
+class _GameCountdownState extends State<GameCountdown> {
+  var _n = 3;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(milliseconds: 700), (_) {
+      if (_n <= 1) {
+        _timer?.cancel();
+        widget.onDone();
+      } else {
+        setState(() => _n--);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Center(
+        child: Text(
+          '$_n',
+          style: const TextStyle(
+            fontSize: 110,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            shadows: [
+              Shadow(color: Color(0x40000000), offset: Offset(0, 6), blurRadius: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 丸い白の戻るボタン(CSS .iconbtn .backbtn 相当)。
+class BackIconButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const BackIconButton({super.key, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      elevation: 3,
+      shadowColor: const Color(0x1F3A3F52),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: const SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(Icons.arrow_back, size: 20, color: Color(0xFF3A3F52)),
+        ),
+      ),
+    );
+  }
+}
