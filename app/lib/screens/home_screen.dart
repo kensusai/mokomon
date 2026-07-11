@@ -1,24 +1,30 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../data/foods.dart';
 import '../logic/game_controller.dart';
 import '../models/game_state.dart';
+import '../widgets/book_sheet.dart';
 import '../widgets/celebrate_overlay.dart';
+import '../widgets/code_dialog.dart';
 import '../widgets/creature_view.dart';
 import '../widgets/evolution_overlay.dart';
 import '../widgets/food_sheet.dart';
 import '../widgets/game_chooser.dart';
 import '../widgets/particles.dart';
+import '../widgets/shop_sheet.dart';
 import '../widgets/toast.dart';
 import 'catch_screen.dart';
 import 'memory_screen.dart';
+import 'paint_screen.dart';
 import 'puzzle_screen.dart';
 
 /// ホーム画面。プロトタイプの screen-home に対応。
-/// TODO(Phase 2-4): あそぶ/おえかき/おみせボタン、ずかん/セーブ/サウンド、💨。
+/// TODO(Phase 4): サウンドトグル、💨(隠し機能)。
 class HomeScreen extends StatefulWidget {
   final GameController controller;
   const HomeScreen({super.key, required this.controller});
@@ -44,10 +50,15 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _glowHinted = false;
   bool _evoBusy = false;
 
+  // 模様(base64 PNG)のデコード結果キャッシュ
+  ui.Image? _patternImage;
+  String? _patternSource;
+
   @override
   void initState() {
     super.initState();
     c.addListener(_onStateChanged);
+    _syncPattern();
     // 進化予兆のキラキラ(数値は出さない)。プロトタイプは2.2秒間隔。
     _sparkleTimer = Timer.periodic(
         const Duration(milliseconds: 2200), (_) => _spawnSparkle());
@@ -83,6 +94,23 @@ class _HomeScreenState extends State<HomeScreen> {
           () => _hint('なんだか からだが ひかってる…!'));
     }
     if (!near) _glowHinted = false;
+    _syncPattern();
+  }
+
+  /// state.pattern (base64 PNG) を ui.Image にデコードして表示に反映する。
+  void _syncPattern() {
+    final p = s.pattern;
+    if (p == _patternSource) return;
+    _patternSource = p;
+    if (p == null) {
+      setState(() => _patternImage = null);
+      return;
+    }
+    decodeImageFromList(base64Decode(p)).then((img) {
+      if (mounted && _patternSource == p) {
+        setState(() => _patternImage = img);
+      }
+    });
   }
 
   void _hint(String msg) {
@@ -149,6 +177,30 @@ class _HomeScreenState extends State<HomeScreen> {
     await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => screen));
     if (mounted) await _checkEvolve();
+  }
+
+  Future<void> _onPaintPressed() async {
+    if (s.stage == 0) {
+      _hint('うまれてから おえかき できるよ!');
+      return;
+    }
+    final saved = await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => PaintScreen(controller: c)));
+    if (saved == true && mounted) {
+      showToast(context, 'もようが かわったよ! ✨');
+      await _checkEvolve();
+    }
+  }
+
+  Future<void> _onBookPressed() async {
+    final newSpecies = await showBookModal(context, c);
+    if (newSpecies == null || !mounted) return;
+    if (newSpecies == 3) {
+      await showCelebrate(context,
+          emoji: '🌟', title: 'なにこれ!?', desc: 'きんいろに かがやく たまごが とどいた…!');
+    } else {
+      _hint('あたらしい たまごが きたよ! タッチしてみて! 👆');
+    }
   }
 
   void _onFed(Food food) {
@@ -231,8 +283,28 @@ class _HomeScreenState extends State<HomeScreen> {
             const Spacer(),
             _pill(s.displayName),
             const Spacer(),
-            // TODO(Phase 3-4): ずかん/セーブ/サウンドのアイコンボタン
+            _iconButton('📖', _onBookPressed),
+            const SizedBox(width: 8),
+            _iconButton('💾', () => showCodeDialog(context, c)),
+            // TODO(Phase 4): サウンドトグル
           ],
+        ),
+      );
+
+  Widget _iconButton(String emoji, VoidCallback onTap) => Material(
+        color: Colors.white,
+        shape: const CircleBorder(),
+        elevation: 3,
+        shadowColor: const Color(0x1F3A3F52),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 18))),
+          ),
         ),
       );
 
@@ -265,7 +337,8 @@ class _HomeScreenState extends State<HomeScreen> {
               key: _creatureBoxKey,
               width: creatureSize,
               height: creatureSize,
-              child: CreatureView(key: _creatureKey, state: s),
+              child: CreatureView(
+                  key: _creatureKey, state: s, pattern: _patternImage),
             ),
           ),
         ),
@@ -360,7 +433,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: _onPlayPressed,
                   ),
                 ),
-                // TODO(Phase 3): おえかき / おみせ ボタン
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _BigButton(
+                    icon: '🎨',
+                    label: 'おえかき',
+                    sub: 'もようがえ',
+                    colors: const [Color(0xFFAB9DFF), Color(0xFF8A78F5)],
+                    onTap: _onPaintPressed,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _BigButton(
+                    icon: '🛍️',
+                    label: 'おみせ',
+                    sub: 'きせかえ',
+                    colors: const [Color(0xFF6CC4FF), Color(0xFF3BA4EC)],
+                    onTap: () => showShopModal(context, c),
+                  ),
+                ),
               ],
             ),
           ],

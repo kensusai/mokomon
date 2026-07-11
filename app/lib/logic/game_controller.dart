@@ -4,12 +4,16 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import '../data/foods.dart';
+import '../data/items.dart';
 import '../data/save_store.dart';
 import '../data/species.dart';
 import '../models/game_state.dart';
 
 /// たまごタップの結果。3タップ目で孵化する(docs/game-design.md §4)。
 enum EggTapOutcome { crack, hatched }
+
+/// ショップのセルをタップした結果(docs/game-design.md §7)。
+enum ShopTapOutcome { bought, equipped, unequipped, notEnoughCoins }
 
 /// ユースケース層: ゲーム操作とその副作用(通知・保存)をまとめる。
 /// UI は本クラス経由でのみ状態を変更する。
@@ -97,9 +101,71 @@ class GameController extends ChangeNotifier {
       ..xp = 0
       ..hunger = 80
       ..happy = 80
+      ..pattern = null
       ..color = speciesList[next].color.toARGB32();
     _commit();
     return next;
+  }
+
+  /// ショップのセルをタップ: 未所持なら購入(即装備)、
+  /// 所持済みなら着脱トグル。装備は種族をまたいで維持される。
+  ShopTapOutcome tapShopItem(ShopItem item) {
+    final outcome = _tapShopItem(item);
+    if (outcome != ShopTapOutcome.notEnoughCoins) _commit();
+    return outcome;
+  }
+
+  ShopTapOutcome _tapShopItem(ShopItem item) {
+    if (!state.owned.contains(item.key)) {
+      if (state.coins < item.cost) return ShopTapOutcome.notEnoughCoins;
+      state.coins -= item.cost;
+      state.owned.add(item.key);
+      _setSlot(item.slot, item.key);
+      return ShopTapOutcome.bought;
+    }
+    final current =
+        item.slot == ItemSlot.head ? state.equipHead : state.equipFace;
+    if (current == item.key) {
+      _setSlot(item.slot, null);
+      return ShopTapOutcome.unequipped;
+    }
+    _setSlot(item.slot, item.key);
+    return ShopTapOutcome.equipped;
+  }
+
+  void _setSlot(ItemSlot slot, String? key) {
+    if (slot == ItemSlot.head) {
+      state.equipHead = key;
+    } else {
+      state.equipFace = key;
+    }
+  }
+
+  /// おえかき: 体色の変更(即時反映・保存)。
+  void setBodyColor(int argb) {
+    state.color = argb;
+    _commit();
+  }
+
+  /// おえかき: 模様を保存して happy+8 / xp+4(docs/game-design.md §6)。
+  void savePaint(String patternBase64) {
+    state.pattern = patternBase64;
+    state.happy = min(100, state.happy + 8);
+    state.xp += 4;
+    _commit();
+  }
+
+  /// おえかき: 模様を消す(報酬なし)。
+  void clearPattern() {
+    state.pattern = null;
+    _commit();
+  }
+
+  /// あいことばを適用する。成功時のみ状態が置き換わる。
+  bool applyCode(String input) {
+    if (!state.loadCode(input)) return false;
+    _commit();
+    return true;
   }
 
   /// 変更を通知し保存する。書き込みは操作のたび(仕様)。

@@ -19,7 +19,8 @@ Future<void> showFoodModal(BuildContext context, GameController controller,
     builder: (dialogContext) => Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Padding(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 360),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
