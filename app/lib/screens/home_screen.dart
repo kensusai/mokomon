@@ -11,6 +11,7 @@ import '../logic/game_controller.dart';
 import '../models/game_state.dart';
 import '../widgets/book_sheet.dart';
 import '../widgets/celebrate_overlay.dart';
+import '../widgets/cloud.dart';
 import '../widgets/code_dialog.dart';
 import '../widgets/creature_view.dart';
 import '../widgets/evolution_overlay.dart';
@@ -18,6 +19,7 @@ import '../widgets/food_sheet.dart';
 import '../widgets/game_chooser.dart';
 import '../widgets/particles.dart';
 import '../widgets/shop_sheet.dart';
+import '../widgets/stat_meter.dart';
 import '../widgets/toast.dart';
 import '../widgets/ui_kit.dart';
 import 'catch_screen.dart';
@@ -340,8 +342,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        const Positioned(top: 40, left: 30, child: _Cloud(width: 70)),
-        const Positioned(top: 90, right: 36, child: _Cloud(width: 56)),
+        const Positioned(top: 40, left: 30, child: Cloud(width: 70)),
+        const Positioned(top: 90, right: 36, child: Cloud(width: 56)),
         // 地面の影
         Align(
           alignment: const Alignment(0, 0.86),
@@ -416,12 +418,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Column(
           children: [
-            _Meter(
+            StatMeter(
                 icon: '🍖',
                 value: s.hunger,
                 colors: const [Color(0xFFFFC46B), Color(0xFFFF9A3D)]),
             const SizedBox(height: 10),
-            _Meter(
+            StatMeter(
                 icon: '💖',
                 value: s.happy,
                 colors: const [Color(0xFFFF9CC2), Color(0xFFFF6EA6)]),
@@ -429,7 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _BigButton(
+                  child: BigActionButton(
                     icon: '🍎',
                     label: 'ごはん',
                     sub: '3しゅるい',
@@ -439,7 +441,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _BigButton(
+                  child: BigActionButton(
                     icon: '🎮',
                     label: 'あそぶ',
                     sub: 'コインげっと',
@@ -453,7 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _BigButton(
+                  child: BigActionButton(
                     icon: '🎨',
                     label: 'おえかき',
                     sub: 'もようがえ',
@@ -463,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _BigButton(
+                  child: BigActionButton(
                     icon: '🛍️',
                     label: 'おみせ',
                     sub: 'きせかえ',
@@ -475,141 +477,5 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      );
-}
-
-class _Meter extends StatelessWidget {
-  final String icon;
-  final double value;
-  final List<Color> colors;
-  const _Meter({required this.icon, required this.value, required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-            width: 28,
-            child: Text(icon,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22))),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            height: 18,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEF0F7),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: AnimatedFractionallySizedBox(
-                duration: const Duration(milliseconds: 500),
-                widthFactor: (value / 100).clamp(0.0, 1.0),
-                heightFactor: 1,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: colors),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 押し込み式の大ボタン(CSS .bigbtn 相当)。
-class _BigButton extends StatelessWidget {
-  final String icon;
-  final String label;
-  final String sub;
-  final List<Color> colors;
-  final VoidCallback onTap;
-  const _BigButton({
-    required this.icon,
-    required this.label,
-    required this.sub,
-    required this.colors,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return PressableGradient(
-      colors: colors,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
-        child: Column(
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 26)),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white)),
-            Text(sub,
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// ふわふわ雲(装飾)。
-class _Cloud extends StatelessWidget {
-  final double width;
-  const _Cloud({required this.width});
-
-  @override
-  Widget build(BuildContext context) {
-    final h = width * 0.34;
-    return Opacity(
-      opacity: 0.8,
-      child: SizedBox(
-        width: width,
-        height: h * 2.2,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              bottom: 0,
-              child: Container(
-                width: width,
-                height: h,
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999)),
-              ),
-            ),
-            Positioned(
-              bottom: h * 0.5,
-              left: width * 0.17,
-              child: _bump(width * 0.43),
-            ),
-            Positioned(
-              bottom: h * 0.55,
-              left: width * 0.51,
-              child: _bump(width * 0.31),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _bump(double d) => Container(
-        width: d,
-        height: d,
-        decoration:
-            const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
       );
 }

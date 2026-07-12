@@ -106,6 +106,51 @@ class PressableGradient extends StatelessWidget {
   }
 }
 
+/// 絵文字アイコン+ラベルの大きなアクションボタン。CSS .bigbtn 相当。
+/// ホームの4ボタンとおえかきの けす/できた! で共用。
+class BigActionButton extends StatelessWidget {
+  final String icon;
+  final String label;
+  final String? sub;
+  final List<Color> colors;
+  final VoidCallback onTap;
+  const BigActionButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.sub,
+    required this.colors,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableGradient(
+      colors: colors,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
+        child: Column(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 26)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white)),
+            if (sub != null)
+              Text(sub!,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// モーダル下部のグレーの閉じるボタン。CSS .closebtn 相当。
 class ModalCloseButton extends StatelessWidget {
   final String label;

@@ -194,8 +194,8 @@ class _PaintScreenState extends State<PaintScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _actionButton(
-                        emoji: '🧽',
+                      child: BigActionButton(
+                        icon: '🧽',
                         label: 'けす',
                         colors: const [Color(0xFFC3C9DD), Color(0xFFA6ADC7)],
                         onTap: _clear,
@@ -204,8 +204,8 @@ class _PaintScreenState extends State<PaintScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       flex: 2,
-                      child: _actionButton(
-                        emoji: '✨',
+                      child: BigActionButton(
+                        icon: '✨',
                         label: 'できた!',
                         colors: greenGradient,
                         onTap: _save,
@@ -250,31 +250,6 @@ class _PaintScreenState extends State<PaintScreen> {
             ),
           ),
       ],
-    );
-  }
-
-  Widget _actionButton({
-    required String emoji,
-    required String label,
-    required List<Color> colors,
-    required VoidCallback onTap,
-  }) {
-    return PressableGradient(
-      colors: colors,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        child: Column(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 26)),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white)),
-          ],
-        ),
-      ),
     );
   }
 }
