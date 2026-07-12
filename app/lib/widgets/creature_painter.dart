@@ -41,17 +41,36 @@ class CreaturePainter extends CustomPainter {
     ..cubicTo(38, 104, 78, 42, 150, 42)
     ..close();
 
+  /// ベビー専用の丸い素体(進化の見た目差を大きくするため別シルエット)。
+  static Path babyBodyPath() => Path()
+    ..moveTo(150, 82)
+    ..cubicTo(224, 82, 254, 136, 254, 182)
+    ..cubicTo(254, 238, 212, 268, 150, 268)
+    ..cubicTo(88, 268, 46, 238, 46, 182)
+    ..cubicTo(46, 136, 76, 82, 150, 82)
+    ..close();
+
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.width / 300.0;
     canvas.scale(s, s);
 
-    // キング=1.14 / ベビー=0.7(足元アンカー)。docs §3
-    final scale = stage == 1 ? 0.7 : (stage == 3 ? 1.14 : 1.0);
+    // キング=1.2 / ベビー=0.62(足元アンカー)。docs §3
+    final scale = stage == 1 ? 0.62 : (stage == 3 ? 1.2 : 1.0);
     canvas.translate(150 * (1 - scale), 270 * (1 - scale));
     canvas.scale(scale, scale);
 
-    _paintAccessories(canvas);
+    // アクセサリ(耳・トゲ・星)は stage2 から。キングは大型化して威厳を出す
+    if (stage >= 2) {
+      if (stage == 3) {
+        canvas.save();
+        canvas.translate(150, 64);
+        canvas.scale(1.18, 1.18);
+        canvas.translate(-150, -64);
+      }
+      _paintAccessories(canvas);
+      if (stage == 3) canvas.restore();
+    }
     _paintBody(canvas);
     _paintFace(canvas);
     if (stage >= 3 && equipHead == null) _paintCrown(canvas);
@@ -62,8 +81,21 @@ class CreaturePainter extends CustomPainter {
   // ---------- body ----------
 
   void _paintBody(Canvas canvas) {
-    final body = bodyPath();
+    if (stage == 3) _paintMantle(canvas);
+
+    final body = stage == 1 ? babyBodyPath() : bodyPath();
     canvas.drawPath(body, Paint()..color = bodyColor);
+
+    // キングはおなかに明るいパッチ(体格の変化を強調)
+    if (stage == 3) {
+      canvas.save();
+      canvas.clipPath(body);
+      canvas.drawOval(
+          Rect.fromCenter(
+              center: const Offset(150, 212), width: 110, height: 86),
+          Paint()..color = shade(bodyColor, 34));
+      canvas.restore();
+    }
 
     if (pattern != null) {
       canvas.save();
@@ -78,35 +110,73 @@ class CreaturePainter extends CustomPainter {
       canvas.restore();
     }
 
+    // 手(腕)は stage2 から生える
+    if (stage >= 2) {
+      final arm = Paint()..color = shade(bodyColor, -18);
+      canvas.save();
+      canvas.translate(50, 194);
+      canvas.rotate(-35 * 3.14159265 / 180);
+      canvas.drawOval(
+          Rect.fromCenter(center: Offset.zero, width: 46, height: 22), arm);
+      canvas.restore();
+      canvas.save();
+      canvas.translate(250, 194);
+      canvas.rotate(35 * 3.14159265 / 180);
+      canvas.drawOval(
+          Rect.fromCenter(center: Offset.zero, width: 46, height: 22), arm);
+      canvas.restore();
+    }
+
     final foot = Paint()..color = shade(bodyColor, -36);
+    final footW = stage == 1 ? 38.0 : 48.0;
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(112, 258), width: 48, height: 24),
+        Rect.fromCenter(center: const Offset(112, 258), width: footW, height: 24),
         foot);
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(188, 258), width: 48, height: 24),
+        Rect.fromCenter(center: const Offset(188, 258), width: footW, height: 24),
         foot);
+  }
+
+  /// キングの王家マント(体の後ろ・すその波+金の縁取り)。
+  void _paintMantle(Canvas canvas) {
+    final mantle = Path()
+      ..moveTo(108, 92)
+      ..cubicTo(42, 128, 16, 200, 28, 260)
+      ..quadraticBezierTo(58, 246, 84, 260)
+      ..quadraticBezierTo(117, 244, 150, 260)
+      ..quadraticBezierTo(183, 244, 216, 260)
+      ..quadraticBezierTo(242, 246, 272, 260)
+      ..cubicTo(284, 200, 258, 128, 192, 92)
+      ..close();
+    canvas.drawPath(mantle, Paint()..color = const Color(0xFFD6506E));
+    canvas.drawPath(
+        mantle,
+        Paint()
+          ..color = const Color(0xFFFFD23E)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6
+          ..strokeJoin = StrokeJoin.round);
   }
 
   // ---------- 種族アクセサリ(体の後ろに描く) ----------
 
+  /// 種族アクセサリ。呼び出し側で stage>=2 にゲートされている。
   void _paintAccessories(Canvas canvas) {
     final acc = Paint()..color = shade(bodyColor, -22);
     switch (speciesIndex) {
-      case 0: // moko: stage2+ で小さい耳
-        if (stage >= 2) {
-          canvas.drawPath(
-              Path()
-                ..moveTo(85, 70)
-                ..cubicTo(70, 20, 110, 15, 118, 55)
-                ..close(),
-              acc);
-          canvas.drawPath(
-              Path()
-                ..moveTo(215, 70)
-                ..cubicTo(230, 20, 190, 15, 182, 55)
-                ..close(),
-              acc);
-        }
+      case 0: // moko: 小さい耳
+        canvas.drawPath(
+            Path()
+              ..moveTo(85, 70)
+              ..cubicTo(70, 20, 110, 15, 118, 55)
+              ..close(),
+            acc);
+        canvas.drawPath(
+            Path()
+              ..moveTo(215, 70)
+              ..cubicTo(230, 20, 190, 15, 182, 55)
+              ..close(),
+            acc);
       case 1: // pyon: うさ耳 + 内耳ハイライト
         canvas.drawPath(
             Path()
