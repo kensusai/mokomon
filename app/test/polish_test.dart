@@ -59,8 +59,7 @@ void main() {
       expect(c.state.happy, 82); // なでなで(+3)ではなく💨(+2)
       expect(c.state.xp, 0);
       expect(
-        _puffLines.any(
-            (line) => find.text(line).evaluate().isNotEmpty),
+        _puffLines.any((line) => find.text(line).evaluate().isNotEmpty),
         isTrue,
       );
 

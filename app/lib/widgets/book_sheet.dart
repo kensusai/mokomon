@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/species.dart';
 import '../logic/game_controller.dart';
 import '../widgets/creature_painter.dart';
+import 'ui_kit.dart';
 
 /// いきものずかん(プロトタイプ #bookModal)。
 /// 「あたらしいたまごを むかえる」を押したら抽選した種族indexを返して閉じる。
@@ -12,109 +13,66 @@ Future<int?> showBookModal(BuildContext context, GameController controller) {
     builder: (dialogContext) {
       final s = controller.state;
       final kinged = s.stage == 3;
-      return Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 360),
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text('📖 いきもの ずかん',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF3A3F52))),
-                const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 3,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 0.8,
-                  children: [
-                    for (var i = 0; i < speciesList.length; i++)
-                      _BookCell(
-                          speciesIndex: i,
-                          owned: s.collection[i],
-                          current: i == s.species),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  kinged
-                      ? 'あたらしい たまごを むかえよう!'
-                      : 'キングまで そだてると ずかんに とうろくされて、あたらしい たまごが もらえるよ!',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      height: 1.6,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF8A90A8)),
-                ),
-                if (kinged) ...[
-                  const SizedBox(height: 10),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF34C98E), Color(0xFF1FAE76)],
-                      ),
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Color(0x24000000), offset: Offset(0, 6)),
-                      ],
-                    ),
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(22),
-                        onTap: () => Navigator.of(dialogContext)
-                            .pop(controller.newEgg()),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 13),
-                          child: Column(
-                            children: [
-                              Text('🥚', style: TextStyle(fontSize: 26)),
-                              Text('あたらしい たまごを むかえる',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+      return MokoModalShell(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const ModalTitle('📖 いきもの ずかん'),
+              const SizedBox(height: 12),
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 0.8,
+                children: [
+                  for (var i = 0; i < speciesList.length; i++)
+                    _BookCell(
+                        speciesIndex: i,
+                        owned: s.collection[i],
+                        current: i == s.species),
                 ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                kinged
+                    ? 'あたらしい たまごを むかえよう!'
+                    : 'キングまで そだてると ずかんに とうろくされて、あたらしい たまごが もらえるよ!',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    fontWeight: FontWeight.w700,
+                    color: ink2Color),
+              ),
+              if (kinged) ...[
                 const SizedBox(height: 10),
-                Material(
-                  color: const Color(0xFFEEF0F7),
-                  borderRadius: BorderRadius.circular(16),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () => Navigator.of(dialogContext).pop(),
-                    child: const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Text('とじる',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF8A90A8))),
+                PressableGradient(
+                  colors: greenGradient,
+                  onTap: () =>
+                      Navigator.of(dialogContext).pop(controller.newEgg()),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 13),
+                    child: Column(
+                      children: [
+                        Text('🥚', style: TextStyle(fontSize: 26)),
+                        Text('あたらしい たまごを むかえる',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white)),
+                      ],
                     ),
                   ),
                 ),
               ],
-            ),
+              const SizedBox(height: 10),
+              ModalCloseButton(
+                  label: 'とじる', onTap: () => Navigator.of(dialogContext).pop()),
+            ],
           ),
         ),
       );
@@ -177,9 +135,7 @@ class _BookCell extends StatelessWidget {
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: owned
-                      ? const Color(0xFF3A3F52)
-                      : const Color(0xFF8A90A8))),
+                  color: owned ? inkColor : ink2Color)),
           if (current)
             const Text('そだてちゅう',
                 style: TextStyle(

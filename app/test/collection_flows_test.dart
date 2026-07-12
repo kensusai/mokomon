@@ -24,7 +24,11 @@ void main() {
 
   testWidgets('shop: buying a ribbon deducts coins and equips it',
       (tester) async {
-    final c = await boot(tester, GameState()..stage = 1..coins = 20);
+    final c = await boot(
+        tester,
+        GameState()
+          ..stage = 1
+          ..coins = 20);
 
     await tester.tap(find.text('おみせ'));
     await tester.pump();
@@ -79,7 +83,11 @@ void main() {
 
   testWidgets('code dialog: issue a code, wipe, and restore it',
       (tester) async {
-    final c = await boot(tester, GameState()..stage = 2..coins = 55);
+    final c = await boot(
+        tester,
+        GameState()
+          ..stage = 2
+          ..coins = 55);
 
     await tester.tap(find.text('💾'));
     await tester.pump();

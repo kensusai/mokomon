@@ -7,6 +7,7 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/ui_kit.dart';
 
 /// ペアさがし(docs/game-design.md §5)。3×4=6ペア。
 class MemoryScreen extends StatefulWidget {
@@ -91,7 +92,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF3A3F52))),
+                                  color: inkColor)),
                         ),
                         const SizedBox(width: 40),
                       ],

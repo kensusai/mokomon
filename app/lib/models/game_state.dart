@@ -145,8 +145,8 @@ class GameState {
     for (final c in body.codeUnits) {
       sum = (sum + c) % 97;
     }
-    final b64 = base64Encode(utf8.encode('$body;$sum'))
-        .replaceAll(RegExp(r'=+$'), '');
+    final b64 =
+        base64Encode(utf8.encode('$body;$sum')).replaceAll(RegExp(r'=+$'), '');
     return 'MOKO-$b64';
   }
 

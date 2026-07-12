@@ -8,6 +8,7 @@ import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/particles.dart';
+import '../widgets/ui_kit.dart';
 
 enum _Phase { intro, countdown, running, ended }
 
@@ -68,8 +69,7 @@ class _CatchScreenState extends State<CatchScreen>
     final hit = _game.tapAt(d.localPosition.dx, d.localPosition.dy);
     if (hit != null) {
       widget.controller.sfx.play(Sfx.pop);
-      _particleKey.currentState
-          ?.spawn(hit.star ? '✨' : '💥', d.localPosition);
+      _particleKey.currentState?.spawn(hit.star ? '✨' : '💥', d.localPosition);
       setState(() {});
     }
   }
@@ -115,8 +115,8 @@ class _CatchScreenState extends State<CatchScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _pill('⏰ ${_game.timeLeft}'),
-                    _pill('🍎 ${_game.score}'),
+                    StatPill('⏰ ${_game.timeLeft}'),
+                    StatPill('🍎 ${_game.score}'),
                   ],
                 ),
               ),
@@ -143,21 +143,4 @@ class _CatchScreenState extends State<CatchScreen>
       ),
     );
   }
-
-  Widget _pill(String text) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: const [
-            BoxShadow(
-                color: Color(0x1F3A3F52), blurRadius: 12, offset: Offset(0, 4)),
-          ],
-        ),
-        child: Text(text,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF3A3F52))),
-      );
 }

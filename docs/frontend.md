@@ -59,6 +59,7 @@ lib/
 
 | ウィジェット | 場所 | 用途 |
 |---|---|---|
+| デザイントークン(`inkColor`/`ink2Color`/各グラデ)・`StatPill`・`CircleIconButton`・`PressableGradient`・`ModalCloseButton`・`MokoModalShell`・`ModalTitle` | widgets/ui_kit.dart | 色・ピル・丸ボタン・押し込みグラデボタン・モーダル外枠の共通部品。**色リテラルや独自ボタンを作る前に必ずここを使う** |
 | `CreaturePainter` / `EggPainter` | widgets/ | いきもの・たまご描画(300x300座標系) |
 | `CreatureView` | widgets/creature_view.dart | 浮遊・グロー・オーラ・タップアニメ込みの表示 |
 | `ParticleField` | widgets/particles.dart | 絵文字パーティクル(上昇/💨ドリフト) |

@@ -9,8 +9,8 @@ void main() {
   testWidgets('app boots on the home screen with a fresh state',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
-    await tester
-        .pumpWidget(MokomonApp(controller: GameController(GameState(), SaveStore())));
+    await tester.pumpWidget(
+        MokomonApp(controller: GameController(GameState(), SaveStore())));
 
     // Fresh state: 10 coins, egg stage.
     expect(find.textContaining('10'), findsWidgets);

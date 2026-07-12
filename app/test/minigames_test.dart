@@ -96,8 +96,7 @@ void main() {
 
     test('wrong answers do not advance and cost nothing', () {
       final g = PuzzleGame(rng: Random(5));
-      final wrongIdx =
-          g.choices.indexWhere((piece) => piece != g.target);
+      final wrongIdx = g.choices.indexWhere((piece) => piece != g.target);
       expect(g.guess(wrongIdx), isFalse);
       expect(g.round, 0);
       expect(g.reward, 0);

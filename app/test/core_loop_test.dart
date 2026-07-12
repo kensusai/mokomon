@@ -16,6 +16,32 @@ void main() {
   GameController fresh([GameState? state, Random? rng]) =>
       GameController(state ?? GameState(), SaveStore(), rng: rng);
 
+  group('tapCreature (docs/game-design.md §3, §9)', () {
+    test('egg stage: cracks then hatches', () {
+      final c = fresh();
+      expect(c.tapCreature(lowerBody: false), CreatureTapOutcome.crack);
+      expect(c.tapCreature(lowerBody: true), CreatureTapOutcome.crack);
+      expect(c.tapCreature(lowerBody: false), CreatureTapOutcome.hatched);
+    });
+
+    test('lower-body tap always puffs (happy +2, no xp)', () {
+      final c = fresh(GameState()..stage = 1, _FixedRandom(0.99));
+      expect(c.tapCreature(lowerBody: true), CreatureTapOutcome.puffed);
+      expect(c.state.happy, 82);
+      expect(c.state.xp, 0);
+    });
+
+    test('normal tap pets unless the 6% roll fires', () {
+      final pet = fresh(GameState()..stage = 1, _FixedRandom(0.5));
+      expect(pet.tapCreature(lowerBody: false), CreatureTapOutcome.petted);
+      expect(pet.state.xp, 1);
+
+      final puff = fresh(GameState()..stage = 1, _FixedRandom(0.05));
+      expect(puff.tapCreature(lowerBody: false), CreatureTapOutcome.puffed);
+      expect(puff.state.xp, 0);
+    });
+  });
+
   group('egg tapping (docs/game-design.md §4)', () {
     test('first two taps crack, third hatches with xp 5', () {
       final c = fresh();
@@ -154,8 +180,30 @@ void main() {
     test('includes stage emoji like the prototype name pill', () {
       expect(GameState().displayName, '🥚 たまご');
       expect((GameState()..stage = 1).displayName, '🐣 もこ');
-      expect((GameState()..species = 3..stage = 0).displayName, '🥚 きんのたまご');
-      expect((GameState()..species = 5..stage = 3).displayName, '👑 キングぶー');
+      expect(
+          (GameState()
+                ..species = 3
+                ..stage = 0)
+              .displayName,
+          '🥚 きんのたまご');
+      expect(
+          (GameState()
+                ..species = 5
+                ..stage = 3)
+              .displayName,
+          '👑 キングぶー');
     });
   });
+}
+
+/// nextDouble が固定値を返すテスト用 Random(💨の6%判定を制御する)。
+class _FixedRandom implements Random {
+  final double value;
+  _FixedRandom(this.value);
+  @override
+  double nextDouble() => value;
+  @override
+  int nextInt(int max) => 0;
+  @override
+  bool nextBool() => false;
 }

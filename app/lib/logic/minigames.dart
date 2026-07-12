@@ -92,7 +92,13 @@ class CatchGame {
 
 enum PuzzleShape { circle, star, triangle, square, heart }
 
-const puzzleColors = [0xFFFF6EA6, 0xFFFFAB49, 0xFF34C98E, 0xFF54B9FF, 0xFF9B8CFF];
+const puzzleColors = [
+  0xFFFF6EA6,
+  0xFFFFAB49,
+  0xFF34C98E,
+  0xFF54B9FF,
+  0xFF9B8CFF
+];
 const puzzleRounds = 8;
 const puzzleRewardPerRound = 2;
 

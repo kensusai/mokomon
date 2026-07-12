@@ -19,6 +19,7 @@ import '../widgets/game_chooser.dart';
 import '../widgets/particles.dart';
 import '../widgets/shop_sheet.dart';
 import '../widgets/toast.dart';
+import '../widgets/ui_kit.dart';
 import 'catch_screen.dart';
 import 'memory_screen.dart';
 import 'paint_screen.dart';
@@ -73,8 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _sparkleTimer = Timer.periodic(
         const Duration(milliseconds: 2200), (_) => _spawnSparkle());
     if (s.stage == 0) {
-      _later(const Duration(milliseconds: 800),
-          () => _hint('たまごを タッチしてみて! 👆'));
+      _later(
+          const Duration(milliseconds: 800), () => _hint('たまごを タッチしてみて! 👆'));
     }
     // 既にしきい値を超えていた場合の追いつき進化
     _later(const Duration(milliseconds: 1200), _checkEvolve);
@@ -100,8 +101,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final near = s.nearEvolve;
     if (near && !_glowHinted) {
       _glowHinted = true;
-      _later(const Duration(milliseconds: 600),
-          () => _hint('なんだか からだが ひかってる…!'));
+      _later(
+          const Duration(milliseconds: 600), () => _hint('なんだか からだが ひかってる…!'));
     }
     if (!near) _glowHinted = false;
     _syncPattern();
@@ -138,45 +139,37 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------- interactions ----------
 
   void _onCreatureTap(TapDownDetails d) {
-    if (s.stage == 0) {
-      final outcome = c.tapEgg();
-      _creatureKey.currentState?.play(CreatureAnim.wiggle);
-      switch (outcome) {
-        case EggTapOutcome.crack:
-          _hint(s.eggTaps == 1 ? 'あれ? なにか きこえる…' : 'ヒビが はいった! もういっかい!');
-        case EggTapOutcome.hatched:
-          showCelebrate(context,
-              sfx: c.sfx,
-              emoji: '🐣',
-              title: 'うまれた!',
-              desc: '「${s.currentSpecies.names[1]}」が うまれたよ! ごはんを あげて そだてよう!');
-      }
-      return;
-    }
-    // 下部30%タップ、またはなでなでの6%で💨(発見型・説明しない)
     final box =
         _creatureBoxKey.currentContext?.findRenderObject() as RenderBox?;
-    final low =
-        box != null && d.localPosition.dy / box.size.height > 0.7;
-    if (low || _rng.nextDouble() < 0.06) {
-      _doPuff(box);
-      return;
+    final lowerBody = box != null && d.localPosition.dy / box.size.height > 0.7;
+    switch (c.tapCreature(lowerBody: lowerBody)) {
+      case CreatureTapOutcome.crack:
+        _creatureKey.currentState?.play(CreatureAnim.wiggle);
+        _hint(s.eggTaps == 1 ? 'あれ? なにか きこえる…' : 'ヒビが はいった! もういっかい!');
+      case CreatureTapOutcome.hatched:
+        _creatureKey.currentState?.play(CreatureAnim.wiggle);
+        showCelebrate(context,
+            sfx: c.sfx,
+            emoji: '🐣',
+            title: 'うまれた!',
+            desc: '「${s.currentSpecies.names[1]}」が うまれたよ! ごはんを あげて そだてよう!');
+      case CreatureTapOutcome.puffed:
+        _showPuffEffects(box);
+      case CreatureTapOutcome.petted:
+        _creatureKey.currentState?.play(CreatureAnim.bounce);
+        _spawnParticleAtGlobal(
+            const ['💖', '💛', '⭐'][_rng.nextInt(3)], d.globalPosition);
+        _checkEvolve();
     }
-    c.pet();
-    _creatureKey.currentState?.play(CreatureAnim.bounce);
-    _spawnParticleAtGlobal(
-        const ['💖', '💛', '⭐'][_rng.nextInt(3)], d.globalPosition);
-    _checkEvolve();
   }
 
-  void _doPuff(RenderBox? creatureBox) {
-    c.puff();
+  /// 💨の演出(状態変更は controller.tapCreature 側で済んでいる)。
+  void _showPuffEffects(RenderBox? creatureBox) {
     _creatureKey.currentState?.play(CreatureAnim.wiggle);
     _hint(_puffLines[_rng.nextInt(_puffLines.length)]);
     if (creatureBox == null) return;
     const emojis = ['💨', '💨', '🌫️'];
-    final field =
-        _particleKey.currentContext?.findRenderObject() as RenderBox?;
+    final field = _particleKey.currentContext?.findRenderObject() as RenderBox?;
     if (field == null) return;
     for (var i = 0; i < 3; i++) {
       final local = Offset(
@@ -216,8 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'puzzle' => PuzzleScreen(controller: c),
       _ => MemoryScreen(controller: c),
     };
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => screen));
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     if (mounted) await _checkEvolve();
   }
 
@@ -325,9 +317,9 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            _pill('🪙 ${s.coins}'),
+            StatPill('🪙 ${s.coins}'),
             const Spacer(),
-            _pill(s.displayName),
+            StatPill(s.displayName),
             const Spacer(),
             _iconButton('📖', _onBookPressed),
             const SizedBox(width: 8),
@@ -338,21 +330,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
 
-  Widget _iconButton(String emoji, VoidCallback onTap) => Material(
-        color: Colors.white,
-        shape: const CircleBorder(),
-        elevation: 3,
-        shadowColor: const Color(0x1F3A3F52),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 18))),
-          ),
-        ),
+  Widget _iconButton(String emoji, VoidCallback onTap) => CircleIconButton(
+        onTap: onTap,
+        child: Text(emoji, style: const TextStyle(fontSize: 18)),
       );
 
   Widget _stage() {
@@ -417,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF3A3F52))),
+                          color: inkColor)),
                 ),
               ),
             ),
@@ -426,19 +406,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-
-  Widget _pill(String text) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: const [
-            BoxShadow(
-                color: Color(0x1F3A3F52), blurRadius: 12, offset: Offset(0, 4)),
-          ],
-        ),
-        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w800)),
-      );
 
   Widget _bottomCard() => Container(
         margin: const EdgeInsets.all(12),
@@ -466,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: '🍎',
                     label: 'ごはん',
                     sub: '3しゅるい',
-                    colors: const [Color(0xFFFFAB49), Color(0xFFFF8F1F)],
+                    colors: orangeGradient,
                     onTap: _onFeedPressed,
                   ),
                 ),
@@ -476,7 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: '🎮',
                     label: 'あそぶ',
                     sub: 'コインげっと',
-                    colors: const [Color(0xFF34C98E), Color(0xFF1FAE76)],
+                    colors: greenGradient,
                     onTap: _onPlayPressed,
                   ),
                 ),
@@ -490,7 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: '🎨',
                     label: 'おえかき',
                     sub: 'もようがえ',
-                    colors: const [Color(0xFFAB9DFF), Color(0xFF8A78F5)],
+                    colors: purpleGradient,
                     onTap: _onPaintPressed,
                   ),
                 ),
@@ -500,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: '🛍️',
                     label: 'おみせ',
                     sub: 'きせかえ',
-                    colors: const [Color(0xFF6CC4FF), Color(0xFF3BA4EC)],
+                    colors: blueGradient,
                     onTap: () => showShopModal(context, c),
                   ),
                 ),
@@ -572,40 +539,25 @@ class _BigButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: colors),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(color: Color(0x24000000), offset: Offset(0, 6)),
-        ],
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(22),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
-            child: Column(
-              children: [
-                Text(icon, style: const TextStyle(fontSize: 26)),
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white)),
-                Text(sub,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white)),
-              ],
-            ),
-          ),
+    return PressableGradient(
+      colors: colors,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
+        child: Column(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 26)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white)),
+            Text(sub,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white)),
+          ],
         ),
       ),
     );

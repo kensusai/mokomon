@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../logic/game_controller.dart';
 import '../widgets/creature_painter.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/ui_kit.dart';
 
 /// ブラシ8色(プロトタイプ PALETTE)
 const _palette = [
@@ -117,7 +118,7 @@ class _PaintScreenState extends State<PaintScreen> {
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF3A3F52))),
+                              color: inkColor)),
                     ),
                     const SizedBox(width: 40),
                   ],
@@ -182,7 +183,7 @@ class _PaintScreenState extends State<PaintScreen> {
                             style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF8A90A8))),
+                                color: ink2Color)),
                         const SizedBox(height: 8),
                         _swatchRow(_bodyColors, 34,
                             onTap: widget.controller.setBodyColor),
@@ -206,7 +207,7 @@ class _PaintScreenState extends State<PaintScreen> {
                       child: _actionButton(
                         emoji: '✨',
                         label: 'できた!',
-                        colors: const [Color(0xFF34C98E), Color(0xFF1FAE76)],
+                        colors: greenGradient,
                         onTap: _save,
                       ),
                     ),
@@ -238,7 +239,7 @@ class _PaintScreenState extends State<PaintScreen> {
                 border: Border.all(color: Colors.white, width: 4),
                 boxShadow: [
                   if (selected == c)
-                    const BoxShadow(color: Color(0xFF3A3F52), spreadRadius: 3)
+                    const BoxShadow(color: inkColor, spreadRadius: 3)
                   else
                     const BoxShadow(
                         color: Color(0x1F3A3F52),
@@ -258,35 +259,20 @@ class _PaintScreenState extends State<PaintScreen> {
     required List<Color> colors,
     required VoidCallback onTap,
   }) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: colors),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(color: Color(0x24000000), offset: Offset(0, 6)),
-        ],
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(22),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            child: Column(
-              children: [
-                Text(emoji, style: const TextStyle(fontSize: 26)),
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white)),
-              ],
-            ),
-          ),
+    return PressableGradient(
+      colors: colors,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 26)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white)),
+          ],
         ),
       ),
     );

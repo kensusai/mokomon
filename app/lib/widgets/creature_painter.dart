@@ -130,10 +130,12 @@ class CreaturePainter extends CustomPainter {
     final foot = Paint()..color = shade(bodyColor, -36);
     final footW = stage == 1 ? 38.0 : 48.0;
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(112, 258), width: footW, height: 24),
+        Rect.fromCenter(
+            center: const Offset(112, 258), width: footW, height: 24),
         foot);
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(188, 258), width: footW, height: 24),
+        Rect.fromCenter(
+            center: const Offset(188, 258), width: footW, height: 24),
         foot);
   }
 
@@ -298,7 +300,8 @@ class CreaturePainter extends CustomPainter {
     ..strokeCap = StrokeCap.round;
 
   void _cheeks(Canvas canvas, double lx, double rx, double y) {
-    final cheek = Paint()..color = const Color(0xFFFF9CC2).withValues(alpha: 0.7);
+    final cheek = Paint()
+      ..color = const Color(0xFFFF9CC2).withValues(alpha: 0.7);
     canvas.drawCircle(Offset(lx, y), 11, cheek);
     canvas.drawCircle(Offset(rx, y), 11, cheek);
   }
@@ -392,8 +395,10 @@ class CreaturePainter extends CustomPainter {
         nostril);
 
     if (sad) {
-      canvas.drawLine(const Offset(82, 120), const Offset(108, 130), _inkStroke(6));
-      canvas.drawLine(const Offset(218, 120), const Offset(192, 130), _inkStroke(6));
+      canvas.drawLine(
+          const Offset(82, 120), const Offset(108, 130), _inkStroke(6));
+      canvas.drawLine(
+          const Offset(218, 120), const Offset(192, 130), _inkStroke(6));
       final mouth = Path()
         ..moveTo(134, 216)
         ..quadraticBezierTo(150, 205, 166, 216);
@@ -423,21 +428,25 @@ class CreaturePainter extends CustomPainter {
     canvas.translate(150, 93);
     canvas.rotate((sad ? 6 : -3) * 3.14159265 / 180);
     canvas.drawRRect(
-        RRect.fromRectAndRadius(const Rect.fromLTWH(-42, -7.5, 84, 15),
-            const Radius.circular(7.5)),
+        RRect.fromRectAndRadius(
+            const Rect.fromLTWH(-42, -7.5, 84, 15), const Radius.circular(7.5)),
         _inkFill);
     canvas.restore();
 
-    canvas.drawCircle(const Offset(150, 142), 36, Paint()..color = Colors.white);
+    canvas.drawCircle(
+        const Offset(150, 142), 36, Paint()..color = Colors.white);
     canvas.drawCircle(const Offset(150, 142), 36, _inkStroke(5));
-    canvas.drawCircle(const Offset(150, 146), 17, Paint()..color = const Color(0xFF6CC4FF));
+    canvas.drawCircle(
+        const Offset(150, 146), 17, Paint()..color = const Color(0xFF6CC4FF));
     canvas.drawCircle(const Offset(150, 146), 9, _inkFill);
-    canvas.drawCircle(const Offset(157, 138), 4.5, Paint()..color = Colors.white);
+    canvas.drawCircle(
+        const Offset(157, 138), 4.5, Paint()..color = Colors.white);
     _cheeks(canvas, 100, 200, 185);
 
     if (sad) {
       canvas.drawOval(
-          Rect.fromCenter(center: const Offset(150, 206), width: 20, height: 26),
+          Rect.fromCenter(
+              center: const Offset(150, 206), width: 20, height: 26),
           _inkFill);
       return;
     }
@@ -590,7 +599,8 @@ class CreaturePainter extends CustomPainter {
               ..lineTo(30, 16)
               ..close(),
             wing);
-        canvas.drawCircle(Offset.zero, 8, Paint()..color = const Color(0xFFFF4F96));
+        canvas.drawCircle(
+            Offset.zero, 8, Paint()..color = const Color(0xFFFF4F96));
         canvas.restore();
       case 'flower':
         canvas.save();
@@ -605,7 +615,8 @@ class CreaturePainter extends CustomPainter {
         ]) {
           canvas.drawCircle(o, 9, petal);
         }
-        canvas.drawCircle(Offset.zero, 7, Paint()..color = const Color(0xFFFFD23E));
+        canvas.drawCircle(
+            Offset.zero, 7, Paint()..color = const Color(0xFFFFD23E));
         canvas.restore();
       case 'strawhat':
         final straw = Paint()..color = const Color(0xFFFFD23E);

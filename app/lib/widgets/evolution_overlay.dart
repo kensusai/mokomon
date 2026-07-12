@@ -119,7 +119,8 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
                 ),
               ),
             ),
-            if (_revealed) const Positioned.fill(child: ConfettiBurst(count: 34)),
+            if (_revealed)
+              const Positioned.fill(child: ConfettiBurst(count: 34)),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -265,8 +266,8 @@ class _RaysPainter extends CustomPainter {
       canvas.drawPath(
         Path()
           ..moveTo(center.dx, center.dy)
-          ..arcTo(Rect.fromCircle(center: center, radius: radius), start,
-              wedge, false)
+          ..arcTo(Rect.fromCircle(center: center, radius: radius), start, wedge,
+              false)
           ..close(),
         paint,
       );

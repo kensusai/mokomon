@@ -16,10 +16,30 @@ void main() {
     });
 
     test('display names follow the stage pattern', () {
-      expect((GameState()..species = 7..stage = 1).displayName, '🐱 にゃん');
-      expect((GameState()..species = 7..stage = 3).displayName, '👑 キングにゃんこ');
-      expect((GameState()..species = 8..stage = 2).displayName, '🧔 ダンディ');
-      expect((GameState()..species = 8..stage = 3).displayName, '👑 キングダンディ');
+      expect(
+          (GameState()
+                ..species = 7
+                ..stage = 1)
+              .displayName,
+          '🐱 にゃん');
+      expect(
+          (GameState()
+                ..species = 7
+                ..stage = 3)
+              .displayName,
+          '👑 キングにゃんこ');
+      expect(
+          (GameState()
+                ..species = 8
+                ..stage = 2)
+              .displayName,
+          '🧔 ダンディ');
+      expect(
+          (GameState()
+                ..species = 8
+                ..stage = 3)
+              .displayName,
+          '👑 キングダンディ');
     });
 
     test('collection bits for index 8 roundtrip through あいことば', () {
@@ -51,8 +71,8 @@ void main() {
               MaterialApp(
                 home: CustomPaint(
                   size: const Size(300, 300),
-                  painter: CreaturePainter(
-                      speciesIndex: sp, stage: stage, sad: sad),
+                  painter:
+                      CreaturePainter(speciesIndex: sp, stage: stage, sad: sad),
                 ),
               ),
             );

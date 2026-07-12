@@ -21,8 +21,8 @@ void main() {
     final cols = 4; // egg + stage1..3
     final rows = speciesList.length;
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder,
-        Rect.fromLTWH(0, 0, cell * cols, cell * rows));
+    final canvas =
+        Canvas(recorder, Rect.fromLTWH(0, 0, cell * cols, cell * rows));
     canvas.drawRect(Rect.fromLTWH(0, 0, cell * cols, cell * rows),
         Paint()..color = const Color(0xFFEAF6FF));
 
@@ -46,6 +46,7 @@ void main() {
         .endRecording()
         .toImage((cell * cols).toInt(), (cell * rows).toInt());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    File('$dir/species_sheet.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+    File('$dir/species_sheet.png')
+        .writeAsBytesSync(bytes!.buffer.asUint8List());
   });
 }

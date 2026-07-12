@@ -27,7 +27,12 @@ void main() {
 
     test('egg and king never evolve', () {
       expect((GameState()..xp = 999).evolveCheck(), isNull);
-      expect((GameState()..stage = 3..xp = 999).evolveCheck(), isNull);
+      expect(
+          (GameState()
+                ..stage = 3
+                ..xp = 999)
+              .evolveCheck(),
+          isNull);
     });
 
     test('near-evolve glow starts 8 before stage2 and 12 before stage3', () {
@@ -130,8 +135,7 @@ void main() {
       ..hunger = 66
       ..happy = 77
       ..species = 4
-      ..collection =
-          List.generate(speciesList.length, (i) => i == 0 || i == 2)
+      ..collection = List.generate(speciesList.length, (i) => i == 0 || i == 2)
       ..owned = {'ribbon', 'glasses'}
       ..equipHead = 'ribbon'
       ..equipFace = 'glasses'
@@ -232,7 +236,12 @@ void main() {
     test('sad below 30 hunger or happy', () {
       expect((GameState()..hunger = 29).isSad, isTrue);
       expect((GameState()..happy = 29).isSad, isTrue);
-      expect((GameState()..hunger = 30..happy = 30).isSad, isFalse);
+      expect(
+          (GameState()
+                ..hunger = 30
+                ..happy = 30)
+              .isSad,
+          isFalse);
     });
   });
 }

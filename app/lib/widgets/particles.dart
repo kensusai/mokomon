@@ -23,8 +23,8 @@ class ParticleFieldState extends State<ParticleField> {
   /// 💨用: 横に流れて消えるパーティクル(CSS puffout 相当)。
   void spawnPuff(String emoji, Offset position,
       {required double driftX, Duration delay = Duration.zero}) {
-    setState(() =>
-        _items.add(_Particle(_seq++, emoji, position, driftX: driftX, delay: delay)));
+    setState(() => _items
+        .add(_Particle(_seq++, emoji, position, driftX: driftX, delay: delay)));
   }
 
   void _remove(int id) {

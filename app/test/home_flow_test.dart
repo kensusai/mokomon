@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/data/save_store.dart';
@@ -7,11 +9,22 @@ import 'package:mokomon/models/game_state.dart';
 import 'package:mokomon/widgets/creature_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// なでなでの6%💨判定を出さない決定的Random(テスト安定化)。
+class NoPuffRandom implements Random {
+  @override
+  double nextDouble() => 0.99;
+  @override
+  int nextInt(int max) => 0;
+  @override
+  bool nextBool() => false;
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   Future<GameController> boot(WidgetTester tester, [GameState? state]) async {
-    final c = GameController(state ?? GameState(), SaveStore());
+    final c =
+        GameController(state ?? GameState(), SaveStore(), rng: NoPuffRandom());
     await tester.pumpWidget(MokomonApp(controller: c));
     return c;
   }
@@ -72,7 +85,11 @@ void main() {
 
   testWidgets('feeding is blocked with a hint when hunger >= 98',
       (tester) async {
-    await boot(tester, GameState()..stage = 1..hunger = 98);
+    await boot(
+        tester,
+        GameState()
+          ..stage = 1
+          ..hunger = 98);
 
     await tester.tap(find.text('ごはん'));
     await tester.pump();
@@ -93,7 +110,11 @@ void main() {
 
   testWidgets('petting past the threshold triggers the evolution cutscene',
       (tester) async {
-    final c = await boot(tester, GameState()..stage = 1..xp = 29);
+    final c = await boot(
+        tester,
+        GameState()
+          ..stage = 1
+          ..xp = 29);
 
     await tester.tap(find.byType(CreatureView));
     await tester.pump();
@@ -119,7 +140,12 @@ void main() {
 
   testWidgets('king evolution registers the collection and shows a toast',
       (tester) async {
-    final c = await boot(tester, GameState()..stage = 2..xp = 79..species = 1);
+    final c = await boot(
+        tester,
+        GameState()
+          ..stage = 2
+          ..xp = 79
+          ..species = 1);
 
     await tester.tap(find.byType(CreatureView));
     await tester.pump();

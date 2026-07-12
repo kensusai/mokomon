@@ -41,7 +41,8 @@ class CreatureViewState extends State<CreatureView>
 
   void play(CreatureAnim anim) {
     _current = anim;
-    _tap.duration = Duration(milliseconds: anim == CreatureAnim.munch ? 800 : 500);
+    _tap.duration =
+        Duration(milliseconds: anim == CreatureAnim.munch ? 800 : 500);
     _tap.forward(from: 0);
   }
 
@@ -158,8 +159,7 @@ class CreatureViewState extends State<CreatureView>
               _lerp(0.96, 1.05, k), _lerp(1.05, 0.95, k), 1);
         }
         final k = (t - 0.75) / 0.25;
-        return Matrix4.diagonal3Values(
-            _lerp(1.05, 1, k), _lerp(0.95, 1, k), 1);
+        return Matrix4.diagonal3Values(_lerp(1.05, 1, k), _lerp(0.95, 1, k), 1);
       case CreatureAnim.wiggle:
         // 0%(0deg) 25%(-7deg) 75%(7deg) 100%(0deg)
         final deg = t < 0.25

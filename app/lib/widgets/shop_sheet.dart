@@ -3,71 +3,46 @@ import 'package:flutter/material.dart';
 import '../data/items.dart';
 import '../logic/game_controller.dart';
 import 'toast.dart';
+import 'ui_kit.dart';
 
 /// きせかえショップ(プロトタイプ #shopModal)。docs/game-design.md §7。
 Future<void> showShopModal(BuildContext context, GameController controller) {
   return showDialog(
     context: context,
-    builder: (dialogContext) => Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 360),
-        padding: const EdgeInsets.all(20),
-        child: ListenableBuilder(
+    builder: (dialogContext) => MokoModalShell(
+      child: ListenableBuilder(
           listenable: controller,
           builder: (context, _) => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('🛍️ きせかえショップ',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF3A3F52))),
-              const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 0.82,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final item in shopItems)
-                    _ShopCell(item: item, controller: controller),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text('かったものは タップで きたり ぬいだり できるよ',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF8A90A8))),
-              const SizedBox(height: 10),
-              Material(
-                color: const Color(0xFFEEF0F7),
-                borderRadius: BorderRadius.circular(16),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () => Navigator.of(dialogContext).pop(),
-                  child: const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Text('とじる',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF8A90A8))),
+                  const ModalTitle('🛍️ きせかえショップ'),
+                  const SizedBox(height: 12),
+                  GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 0.82,
+                    children: [
+                      for (final item in shopItems)
+                        _ShopCell(item: item, controller: controller),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+                  const SizedBox(height: 8),
+                  const Text('かったものは タップで きたり ぬいだり できるよ',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: ink2Color)),
+                  const SizedBox(height: 10),
+                  ModalCloseButton(
+                      label: 'とじる',
+                      onTap: () => Navigator.of(dialogContext).pop()),
+                ],
+              )),
     ),
   );
 }
@@ -117,7 +92,7 @@ class _ShopCell extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF3A3F52))),
+                      color: inkColor)),
               const SizedBox(height: 6),
               Container(
                 padding:
@@ -137,9 +112,7 @@ class _ShopCell extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: poor
-                          ? const Color(0xFFD05555)
-                          : const Color(0xFF3A3F52)),
+                      color: poor ? const Color(0xFFD05555) : inkColor),
                 ),
               ),
             ],

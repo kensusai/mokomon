@@ -7,6 +7,7 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/ui_kit.dart';
 import '../widgets/shape_painter.dart';
 
 /// おなじのどれ?(docs/game-design.md §5)。8ラウンド、不正解ペナルティなし。
@@ -100,7 +101,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF3A3F52))),
+                                  color: inkColor)),
                         ),
                         const SizedBox(width: 40),
                       ],
@@ -140,7 +141,9 @@ class _PuzzleScreenState extends State<PuzzleScreen>
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x1F3A3F52), blurRadius: 24, offset: Offset(0, 10)),
+                color: Color(0x1F3A3F52),
+                blurRadius: 24,
+                offset: Offset(0, 10)),
           ],
         ),
         child: Column(
@@ -149,7 +152,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF8A90A8))),
+                    color: ink2Color)),
             const SizedBox(height: 8),
             CustomPaint(
               size: const Size(96, 96),
@@ -183,7 +186,8 @@ class _PuzzleScreenState extends State<PuzzleScreen>
           padding: const EdgeInsets.all(14),
           child: CustomPaint(
             size: const Size(64, 64),
-            painter: ShapePainter(shape: piece.shape, color: Color(piece.color)),
+            painter:
+                ShapePainter(shape: piece.shape, color: Color(piece.color)),
           ),
         ),
       ),

@@ -55,8 +55,7 @@ class _ConfettiBurstState extends State<ConfettiBurst>
               clipBehavior: Clip.none,
               children: [
                 for (final p in _pieces)
-                  if (nowMs >= p.delayMs &&
-                      nowMs < p.delayMs + p.durationMs)
+                  if (nowMs >= p.delayMs && nowMs < p.delayMs + p.durationMs)
                     Positioned(
                       left: p.x * box.maxWidth,
                       top: -20 +

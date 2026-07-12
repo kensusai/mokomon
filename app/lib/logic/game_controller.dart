@@ -14,6 +14,9 @@ import '../models/game_state.dart';
 /// たまごタップの結果。3タップ目で孵化する(docs/game-design.md §4)。
 enum EggTapOutcome { crack, hatched }
 
+/// いきもの(またはたまご)をタップした結果。UIは演出だけを担当する。
+enum CreatureTapOutcome { crack, hatched, petted, puffed }
+
 /// ショップのセルをタップした結果(docs/game-design.md §7)。
 enum ShopTapOutcome { bought, equipped, unequipped, notEnoughCoins }
 
@@ -64,6 +67,22 @@ class GameController extends ChangeNotifier {
     state.xp += 1;
     sfx.play(Sfx.happy);
     _commit();
+  }
+
+  /// いきものタップの一次判定。たまごなら孵化進行、
+  /// 下部30%タップ or 6% で💨、それ以外はなでなで(docs/game-design.md §3, §9)。
+  CreatureTapOutcome tapCreature({required bool lowerBody}) {
+    if (state.stage == 0) {
+      return tapEgg() == EggTapOutcome.hatched
+          ? CreatureTapOutcome.hatched
+          : CreatureTapOutcome.crack;
+    }
+    if (lowerBody || _rng.nextDouble() < 0.06) {
+      puff();
+      return CreatureTapOutcome.puffed;
+    }
+    pet();
+    return CreatureTapOutcome.petted;
   }
 
   /// 💨(隠し機能・名前を付けない)。happy +2。docs/game-design.md §9。

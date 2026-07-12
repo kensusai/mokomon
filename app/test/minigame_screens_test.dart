@@ -115,8 +115,8 @@ void main() {
     expect(find.text('⏰ 2'), findsOneWidget);
 
     // 直接アイテムを置いてタップ→スコア加算
-    game.items.add(CatchItem(
-        x: 200, y: 300, vy: 0, emoji: '⭐', star: true, wobble: 0));
+    game.items.add(
+        CatchItem(x: 200, y: 300, vy: 0, emoji: '⭐', star: true, wobble: 0));
     await tester.pump(const Duration(milliseconds: 16));
     expect(find.text('⭐'), findsOneWidget);
     await tester.tapAt(const Offset(200, 300));

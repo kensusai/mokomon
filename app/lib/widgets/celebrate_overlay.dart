@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../audio/sfx_player.dart';
 import '../audio/sound_synth.dart';
 import 'confetti.dart';
+import 'ui_kit.dart';
 
 /// お祝い全画面オーバーレイ(誕生・金のたまご等)。
 /// プロトタイプの celebrate() に対応。ボタンで閉じるまで待つ。
@@ -31,7 +32,7 @@ Future<void> showCelebrate(
                   style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF3A3F52)),
+                      color: inkColor),
                   textAlign: TextAlign.center),
               const SizedBox(height: 6),
               Padding(
@@ -40,7 +41,7 @@ Future<void> showCelebrate(
                     style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF8A90A8)),
+                        color: ink2Color),
                     textAlign: TextAlign.center),
               ),
               const SizedBox(height: 20),
@@ -94,32 +95,17 @@ class StartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF34C98E), Color(0xFF1FAE76)],
-        ),
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: const [
-          BoxShadow(color: Color(0x26000000), offset: Offset(0, 6)),
-        ],
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white)),
-          ),
-        ),
+    return PressableGradient(
+      colors: greenGradient,
+      radius: 999,
+      onTap: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+        child: Text(label,
+            style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Colors.white)),
       ),
     );
   }
