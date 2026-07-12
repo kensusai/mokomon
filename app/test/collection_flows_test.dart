@@ -3,24 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/data/save_store.dart';
 import 'package:mokomon/data/species.dart';
 import 'package:mokomon/logic/game_controller.dart';
-import 'package:mokomon/main.dart';
 import 'package:mokomon/models/game_state.dart';
 import 'package:mokomon/screens/paint_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'helpers.dart';
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  Future<GameController> boot(WidgetTester tester, [GameState? state]) async {
-    final c = GameController(state ?? (GameState()..stage = 1), SaveStore());
-    await tester.pumpWidget(MokomonApp(controller: c));
-    return c;
-  }
-
-  Future<void> drain(WidgetTester tester) async {
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 5));
-  }
+  Future<GameController> boot(WidgetTester tester, [GameState? state]) =>
+      bootApp(tester, state: state ?? (GameState()..stage = 1));
 
   testWidgets('shop: buying a ribbon deducts coins and equips it',
       (tester) async {
@@ -49,7 +42,7 @@ void main() {
 
     await tester.tap(find.text('とじる'));
     await tester.pump(const Duration(seconds: 3));
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('book: king can welcome a new egg and state resets',
@@ -78,7 +71,7 @@ void main() {
     expect(c.state.species, isNot(3)); // キング1体では金のたまごは来ない
     expect(find.textContaining('あたらしい たまごが きたよ!'), findsOneWidget);
 
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('code dialog: issue a code, wipe, and restore it',
@@ -109,7 +102,7 @@ void main() {
     expect(find.textContaining('おかえり!'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('code dialog: wrong code shows a gentle error toast',
@@ -125,7 +118,7 @@ void main() {
     expect(find.textContaining('あいことばが ちがうみたい'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('paint: drawing and saving stores a pattern and rewards',
@@ -161,6 +154,6 @@ void main() {
     await tester.tap(find.text('おえかき'));
     await tester.pump();
     expect(find.text('うまれてから おえかき できるよ!'), findsOneWidget);
-    await drain(tester);
+    await drainTimers(tester);
   });
 }

@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/audio/sound_synth.dart';
 import 'package:mokomon/data/save_store.dart';
 import 'package:mokomon/logic/game_controller.dart';
-import 'package:mokomon/main.dart';
 import 'package:mokomon/models/game_state.dart';
 import 'package:mokomon/widgets/creature_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'helpers.dart';
 
 const _puffLines = [
   '……いまの なあに?',
@@ -49,8 +49,7 @@ void main() {
 
     testWidgets('tapping the bottom 30% of the creature triggers 💨',
         (tester) async {
-      final c = GameController(GameState()..stage = 1, SaveStore());
-      await tester.pumpWidget(MokomonApp(controller: c));
+      final c = await bootApp(tester, state: GameState()..stage = 1);
 
       final rect = tester.getRect(find.byType(CreatureView));
       await tester.tapAt(Offset(rect.center.dx, rect.top + rect.height * 0.9));
@@ -63,15 +62,13 @@ void main() {
         isTrue,
       );
 
-      await tester.pumpWidget(const SizedBox());
-      await tester.pump(const Duration(seconds: 5));
+      await drainTimers(tester);
     });
   });
 
   group('sound toggle', () {
     testWidgets('🔊 toggles to 🔇 and persists the flag', (tester) async {
-      final c = GameController(GameState()..stage = 1, SaveStore());
-      await tester.pumpWidget(MokomonApp(controller: c));
+      final c = await bootApp(tester, state: GameState()..stage = 1);
 
       expect(find.text('🔊'), findsOneWidget);
       await tester.tap(find.text('🔊'));
@@ -79,8 +76,7 @@ void main() {
       expect(c.state.sound, isFalse);
       expect(find.text('🔇'), findsOneWidget);
 
-      await tester.pumpWidget(const SizedBox());
-      await tester.pump(const Duration(seconds: 5));
+      await drainTimers(tester);
     });
   });
 }

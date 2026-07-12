@@ -8,6 +8,8 @@ import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/models/game_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'helpers.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -25,18 +27,18 @@ void main() {
     });
 
     test('lower-body tap always puffs (happy +2, no xp)', () {
-      final c = fresh(GameState()..stage = 1, _FixedRandom(0.99));
+      final c = fresh(GameState()..stage = 1, FixedRandom(0.99));
       expect(c.tapCreature(lowerBody: true), CreatureTapOutcome.puffed);
       expect(c.state.happy, 82);
       expect(c.state.xp, 0);
     });
 
     test('normal tap pets unless the 6% roll fires', () {
-      final pet = fresh(GameState()..stage = 1, _FixedRandom(0.5));
+      final pet = fresh(GameState()..stage = 1, FixedRandom(0.5));
       expect(pet.tapCreature(lowerBody: false), CreatureTapOutcome.petted);
       expect(pet.state.xp, 1);
 
-      final puff = fresh(GameState()..stage = 1, _FixedRandom(0.05));
+      final puff = fresh(GameState()..stage = 1, FixedRandom(0.05));
       expect(puff.tapCreature(lowerBody: false), CreatureTapOutcome.puffed);
       expect(puff.state.xp, 0);
     });
@@ -194,16 +196,4 @@ void main() {
           '👑 キングぶー');
     });
   });
-}
-
-/// nextDouble が固定値を返すテスト用 Random(💨の6%判定を制御する)。
-class _FixedRandom implements Random {
-  final double value;
-  _FixedRandom(this.value);
-  @override
-  double nextDouble() => value;
-  @override
-  int nextInt(int max) => 0;
-  @override
-  bool nextBool() => false;
 }

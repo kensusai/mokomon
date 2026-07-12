@@ -1,39 +1,16 @@
-import 'dart:math';
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mokomon/data/save_store.dart';
 import 'package:mokomon/logic/game_controller.dart';
-import 'package:mokomon/main.dart';
 import 'package:mokomon/models/game_state.dart';
 import 'package:mokomon/widgets/creature_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// なでなでの6%💨判定を出さない決定的Random(テスト安定化)。
-class NoPuffRandom implements Random {
-  @override
-  double nextDouble() => 0.99;
-  @override
-  int nextInt(int max) => 0;
-  @override
-  bool nextBool() => false;
-}
+import 'helpers.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  Future<GameController> boot(WidgetTester tester, [GameState? state]) async {
-    final c =
-        GameController(state ?? GameState(), SaveStore(), rng: NoPuffRandom());
-    await tester.pumpWidget(MokomonApp(controller: c));
-    return c;
-  }
-
-  /// ホームのタイマー(ヒント・キラキラ等)を流してから画面を破棄する。
-  Future<void> drain(WidgetTester tester) async {
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 5));
-  }
+  Future<GameController> boot(WidgetTester tester, [GameState? state]) =>
+      bootApp(tester, state: state, rng: NoPuffRandom());
 
   testWidgets('egg hatches on the third tap with a birth celebration',
       (tester) async {
@@ -59,7 +36,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('🐣 もこ'), findsOneWidget);
 
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('feeding an apple from the food modal costs 3 coins',
@@ -80,7 +57,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('🪙 7'), findsOneWidget);
 
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('feeding is blocked with a hint when hunger >= 98',
@@ -96,7 +73,7 @@ void main() {
     expect(find.text('おなか いっぱい みたい!'), findsOneWidget);
     expect(find.text('なにを たべる?'), findsNothing);
 
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('feed button on egg stage nudges to tap the egg first',
@@ -105,7 +82,7 @@ void main() {
     await tester.tap(find.text('ごはん'));
     await tester.pump();
     expect(find.text('まずは たまごを タッチしてみて!'), findsOneWidget);
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('petting past the threshold triggers the evolution cutscene',
@@ -135,7 +112,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('🌱 もこもん'), findsOneWidget);
 
-    await drain(tester);
+    await drainTimers(tester);
   });
 
   testWidgets('king evolution registers the collection and shows a toast',
@@ -161,6 +138,6 @@ void main() {
 
     // トーストが消えるまで
     await tester.pump(const Duration(seconds: 3));
-    await drain(tester);
+    await drainTimers(tester);
   });
 }
