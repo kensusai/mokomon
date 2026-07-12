@@ -130,7 +130,8 @@ void main() {
       ..hunger = 66
       ..happy = 77
       ..species = 4
-      ..collection = [true, false, true, false, false, false, false]
+      ..collection =
+          List.generate(speciesList.length, (i) => i == 0 || i == 2)
       ..owned = {'ribbon', 'glasses'}
       ..equipHead = 'ribbon'
       ..equipFace = 'glasses'
@@ -148,7 +149,7 @@ void main() {
       expect(restored.happy, 77);
       expect(restored.species, 4);
       expect(restored.collection,
-          [true, false, true, false, false, false, false]);
+          List.generate(speciesList.length, (i) => i == 0 || i == 2));
       expect(restored.owned, {'ribbon', 'glasses'});
       expect(restored.equipHead, 'ribbon');
       expect(restored.equipFace, 'glasses');

@@ -168,6 +168,36 @@ class CreaturePainter extends CustomPainter {
                 ..strokeWidth = 3
                 ..strokeJoin = StrokeJoin.round);
         }
+      case 7: // nyan: ねこ耳(三角)+内耳
+        canvas.drawPath(
+            Path()
+              ..moveTo(82, 80)
+              ..lineTo(92, 18)
+              ..lineTo(138, 52)
+              ..close(),
+            acc);
+        canvas.drawPath(
+            Path()
+              ..moveTo(218, 80)
+              ..lineTo(208, 18)
+              ..lineTo(162, 52)
+              ..close(),
+            acc);
+        final innerEar = Paint()..color = Colors.white.withValues(alpha: 0.45);
+        canvas.drawPath(
+            Path()
+              ..moveTo(94, 68)
+              ..lineTo(99, 34)
+              ..lineTo(124, 52)
+              ..close(),
+            innerEar);
+        canvas.drawPath(
+            Path()
+              ..moveTo(206, 68)
+              ..lineTo(201, 34)
+              ..lineTo(176, 52)
+              ..close(),
+            innerEar);
     }
   }
 
@@ -181,6 +211,10 @@ class CreaturePainter extends CustomPainter {
         _faceBuu(canvas);
       case 6:
         _faceMedama(canvas);
+      case 7:
+        _faceNyan(canvas);
+      case 8:
+        _faceDandy(canvas);
       default:
         _faceDefault(canvas);
     }
@@ -348,6 +382,97 @@ class CreaturePainter extends CustomPainter {
               Rect.fromLTWH(x, 192, 11, 10), const Radius.circular(2)),
           Paint()..color = Colors.white);
     }
+  }
+
+  /// nyan: ねこ目+ひげ+ωのくち+ピンクの鼻
+  void _faceNyan(Canvas canvas) {
+    canvas.drawCircle(const Offset(112, 150), 13, _inkFill);
+    canvas.drawCircle(const Offset(188, 150), 13, _inkFill);
+    final white = Paint()..color = Colors.white;
+    canvas.drawCircle(const Offset(116, 145), 4.5, white);
+    canvas.drawCircle(const Offset(192, 145), 4.5, white);
+    _cheeks(canvas, 95, 205, 180);
+
+    final whisker = _inkStroke(4);
+    canvas.drawLine(const Offset(52, 158), const Offset(90, 164), whisker);
+    canvas.drawLine(const Offset(48, 178), const Offset(90, 178), whisker);
+    canvas.drawLine(const Offset(52, 198), const Offset(90, 192), whisker);
+    canvas.drawLine(const Offset(248, 158), const Offset(210, 164), whisker);
+    canvas.drawLine(const Offset(252, 178), const Offset(210, 178), whisker);
+    canvas.drawLine(const Offset(248, 198), const Offset(210, 192), whisker);
+
+    // 鼻(小さな逆三角)
+    canvas.drawPath(
+        Path()
+          ..moveTo(143, 172)
+          ..lineTo(157, 172)
+          ..lineTo(150, 181)
+          ..close(),
+        Paint()..color = const Color(0xFFFF6EA6));
+
+    final mouth = Path();
+    if (sad) {
+      mouth.moveTo(132, 200);
+      mouth.quadraticBezierTo(150, 186, 168, 200);
+    } else {
+      // ω
+      mouth.moveTo(130, 188);
+      mouth.quadraticBezierTo(140, 200, 150, 189);
+      mouth.quadraticBezierTo(160, 200, 170, 188);
+    }
+    canvas.drawPath(mouth, _inkStroke(6));
+  }
+
+  /// dandy: ちいさな目+極太まゆ+巨大くるくるヒゲ
+  void _faceDandy(Canvas canvas) {
+    canvas.drawCircle(const Offset(108, 134), 7, _inkFill);
+    canvas.drawCircle(const Offset(192, 134), 7, _inkFill);
+
+    // まゆ(悲しいときは八の字)
+    void brow(double cx, double cy, double deg) {
+      canvas.save();
+      canvas.translate(cx, cy);
+      canvas.rotate(deg * 3.14159265 / 180);
+      canvas.drawRRect(
+          RRect.fromRectAndRadius(
+              const Rect.fromLTWH(-26, -8, 52, 16), const Radius.circular(8)),
+          _inkFill);
+      canvas.restore();
+    }
+
+    brow(108, 108, sad ? 14 : -8);
+    brow(192, 108, sad ? -14 : 8);
+
+    // ヒゲ(こげ茶・先端カール)
+    final hige = Paint()..color = const Color(0xFF5C4033);
+    canvas.drawPath(
+        Path()
+          ..moveTo(150, 172)
+          ..cubicTo(132, 160, 100, 162, 86, 178)
+          ..cubicTo(80, 186, 86, 196, 96, 194)
+          ..cubicTo(118, 190, 140, 184, 150, 180)
+          ..close(),
+        hige);
+    canvas.drawPath(
+        Path()
+          ..moveTo(150, 172)
+          ..cubicTo(168, 160, 200, 162, 214, 178)
+          ..cubicTo(220, 186, 214, 196, 204, 194)
+          ..cubicTo(182, 190, 160, 184, 150, 180)
+          ..close(),
+        hige);
+    canvas.drawCircle(const Offset(90, 190), 8, hige);
+    canvas.drawCircle(const Offset(210, 190), 8, hige);
+
+    final mouth = Path();
+    if (sad) {
+      mouth.moveTo(138, 216);
+      mouth.quadraticBezierTo(150, 206, 162, 216);
+    } else {
+      mouth.moveTo(138, 208);
+      mouth.quadraticBezierTo(150, 220, 162, 208);
+    }
+    canvas.drawPath(mouth, _inkStroke(6));
   }
 
   // ---------- 王冠(キング、head装備中は非表示) ----------

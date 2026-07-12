@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/data/save_store.dart';
+import 'package:mokomon/data/species.dart';
 import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/main.dart';
 import 'package:mokomon/models/game_state.dart';
@@ -61,7 +62,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('📖 いきもの ずかん'), findsOneWidget);
     expect(find.text('キングもこ'), findsOneWidget); // 入手済み
-    expect(find.text('???'), findsNWidgets(6));
+    expect(find.text('???'), findsNWidgets(speciesList.length - 1));
 
     await tester.ensureVisible(find.text('あたらしい たまごを むかえる'));
     await tester.pump();

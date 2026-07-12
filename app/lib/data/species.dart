@@ -65,6 +65,19 @@ const speciesList = <Species>[
     names: ['たまご', 'めだま', 'めだまん', 'キングめだまん'],
     emojis: ['🥚', '👀', '😳', '👑'],
   ),
+  // 以降は Flutter 版で追加した種族(あいことば互換のため末尾に追加すること)
+  Species(
+    key: 'nyan',
+    color: Color(0xFFFF9E9E),
+    names: ['たまご', 'にゃん', 'にゃんこ', 'キングにゃんこ'],
+    emojis: ['🥚', '🐱', '😸', '👑'],
+  ),
+  Species(
+    key: 'dandy',
+    color: Color(0xFFA3D9C9),
+    names: ['たまご', 'ひげ', 'ダンディ', 'キングダンディ'],
+    emojis: ['🥚', '🥸', '🧔', '👑'],
+  ),
 ];
 
 /// シークレット種(金のたまご)の index
