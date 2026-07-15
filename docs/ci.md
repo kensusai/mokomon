@@ -12,7 +12,7 @@
 |---|---|---|
 | check | `dart format --set-exit-if-changed` → `flutter analyze` → `flutter test` | — |
 | build-web | `flutter build web`(リリースビルド検証) | check |
-| build-android | `flutter build apk --debug`(Gradle/NDK 込みの検証) | check |
+| build-android | `flutter build apk --release` + APKを成果物 `mokomon-apk` として保存(保持14日) | check |
 
 - **トリガー**: `main` への push、およびすべての pull request
 - コマンドはローカルと完全に同一(`cd app && flutter analyze && flutter test` 等)。CI専用のスクリプトや隠しロジックは置かない
@@ -48,6 +48,20 @@ GitHub にリポジトリを作成したら、`main` に以下を設定する:
 
 - Required status checks: `format / analyze / test`、`build (web)`、`build (android debug)`
 - Require a pull request before merging(直 push 禁止)
+
+## 実機での動作確認(Android)
+
+1. GitHub → Actions → 対象の実行 → 下部 **Artifacts** から `mokomon-apk` をダウンロード(要ログイン)
+2. zip を解凍して `app-release.apk` をスマホへ(スマホのブラウザで直接DLしてもよい)
+3. Android 側で「提供元不明のアプリのインストール」を許可してインストール
+
+注意: 現在のAPKは Flutter 既定の**デバッグ鍵署名**(動作確認専用)。ストア配布時は `key.properties` + GitHub Secrets による正式署名に切り替える(`docs/store-release.md`)。署名鍵が変わると上書きインストールできないため、その際は一度アンインストールが必要。
+
+## iOS の実機配布について
+
+- CI で未署名 `.ipa` を作ることは可能だが、**署名なしでは iPhone にインストールできない**
+- 実機配布は Apple Developer Program(有料)+ TestFlight が現実的。導入時に macOS ランナー(分単価10倍)+ 証明書の Secrets 管理(fastlane match 等)を追加する
+- それまでの iOS 動作確認は、ローカル Mac の Xcode から実機に直接 `flutter run` する(無料Apple IDで7日間有効の署名が可能。要 Xcode 15+)
 
 ## デプロイトリガー
 

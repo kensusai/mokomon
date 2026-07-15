@@ -52,7 +52,7 @@ jobs:
       - run: flutter build web
 
   build-android:
-    name: build (android debug)
+    name: build (android apk)
     needs: check
     runs-on: ubuntu-latest
     steps:
@@ -67,4 +67,11 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
-      - run: flutter build apk --debug
+      # リリースAPK(現状はFlutter既定のデバッグ鍵署名 = 実機に直接インストール可能)
+      - run: flutter build apk --release
+      # 実機での動作確認用にAPKを成果物として保存(Actionsの実行ページからDL)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mokomon-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
