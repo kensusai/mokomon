@@ -450,16 +450,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         Positioned.fill(child: ParticleField(key: _particleKey)),
-        // ヒント吹き出し(ぽよんと弾んで登場・大きな文字)
-        Positioned(
-          top: 4,
-          left: 12,
-          right: 12,
-          child: IgnorePointer(
-            child: AnimatedOpacity(
-              opacity: _hintVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 250),
-              child: _SpeechBubble(message: _hintMsg, seed: _hintSeq),
+        // セリフ(枠なしカラフル文字・上/左/右に出る)
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _hintVisible ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: _SpeechText(message: _hintMsg, seed: _hintSeq),
+              ),
             ),
           ),
         ),
@@ -538,48 +538,74 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 }
 
-/// 大きな文字でぽよんと弾む吹き出し(セリフ用)。
-/// seed が変わるたびにポップ演出をやり直し、毎回すこし傾く。
-class _SpeechBubble extends StatelessWidget {
+/// 枠なしのカラフルなセリフ表示。seed ごとに色(6色)と
+/// 位置(上・左・右)が入れ替わり、ぽよんと弾んで登場する。
+class _SpeechText extends StatelessWidget {
   final String message;
   final int seed;
-  const _SpeechBubble({required this.message, required this.seed});
+  const _SpeechText({required this.message, required this.seed});
+
+  static const _colors = [
+    Color(0xFFFF4F96), // ピンク
+    Color(0xFFFF8F1F), // オレンジ
+    Color(0xFFFFB300), // きいろ
+    Color(0xFF1FAE76), // みどり
+    Color(0xFF3BA4EC), // そら
+    Color(0xFF8A78F5), // むらさき
+  ];
+
+  /// 上・左・右(左右はいきものの顔の高さあたり)
+  static const _aligns = [
+    Alignment(0, -1),
+    Alignment(-0.95, -0.55),
+    Alignment(0.95, -0.55),
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final color = _colors[(seed * 5) % _colors.length];
+    final align = _aligns[seed % _aligns.length];
     final angle = ((seed * 37) % 9 - 4) * 3.14159 / 180; // -4°〜+4°
-    return TweenAnimationBuilder<double>(
-      key: ValueKey(seed),
-      tween: Tween(begin: 0.4, end: 1),
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.elasticOut,
-      builder: (context, t, child) => Transform.rotate(
-        angle: angle,
-        child: Transform.scale(scale: t, child: child),
-      ),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: inkColor, width: 3.5),
-            boxShadow: const [
-              BoxShadow(
-                  color: Color(0x333A3F52),
-                  blurRadius: 18,
-                  offset: Offset(0, 8)),
+
+    const style = TextStyle(
+      fontSize: 30,
+      fontWeight: FontWeight.w800,
+      height: 1.2,
+    );
+
+    return Align(
+      alignment: align,
+      child: TweenAnimationBuilder<double>(
+        key: ValueKey(seed),
+        tween: Tween(begin: 0.3, end: 1),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.elasticOut,
+        builder: (context, t, child) => Transform.rotate(
+          angle: angle,
+          child: Transform.scale(scale: t, child: child),
+        ),
+        // 長いセリフは自動で縮めてはみ出さない
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Stack(
+            children: [
+              // 白フチ(空色背景でも読めるように)+うっすら影
+              Text(message,
+                  style: style.copyWith(
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 8
+                      ..strokeJoin = StrokeJoin.round
+                      ..color = Colors.white,
+                    shadows: const [
+                      Shadow(
+                          color: Color(0x553A3F52),
+                          blurRadius: 10,
+                          offset: Offset(0, 4)),
+                    ],
+                  )),
+              Text(message, style: style.copyWith(color: color)),
             ],
-          ),
-          // 長いセリフは自動で縮めてはみ出さない
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(message,
-                style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: inkColor,
-                    height: 1.2)),
           ),
         ),
       ),

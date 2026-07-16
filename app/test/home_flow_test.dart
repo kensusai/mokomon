@@ -19,11 +19,11 @@ void main() {
 
     await tester.tap(egg);
     await tester.pump();
-    expect(find.text('あれ? なにか きこえる…'), findsOneWidget);
+    expect(find.text('あれ? なにか きこえる…'), findsWidgets);
 
     await tester.tap(egg);
     await tester.pump();
-    expect(find.text('ヒビが はいった! もういっかい!'), findsOneWidget);
+    expect(find.text('ヒビが はいった! もういっかい!'), findsWidgets);
 
     await tester.tap(egg);
     await tester.pump();
@@ -70,7 +70,7 @@ void main() {
 
     await tester.tap(find.text('ごはん'));
     await tester.pump();
-    expect(find.text('おなか いっぱい みたい!'), findsOneWidget);
+    expect(find.text('おなか いっぱい みたい!'), findsWidgets);
     expect(find.text('なにを たべる?'), findsNothing);
 
     await drainTimers(tester);
@@ -81,7 +81,7 @@ void main() {
     await boot(tester);
     await tester.tap(find.text('ごはん'));
     await tester.pump();
-    expect(find.text('まずは たまごを タッチしてみて!'), findsOneWidget);
+    expect(find.text('まずは たまごを タッチしてみて!'), findsWidgets);
     await drainTimers(tester);
   });
 

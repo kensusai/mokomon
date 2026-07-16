@@ -69,7 +69,7 @@ void main() {
     expect(c.state.stage, 0);
     expect(c.state.xp, 0);
     expect(c.state.species, isNot(3)); // キング1体では金のたまごは来ない
-    expect(find.textContaining('あたらしい たまごが きたよ!'), findsOneWidget);
+    expect(find.textContaining('あたらしい たまごが きたよ!'), findsWidgets);
 
     await drainTimers(tester);
   });
@@ -153,7 +153,7 @@ void main() {
     await boot(tester, GameState());
     await tester.tap(find.text('おえかき'));
     await tester.pump();
-    expect(find.text('うまれてから おえかき できるよ!'), findsOneWidget);
+    expect(find.text('うまれてから おえかき できるよ!'), findsWidgets);
     await drainTimers(tester);
   });
 }
