@@ -75,3 +75,28 @@ jobs:
           name: mokomon-apk
           path: app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 14
+
+  # main への push ごとに Releases のローリングリリース(apk-latest)へAPKを添付する。
+  # Artifacts はスマホ(モバイルアプリ/未ログイン)からDLできないため、
+  # スマホでの動作確認は Releases 経由で行う。docs/ci.md 参照。
+  release-apk:
+    name: publish apk (Releases)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # リリース作成・アセット添付に必要(このジョブのみ)
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mokomon-apk
+      - name: Create or update rolling release
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view apk-latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create apk-latest --repo "$GITHUB_REPOSITORY" \
+              --prerelease --title "動作確認用APK(最新main)" \
+              --notes "main への push ごとに自動更新される実機動作確認用ビルドです(デバッグ鍵署名)。"
+          gh release upload apk-latest app-release.apk --clobber --repo "$GITHUB_REPOSITORY"

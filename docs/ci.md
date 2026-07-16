@@ -51,9 +51,13 @@ GitHub にリポジトリを作成したら、`main` に以下を設定する:
 
 ## 実機での動作確認(Android)
 
-1. GitHub → Actions → 対象の実行 → 下部 **Artifacts** から `mokomon-apk` をダウンロード(要ログイン)
-2. zip を解凍して `app-release.apk` をスマホへ(スマホのブラウザで直接DLしてもよい)
+**スマホからは Releases 経由が確実**(Artifacts はモバイルアプリ・未ログインではDLできない):
+
+1. スマホのブラウザで https://github.com/kensusai/mokomon/releases/tag/apk-latest を開く
+2. Assets の `app-release.apk` をタップしてダウンロード(公開リポジトリなのでログイン不要)
 3. Android 側で「提供元不明のアプリのインストール」を許可してインストール
+
+`apk-latest` は main への push ごとに `release-apk` ジョブが自動更新するローリングリリース(prerelease)。PCからは従来どおり Actions の Artifacts(`mokomon-apk`)も使える。
 
 注意: 現在のAPKは Flutter 既定の**デバッグ鍵署名**(動作確認専用)。ストア配布時は `key.properties` + GitHub Secrets による正式署名に切り替える(`docs/store-release.md`)。署名鍵が変わると上書きインストールできないため、その際は一度アンインストールが必要。
 
