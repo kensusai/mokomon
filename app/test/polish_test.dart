@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/audio/sound_synth.dart';
 import 'package:mokomon/data/save_store.dart';
@@ -63,6 +64,89 @@ void main() {
       );
 
       await drainTimers(tester);
+    });
+  });
+
+  group('petting reactions vary by tap zone (docs/game-design.md §3)', () {
+    const headLines = ['えへへ〜', 'あたま なでなで すき!', 'もっと なでて〜', 'きもちいい〜'];
+    const bellyLines = ['くすぐったい〜!', 'ぽんぽん だいすき', 'ぷにぷに でしょ?', 'ぽかぽか する〜'];
+    const sideLines = ['ひゃっ!', 'そこ そこ〜!', 'わきわき くすぐったい!', 'なになに〜?'];
+
+    Future<void> expectZoneLine(WidgetTester tester, Offset Function(Rect) pos,
+        List<String> pool) async {
+      final c = await bootApp(tester,
+          state: GameState()..stage = 1, rng: NoPuffRandom());
+      final rect = tester.getRect(find.byType(CreatureView));
+      await tester.tapAt(pos(rect));
+      await tester.pump();
+      expect(c.state.happy, 83); // なでなで +3
+      expect(c.state.xp, 1);
+      expect(pool.any((line) => find.text(line).evaluate().isNotEmpty), isTrue,
+          reason: 'expected one of $pool');
+      await drainTimers(tester);
+    }
+
+    testWidgets('head tap (top 34%)', (tester) async {
+      await expectZoneLine(tester,
+          (r) => Offset(r.center.dx, r.top + r.height * 0.15), headLines);
+    });
+
+    testWidgets('side tap (outer 30%)', (tester) async {
+      await expectZoneLine(tester,
+          (r) => Offset(r.left + r.width * 0.08, r.center.dy), sideLines);
+    });
+
+    testWidgets('belly tap (center)', (tester) async {
+      await expectZoneLine(tester, (r) => r.center, bellyLines);
+    });
+  });
+
+  group('paint praise (docs/game-design.md §6)', () {
+    const praiseLines = [
+      'わあ! すてきな もよう!',
+      'かわいく なっちゃった!',
+      'みてみて〜!',
+      'あたらしい もよう だいすき!',
+    ];
+
+    testWidgets('saving a drawing makes the creature celebrate',
+        (tester) async {
+      final c = await bootApp(tester,
+          state: GameState()..stage = 1, rng: NoPuffRandom());
+
+      await tester.tap(find.text('おえかき'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final canvas = find.byType(CustomPaint).first;
+      final gesture = await tester.startGesture(tester.getCenter(canvas));
+      await gesture.moveBy(const Offset(30, 20));
+      await gesture.up();
+      await tester.pump();
+
+      await tester.runAsync(() async {
+        await tester.tap(find.text('できた!'));
+        for (var i = 0; i < 20 && c.state.pattern == null; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+      });
+      expect(c.state.pattern, isNotNull);
+
+      // ホームに戻って褒めセリフ
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(praiseLines.any((line) => find.text(line).evaluate().isNotEmpty),
+          isTrue);
+
+      await drainTimers(tester);
+    });
+  });
+
+  group('BGM', () {
+    test('renders a long looping track', () {
+      final wav = SoundSynth().wavFor(Sfx.bgm);
+      // 約19秒ループ(22050Hz 16bit mono) ≒ 840KB
+      expect(wav.length, greaterThan(400000));
     });
   });
 

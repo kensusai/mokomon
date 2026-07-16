@@ -8,7 +8,8 @@ import 'creature_painter.dart';
 import 'egg_painter.dart';
 
 /// タップ時の一回きりアニメーション(CSS bounce/munch/wiggle 相当)。
-enum CreatureAnim { bounce, munch, wiggle }
+/// spin はお絵かきを褒められたとき等の「うれしい!」回転。
+enum CreatureAnim { bounce, munch, wiggle, spin }
 
 /// ホーム画面のいきもの表示。浮遊・グロー・キングのオーラ・
 /// タップアニメーションをまとめる。親は GlobalKey 経由で [play] を呼ぶ。
@@ -41,8 +42,12 @@ class CreatureViewState extends State<CreatureView>
 
   void play(CreatureAnim anim) {
     _current = anim;
-    _tap.duration =
-        Duration(milliseconds: anim == CreatureAnim.munch ? 800 : 500);
+    _tap.duration = Duration(
+        milliseconds: switch (anim) {
+      CreatureAnim.munch => 800,
+      CreatureAnim.spin => 700,
+      _ => 500,
+    });
     _tap.forward(from: 0);
   }
 
@@ -168,6 +173,12 @@ class CreatureViewState extends State<CreatureView>
                 ? _lerp(-7, 7, (t - 0.25) / 0.5)
                 : _lerp(7, 0, (t - 0.75) / 0.25);
         return Matrix4.rotationZ(deg * pi / 180);
+      case CreatureAnim.spin:
+        // うれしい! の1回転(減速)+軽い伸び
+        final e = Curves.easeOut.transform(t);
+        final pop = 1 + 0.12 * sin(pi * t);
+        return Matrix4.rotationZ(2 * pi * e)
+          ..multiply(Matrix4.diagonal3Values(pop, pop, 1));
     }
   }
 

@@ -37,6 +37,42 @@ const _puffLines = [
   'だ、だれかな? いまのは…',
 ];
 
+/// なでなでのタップ位置ゾーン(下部30%は💨なのでここには来ない)。
+enum _PetZone { head, belly, side }
+
+/// ゾーンごとの反応(セリフ・パーティクル・鳴き声・動き)。docs/game-design.md §3。
+const _petLines = {
+  _PetZone.head: ['えへへ〜', 'あたま なでなで すき!', 'もっと なでて〜', 'きもちいい〜'],
+  _PetZone.belly: ['くすぐったい〜!', 'ぽんぽん だいすき', 'ぷにぷに でしょ?', 'ぽかぽか する〜'],
+  _PetZone.side: ['ひゃっ!', 'そこ そこ〜!', 'わきわき くすぐったい!', 'なになに〜?'],
+};
+
+const _petParticles = {
+  _PetZone.head: ['✨', '💛', '🌟'],
+  _PetZone.belly: ['💖', '💗', '💕'],
+  _PetZone.side: ['🎵', '⭐', '💫'],
+};
+
+const _petSounds = {
+  _PetZone.head: [Sfx.coo, Sfx.happy],
+  _PetZone.belly: [Sfx.giggle, Sfx.happy],
+  _PetZone.side: [Sfx.giggle, Sfx.coo],
+};
+
+const _petAnims = {
+  _PetZone.head: CreatureAnim.wiggle,
+  _PetZone.belly: CreatureAnim.bounce,
+  _PetZone.side: CreatureAnim.wiggle,
+};
+
+/// お絵かきを保存したときの褒めセリフ(docs/game-design.md §6)。
+const _paintPraiseLines = [
+  'わあ! すてきな もよう!',
+  'かわいく なっちゃった!',
+  'みてみて〜!',
+  'あたらしい もよう だいすき!',
+];
+
 /// ホーム画面。プロトタイプの screen-home に対応。
 class HomeScreen extends StatefulWidget {
   final GameController controller;
@@ -140,11 +176,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ---------- interactions ----------
 
+  /// タップ位置から反応ゾーンを決める(上34%=あたま/左右30%=よこ/残り=おなか)。
+  _PetZone _zoneOf(Offset local, Size size) {
+    if (local.dy / size.height < 0.34) return _PetZone.head;
+    final x = local.dx / size.width;
+    if (x < 0.30 || x > 0.70) return _PetZone.side;
+    return _PetZone.belly;
+  }
+
   void _onCreatureTap(TapDownDetails d) {
     final box =
         _creatureBoxKey.currentContext?.findRenderObject() as RenderBox?;
     final lowerBody = box != null && d.localPosition.dy / box.size.height > 0.7;
-    switch (c.tapCreature(lowerBody: lowerBody)) {
+    final zone =
+        box == null ? _PetZone.belly : _zoneOf(d.localPosition, box.size);
+    final petSound = _petSounds[zone]![_rng.nextInt(_petSounds[zone]!.length)];
+
+    switch (c.tapCreature(lowerBody: lowerBody, petSound: petSound)) {
       case CreatureTapOutcome.crack:
         _creatureKey.currentState?.play(CreatureAnim.wiggle);
         _hint(s.eggTaps == 1 ? 'あれ? なにか きこえる…' : 'ヒビが はいった! もういっかい!');
@@ -158,9 +206,13 @@ class _HomeScreenState extends State<HomeScreen> {
       case CreatureTapOutcome.puffed:
         _showPuffEffects(box);
       case CreatureTapOutcome.petted:
-        _creatureKey.currentState?.play(CreatureAnim.bounce);
+        // ゾーンごとに動き・パーティクル・セリフを変える(反応バリエーション)
+        _creatureKey.currentState?.play(_petAnims[zone]!);
+        final particles = _petParticles[zone]!;
         _spawnParticleAtGlobal(
-            const ['💖', '💛', '⭐'][_rng.nextInt(3)], d.globalPosition);
+            particles[_rng.nextInt(particles.length)], d.globalPosition);
+        final lines = _petLines[zone]!;
+        _hint(lines[_rng.nextInt(lines.length)]);
         _checkEvolve();
     }
   }
@@ -223,8 +275,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final saved = await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => PaintScreen(controller: c)));
     if (saved == true && mounted) {
-      showToast(context, 'もようが かわったよ! ✨');
+      _celebratePaint();
       await _checkEvolve();
+    }
+  }
+
+  /// お絵かき保存の褒め演出: くるっと回る+キラキラ+褒めセリフ。
+  void _celebratePaint() {
+    _creatureKey.currentState?.play(CreatureAnim.spin);
+    _hint(_paintPraiseLines[_rng.nextInt(_paintPraiseLines.length)]);
+    final box =
+        _creatureBoxKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    const sparkles = ['✨', '🌸', '💖', '✨', '⭐', '🌸'];
+    for (var i = 0; i < sparkles.length; i++) {
+      final local = Offset(
+        box.size.width * (0.15 + _rng.nextDouble() * 0.7),
+        box.size.height * (0.1 + _rng.nextDouble() * 0.6),
+      );
+      _spawnParticleAtGlobal(sparkles[i], box.localToGlobal(local));
     }
   }
 

@@ -19,6 +19,9 @@ class SfxPlayer {
   final _synth = SoundSynth();
   final _players = <Sfx, AudioPlayer>{};
 
+  AudioPlayer? _bgm;
+  var _bgmStarted = false;
+
   Future<void> play(Sfx sfx) async {
     if (_isFlutterTest || !enabled()) return;
     try {
@@ -32,9 +35,43 @@ class SfxPlayer {
     }
   }
 
+  /// BGMのループ再生を開始する(ミュート中は待機)。
+  Future<void> startBgm() async {
+    if (_isFlutterTest) return;
+    try {
+      _bgm ??= AudioPlayer()..setReleaseMode(ReleaseMode.loop);
+      await syncBgm();
+    } catch (e) {
+      debugPrint('bgm failed: $e');
+    }
+  }
+
+  /// ミュート設定・ライフサイクルに合わせてBGMを再生/停止する。
+  /// [suspend] はアプリのバックグラウンド時に true。
+  Future<void> syncBgm({bool suspend = false}) async {
+    final player = _bgm;
+    if (_isFlutterTest || player == null) return;
+    try {
+      if (!suspend && enabled()) {
+        if (_bgmStarted) {
+          await player.resume();
+        } else {
+          _bgmStarted = true;
+          await player
+              .play(BytesSource(_synth.wavFor(Sfx.bgm), mimeType: 'audio/wav'));
+        }
+      } else {
+        await player.pause();
+      }
+    } catch (e) {
+      debugPrint('bgm failed: $e');
+    }
+  }
+
   void dispose() {
     for (final p in _players.values) {
       p.dispose();
     }
+    _bgm?.dispose();
   }
 }

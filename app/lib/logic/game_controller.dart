@@ -62,16 +62,19 @@ class GameController extends ChangeNotifier {
   }
 
   /// なでなで: happy +3 / xp +1。docs/game-design.md §3。
-  void pet() {
+  /// [sound] はタップ位置に応じた鳴き声(UI側が選ぶ)。
+  void pet({Sfx sound = Sfx.happy}) {
     state.happy = min(100, state.happy + 3);
     state.xp += 1;
-    sfx.play(Sfx.happy);
+    sfx.play(sound);
     _commit();
   }
 
   /// いきものタップの一次判定。たまごなら孵化進行、
   /// 下部30%タップ or 6% で💨、それ以外はなでなで(docs/game-design.md §3, §9)。
-  CreatureTapOutcome tapCreature({required bool lowerBody}) {
+  /// [petSound] はタップ位置に応じた鳴き声(UI側が選ぶ)。
+  CreatureTapOutcome tapCreature(
+      {required bool lowerBody, Sfx petSound = Sfx.happy}) {
     if (state.stage == 0) {
       return tapEgg() == EggTapOutcome.hatched
           ? CreatureTapOutcome.hatched
@@ -81,7 +84,7 @@ class GameController extends ChangeNotifier {
       puff();
       return CreatureTapOutcome.puffed;
     }
-    pet();
+    pet(sound: petSound);
     return CreatureTapOutcome.petted;
   }
 
@@ -92,10 +95,11 @@ class GameController extends ChangeNotifier {
     _commit();
   }
 
-  /// サウンドのミュートトグル(設定は保存される)。
+  /// サウンドのミュートトグル(設定は保存される)。BGMも連動する。
   void toggleSound() {
     state.sound = !state.sound;
     sfx.play(Sfx.tap);
+    sfx.syncBgm();
     _commit();
   }
 

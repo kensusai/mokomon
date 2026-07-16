@@ -11,12 +11,36 @@ Future<void> main() async {
   final store = SaveStore();
   final state = await store.load();
   final controller = GameController(state, store)..startDecayTimer();
+  controller.sfx.startBgm();
   runApp(MokomonApp(controller: controller));
 }
 
-class MokomonApp extends StatelessWidget {
+class MokomonApp extends StatefulWidget {
   final GameController controller;
   const MokomonApp({super.key, required this.controller});
+
+  @override
+  State<MokomonApp> createState() => _MokomonAppState();
+}
+
+class _MokomonAppState extends State<MokomonApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// バックグラウンドではBGMを止める(復帰で再開)。
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    widget.controller.sfx.syncBgm(suspend: state != AppLifecycleState.resumed);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +52,7 @@ class MokomonApp extends StatelessWidget {
         fontFamily: 'MPLUSRounded1c',
         colorSchemeSeed: const Color(0xFF34C98E),
       ),
-      home: HomeScreen(controller: controller),
+      home: HomeScreen(controller: widget.controller),
     );
   }
 }

@@ -2,7 +2,22 @@ import 'dart:math';
 import 'dart:typed_data';
 
 /// 効果音の種類(docs/game-design.md §10)。
-enum Sfx { tap, coin, munch, happy, wrong, pop, fanfare, evoRiser, shine, puff }
+/// coo/giggle はなでなでの鳴き声、bgm はホームのループ曲。
+enum Sfx {
+  tap,
+  coin,
+  munch,
+  happy,
+  wrong,
+  pop,
+  fanfare,
+  evoRiser,
+  shine,
+  puff,
+  coo,
+  giggle,
+  bgm,
+}
 
 enum _Wave { sine, square, sawtooth, triangle }
 
@@ -58,7 +73,54 @@ final Map<Sfx, List<_Tone>> _recipes = {
     _Tone(128, 0.09, _Wave.sawtooth, 0.13, 0.10),
     _Tone(92, 0.18, _Wave.sawtooth, 0.13, 0.20),
   ],
+  // なでなでの鳴き声: やわらかい2音(くぅ〜ん)
+  Sfx.coo: const [
+    _Tone(523, 0.10, _Wave.sine, 0.12),
+    _Tone(659, 0.16, _Wave.sine, 0.12, 0.09),
+  ],
+  // なでなでの鳴き声: 笑い声風の3連(きゃはっ)
+  Sfx.giggle: const [
+    _Tone(700, 0.06, _Wave.triangle, 0.11),
+    _Tone(880, 0.06, _Wave.triangle, 0.11, 0.07),
+    _Tone(1047, 0.09, _Wave.triangle, 0.11, 0.14),
+  ],
+  // ホームBGM: ペンタトニックのやさしいループ(約19秒)
+  Sfx.bgm: _bgmTones(),
 };
+
+// ---------- BGM(実行時合成のチップチューン風ループ) ----------
+
+const _bpm = 100.0;
+const _beat = 60.0 / _bpm; // 1拍 = 0.6秒
+
+/// メロディ(三角波)+ベース(サイン波)の8小節ループを _Tone 列で組み立てる。
+/// 音量はSFXよりかなり小さく(BGMは背景に徹する)。
+List<_Tone> _bgmTones() {
+  // C メジャーペンタトニック中心。0 は休符。
+  const melody = [
+    // 小節1-2
+    523, 659, 784, 659, 880, 784, 659, 587,
+    // 小節3-4
+    523, 659, 784, 880, 784, 659, 587, 523,
+    // 小節5-6
+    659, 784, 880, 1047, 880, 784, 659, 784,
+    // 小節7-8(終止形でループ頭へ戻る)
+    880, 784, 659, 587, 523, 587, 659, 0,
+  ];
+  // ベースは1小節(4拍)ごとに1音
+  const bass = [131.0, 175.0, 147.0, 196.0, 131.0, 175.0, 196.0, 131.0];
+
+  final tones = <_Tone>[];
+  for (var i = 0; i < melody.length; i++) {
+    if (melody[i] == 0) continue;
+    tones.add(_Tone(
+        melody[i].toDouble(), _beat * 0.9, _Wave.triangle, 0.045, i * _beat));
+  }
+  for (var bar = 0; bar < bass.length; bar++) {
+    tones.add(_Tone(bass[bar], _beat * 3.6, _Wave.sine, 0.05, bar * 4 * _beat));
+  }
+  return tones;
+}
 
 const _sampleRate = 22050;
 
