@@ -79,7 +79,8 @@ jobs:
             printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=mokomon\nstoreFile=mokomon-ci.jks\n' \
               "$KEYSTORE_PW" "$KEYSTORE_PW" > android/key.properties
           fi
-      - run: flutter build apk --release
+      # versionCode をビルドごとに増やす(同一番号だと端末が上書きを拒否するため)
+      - run: flutter build apk --release --build-number=${{ github.run_number }}
       # 実機での動作確認用にAPKを成果物として保存(Actionsの実行ページからDL)
       - uses: actions/upload-artifact@v4
         with:

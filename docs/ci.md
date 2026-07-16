@@ -64,6 +64,7 @@ GitHub にリポジトリを作成したら、`main` に以下を設定する:
 - CI・ローカルとも **固定のCI用鍵**(`android/key.properties` + `mokomon-ci.jks`、どちらもgitignore)で署名する。鍵は GitHub Secrets(`ANDROID_KEYSTORE_BASE64` / `ANDROID_KEYSTORE_PASSWORD`)から復元される
 - 署名が毎回同じなので**端末での上書き更新が可能**。かつてデバッグ鍵(ランナーごとに毎回生成)で署名していた時期のAPKからは署名が変わっているため、一度アンインストールが必要
 - `key.properties` が無い環境(フォークPR等)はデバッグ鍵にフォールバックしてビルドだけ検証する
+- **versionCode はビルドごとに自動増加**(`--build-number=github.run_number`)。同一 versionCode だと端末が上書きインストールを拒否するため。ローカルビルド(versionCode=1)をCI版の上に入れる場合はダウングレード扱いになるので一度アンインストールする
 - ストア配布時はこのCI用鍵ではなく、Play App Signing を前提に別途鍵を用意する(`docs/store-release.md`)
 
 ## iOS の実機配布について
