@@ -281,3 +281,87 @@ void _faceDandy(Canvas canvas, bool sad) {
   }
   canvas.drawPath(mouth, inkStroke(6));
 }
+
+// ---------- リアクション用の大げさ表情(全種族共通・一時的に顔を差し替える) ----------
+
+/// リアクション中だけ出す誇張表情。docs/game-design.md §3。
+enum CreatureMood { happy, surprised, yum }
+
+/// 種族の顔の代わりに描く漫画的な表情(約1秒で元に戻る)。
+void paintExpressionFace(Canvas canvas, {required CreatureMood mood}) {
+  switch (mood) {
+    case CreatureMood.happy:
+      _happyFace(canvas);
+    case CreatureMood.surprised:
+      _surprisedFace(canvas);
+    case CreatureMood.yum:
+      _yumFace(canvas);
+  }
+}
+
+/// にっこり: ∩∩の目+大きく開いた口+ほっぺ
+void _happyFace(Canvas canvas) {
+  final eye = inkStroke(9);
+  canvas.drawArc(Rect.fromCircle(center: const Offset(112, 152), radius: 18),
+      3.14159, 3.14159, false, eye);
+  canvas.drawArc(Rect.fromCircle(center: const Offset(188, 152), radius: 18),
+      3.14159, 3.14159, false, eye);
+
+  final cheek = Paint()
+    ..color = const Color(0xFFFF9CC2).withValues(alpha: 0.85);
+  canvas.drawCircle(const Offset(90, 178), 14, cheek);
+  canvas.drawCircle(const Offset(210, 178), 14, cheek);
+
+  // 大きく開けて笑う口(下半円)+舌
+  final mouth = Path()
+    ..moveTo(112, 185)
+    ..quadraticBezierTo(150, 248, 188, 185)
+    ..close();
+  canvas.drawPath(mouth, inkFill);
+  canvas.save();
+  canvas.clipPath(mouth);
+  canvas.drawOval(
+      Rect.fromCenter(center: const Offset(150, 228), width: 56, height: 34),
+      Paint()..color = const Color(0xFFFF7EB0));
+  canvas.restore();
+}
+
+/// びっくり: まん丸目+高い眉+ちいさな「お」の口
+void _surprisedFace(Canvas canvas) {
+  final white = Paint()..color = Colors.white;
+  for (final cx in [112.0, 188.0]) {
+    canvas.drawCircle(Offset(cx, 150), 22, white);
+    canvas.drawCircle(Offset(cx, 150), 22, inkStroke(5));
+    canvas.drawCircle(Offset(cx, 152), 7, inkFill);
+  }
+  // 高く上がった眉
+  final brow = inkStroke(7);
+  canvas.drawArc(Rect.fromCircle(center: const Offset(112, 118), radius: 16),
+      3.4, 2.6, false, brow);
+  canvas.drawArc(Rect.fromCircle(center: const Offset(188, 118), radius: 16),
+      3.4, 2.6, false, brow);
+  // 「お」の口
+  canvas.drawOval(
+      Rect.fromCenter(center: const Offset(150, 202), width: 22, height: 28),
+      inkFill);
+}
+
+/// あーん: とじた目+大きく開けた口+舌(ごはん用)
+void _yumFace(Canvas canvas) {
+  final eye = inkStroke(8);
+  canvas.drawArc(Rect.fromCircle(center: const Offset(112, 148), radius: 15),
+      3.14159, 3.14159, false, eye);
+  canvas.drawArc(Rect.fromCircle(center: const Offset(188, 148), radius: 15),
+      3.14159, 3.14159, false, eye);
+  _cheeks(canvas, 92, 208, 176);
+
+  final mouth =
+      Rect.fromCenter(center: const Offset(150, 205), width: 62, height: 46);
+  canvas.drawOval(mouth, inkFill);
+  canvas.save();
+  canvas.clipPath(Path()..addOval(mouth));
+  canvas.drawOval(
+      Rect.fromCenter(center: const Offset(150, 222), width: 44, height: 26),
+      Paint()..color = const Color(0xFFFF7EB0));
+  canvas.restore();
+}

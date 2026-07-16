@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/data/species.dart';
+import 'package:mokomon/widgets/creature_faces.dart';
 import 'package:mokomon/widgets/creature_painter.dart';
 import 'package:mokomon/widgets/egg_painter.dart';
 
@@ -47,6 +48,38 @@ void main() {
         .toImage((cell * cols).toInt(), (cell * rows).toInt());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     File('$dir/species_sheet.png')
+        .writeAsBytesSync(bytes!.buffer.asUint8List());
+  });
+
+  test('render expression preview sheet', () async {
+    if (dir == null) {
+      markTestSkipped('MOKOMON_PREVIEW_DIR not set');
+      return;
+    }
+    const cell = 220.0;
+    const species = [0, 4, 6]; // 通常顔・変顔2種で表情の重なりを確認
+    final moods = CreatureMood.values;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder,
+        Rect.fromLTWH(0, 0, cell * moods.length, cell * species.length));
+    canvas.drawRect(
+        Rect.fromLTWH(0, 0, cell * moods.length, cell * species.length),
+        Paint()..color = const Color(0xFFEAF6FF));
+    for (var r = 0; r < species.length; r++) {
+      for (var c = 0; c < moods.length; c++) {
+        canvas.save();
+        canvas.translate(c * cell + 10, r * cell + 10);
+        canvas.scale((cell - 20) / 300);
+        CreaturePainter(
+                speciesIndex: species[r], stage: 2, sad: false, mood: moods[c])
+            .paint(canvas, const Size(300, 300));
+        canvas.restore();
+      }
+    }
+    final image = await recorder.endRecording().toImage(
+        (cell * moods.length).toInt(), (cell * species.length).toInt());
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    File('$dir/expressions_sheet.png')
         .writeAsBytesSync(bytes!.buffer.asUint8List());
   });
 }

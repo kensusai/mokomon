@@ -4,6 +4,8 @@ import 'package:mokomon/audio/sound_synth.dart';
 import 'package:mokomon/data/save_store.dart';
 import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/models/game_state.dart';
+import 'package:mokomon/widgets/creature_faces.dart';
+import 'package:mokomon/widgets/creature_painter.dart';
 import 'package:mokomon/widgets/creature_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -98,6 +100,47 @@ void main() {
 
     testWidgets('belly tap (center)', (tester) async {
       await expectZoneLine(tester, (r) => r.center, bellyLines);
+    });
+  });
+
+  group('expression flash (docs/game-design.md §3)', () {
+    testWidgets('petting flashes a happy face then reverts', (tester) async {
+      await bootApp(tester, state: GameState()..stage = 1, rng: NoPuffRandom());
+
+      bool hasMood(CreatureMood? mood) => tester
+          .widgetList(find.byWidgetPredicate((w) =>
+              w is CustomPaint &&
+              w.painter is CreaturePainter &&
+              (w.painter as CreaturePainter).mood == mood))
+          .isNotEmpty;
+
+      expect(hasMood(null), isTrue); // 通常は種族の顔
+
+      await tester.tap(find.byType(CreatureView));
+      await tester.pump();
+      expect(hasMood(CreatureMood.happy), isTrue);
+
+      await tester.pump(const Duration(milliseconds: 1100));
+      expect(hasMood(CreatureMood.happy), isFalse); // 元の顔に戻る
+
+      await drainTimers(tester);
+    });
+
+    testWidgets('💨 flashes a surprised face', (tester) async {
+      await bootApp(tester, state: GameState()..stage = 1);
+      final rect = tester.getRect(find.byType(CreatureView));
+      await tester.tapAt(Offset(rect.center.dx, rect.top + rect.height * 0.9));
+      await tester.pump();
+      expect(
+          tester
+              .widgetList(find.byWidgetPredicate((w) =>
+                  w is CustomPaint &&
+                  w.painter is CreaturePainter &&
+                  (w.painter as CreaturePainter).mood ==
+                      CreatureMood.surprised))
+              .isNotEmpty,
+          isTrue);
+      await drainTimers(tester);
     });
   });
 

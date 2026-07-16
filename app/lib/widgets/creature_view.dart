@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../models/game_state.dart';
+import 'creature_faces.dart';
 import 'creature_painter.dart';
 import 'egg_painter.dart';
 
@@ -40,6 +42,19 @@ class CreatureViewState extends State<CreatureView>
   );
   CreatureAnim? _current;
 
+  CreatureMood? _mood;
+  Timer? _moodTimer;
+
+  /// 一時的に誇張表情へ切り替える(自動で元に戻る)。
+  void flashMood(CreatureMood mood,
+      {Duration duration = const Duration(milliseconds: 950)}) {
+    _moodTimer?.cancel();
+    setState(() => _mood = mood);
+    _moodTimer = Timer(duration, () {
+      if (mounted) setState(() => _mood = null);
+    });
+  }
+
   void play(CreatureAnim anim) {
     _current = anim;
     _tap.duration = Duration(
@@ -53,6 +68,7 @@ class CreatureViewState extends State<CreatureView>
 
   @override
   void dispose() {
+    _moodTimer?.cancel();
     _floaty.dispose();
     _glow.dispose();
     _tap.dispose();
@@ -73,6 +89,7 @@ class CreatureViewState extends State<CreatureView>
             speciesIndex: s.species,
             stage: s.stage,
             sad: s.isSad,
+            mood: _mood,
             bodyColor: Color(s.color),
             equipHead: s.equipHead,
             equipFace: s.equipFace,

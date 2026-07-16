@@ -12,6 +12,7 @@ import '../models/game_state.dart';
 import '../widgets/book_sheet.dart';
 import '../widgets/celebrate_overlay.dart';
 import '../widgets/cloud.dart';
+import '../widgets/creature_faces.dart';
 import '../widgets/code_dialog.dart';
 import '../widgets/creature_view.dart';
 import '../widgets/evolution_overlay.dart';
@@ -93,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _hintMsg = '';
   bool _hintVisible = false;
+  int _hintSeq = 0; // 変わるたびに吹き出しのポップ演出をやり直す
   Timer? _hintTimer;
   Timer? _sparkleTimer;
   final _oneShotTimers = <Timer>[];
@@ -167,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _hintMsg = msg;
       _hintVisible = true;
+      _hintSeq++;
     });
     _hintTimer?.cancel();
     _hintTimer = Timer(const Duration(milliseconds: 2600), () {
@@ -204,9 +207,11 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'うまれた!',
             desc: '「${s.currentSpecies.names[1]}」が うまれたよ! ごはんを あげて そだてよう!');
       case CreatureTapOutcome.puffed:
+        _creatureKey.currentState?.flashMood(CreatureMood.surprised);
         _showPuffEffects(box);
       case CreatureTapOutcome.petted:
         // ゾーンごとに動き・パーティクル・セリフを変える(反応バリエーション)
+        _creatureKey.currentState?.flashMood(CreatureMood.happy);
         _creatureKey.currentState?.play(_petAnims[zone]!);
         final particles = _petParticles[zone]!;
         _spawnParticleAtGlobal(
@@ -282,6 +287,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// お絵かき保存の褒め演出: くるっと回る+キラキラ+褒めセリフ。
   void _celebratePaint() {
+    _creatureKey.currentState?.flashMood(CreatureMood.happy,
+        duration: const Duration(milliseconds: 1600));
     _creatureKey.currentState?.play(CreatureAnim.spin);
     _hint(_paintPraiseLines[_rng.nextInt(_paintPraiseLines.length)]);
     final box =
@@ -313,6 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onFed(Food food) {
+    _creatureKey.currentState?.flashMood(CreatureMood.yum,
+        duration: const Duration(milliseconds: 1400));
     _creatureKey.currentState?.play(CreatureAnim.munch);
     final box =
         _creatureBoxKey.currentContext?.findRenderObject() as RenderBox?;
@@ -441,36 +450,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         Positioned.fill(child: ParticleField(key: _particleKey)),
-        // ヒント吹き出し
+        // ヒント吹き出し(ぽよんと弾んで登場・大きな文字)
         Positioned(
-          top: 8,
-          left: 0,
-          right: 0,
+          top: 4,
+          left: 12,
+          right: 12,
           child: IgnorePointer(
             child: AnimatedOpacity(
               opacity: _hintVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 300),
-              child: Center(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                          color: Color(0x1F3A3F52),
-                          blurRadius: 24,
-                          offset: Offset(0, 10)),
-                    ],
-                  ),
-                  child: Text(_hintMsg,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: inkColor)),
-                ),
-              ),
+              duration: const Duration(milliseconds: 250),
+              child: _SpeechBubble(message: _hintMsg, seed: _hintSeq),
             ),
           ),
         ),
@@ -547,4 +536,53 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       );
+}
+
+/// 大きな文字でぽよんと弾む吹き出し(セリフ用)。
+/// seed が変わるたびにポップ演出をやり直し、毎回すこし傾く。
+class _SpeechBubble extends StatelessWidget {
+  final String message;
+  final int seed;
+  const _SpeechBubble({required this.message, required this.seed});
+
+  @override
+  Widget build(BuildContext context) {
+    final angle = ((seed * 37) % 9 - 4) * 3.14159 / 180; // -4°〜+4°
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(seed),
+      tween: Tween(begin: 0.4, end: 1),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.elasticOut,
+      builder: (context, t, child) => Transform.rotate(
+        angle: angle,
+        child: Transform.scale(scale: t, child: child),
+      ),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: inkColor, width: 3.5),
+            boxShadow: const [
+              BoxShadow(
+                  color: Color(0x333A3F52),
+                  blurRadius: 18,
+                  offset: Offset(0, 8)),
+            ],
+          ),
+          // 長いセリフは自動で縮めてはみ出さない
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(message,
+                style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: inkColor,
+                    height: 1.2)),
+          ),
+        ),
+      ),
+    );
+  }
 }

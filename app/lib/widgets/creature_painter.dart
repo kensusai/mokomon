@@ -12,6 +12,9 @@ class CreaturePainter extends CustomPainter {
   final int speciesIndex;
   final int stage; // 1..3
   final bool sad;
+
+  /// リアクション中の誇張表情(null なら通常の種族顔)。約1秒で戻す。
+  final CreatureMood? mood;
   final Color bodyColor;
   final String? equipHead;
   final String? equipFace;
@@ -23,6 +26,7 @@ class CreaturePainter extends CustomPainter {
     required this.speciesIndex,
     required this.stage,
     required this.sad,
+    this.mood,
     Color? bodyColor,
     this.equipHead,
     this.equipFace,
@@ -70,7 +74,11 @@ class CreaturePainter extends CustomPainter {
       if (stage == 3) canvas.restore();
     }
     _paintBody(canvas);
-    paintCreatureFace(canvas, speciesIndex: speciesIndex, sad: sad);
+    if (mood != null) {
+      paintExpressionFace(canvas, mood: mood!);
+    } else {
+      paintCreatureFace(canvas, speciesIndex: speciesIndex, sad: sad);
+    }
     if (stage >= 3 && equipHead == null) _paintCrown(canvas);
     if (equipFace != null) _paintItem(canvas, equipFace!);
     if (equipHead != null) _paintItem(canvas, equipHead!);
@@ -403,6 +411,7 @@ class CreaturePainter extends CustomPainter {
       old.speciesIndex != speciesIndex ||
       old.stage != stage ||
       old.sad != sad ||
+      old.mood != mood ||
       old.bodyColor != bodyColor ||
       old.equipHead != equipHead ||
       old.equipFace != equipFace ||
