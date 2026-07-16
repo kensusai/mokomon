@@ -67,7 +67,18 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
-      # リリースAPK(現状はFlutter既定のデバッグ鍵署名 = 実機に直接インストール可能)
+      # 固定署名鍵をSecretsから復元(毎回同じ署名 = 端末で上書き更新できる)。
+      # フォークPRではSecretsが空なのでスキップされ、デバッグ鍵にフォールバックする。
+      - name: Set up release signing
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > android/app/mokomon-ci.jks
+            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=mokomon\nstoreFile=mokomon-ci.jks\n' \
+              "$KEYSTORE_PW" "$KEYSTORE_PW" > android/key.properties
+          fi
       - run: flutter build apk --release
       # 実機での動作確認用にAPKを成果物として保存(Actionsの実行ページからDL)
       - uses: actions/upload-artifact@v4

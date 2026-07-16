@@ -32,8 +32,8 @@
 
 ## シークレット管理
 
-- **現状、CI が必要とするシークレットはゼロ**(署名なしビルド・外部サービス連携なし)
-- `GITHUB_TOKEN` は `permissions: contents: read` に最小化済み
+- 使用中のシークレット: `ANDROID_KEYSTORE_BASE64`(CI用署名鍵のbase64)/ `ANDROID_KEYSTORE_PASSWORD`。ワークフローでは環境変数経由でのみ参照し、ログに出力しない
+- `GITHUB_TOKEN` は `permissions: contents: read` に最小化済み(release-apk ジョブのみ `contents: write`)
 - 追加する場合は GitHub Secrets のみに置く。ワークフローファイル・ログへの平文出力は禁止(`add-mask` を利用)。フォークからの PR には secrets が渡らない GitHub の既定動作を維持する(`pull_request_target` を使わない)
 - 将来のストア署名鍵は GitHub Secrets + 環境(environment)保護で扱い、リポジトリには置かない
 
@@ -59,7 +59,12 @@ GitHub にリポジトリを作成したら、`main` に以下を設定する:
 
 `apk-latest` は main への push ごとに `release-apk` ジョブが自動更新するローリングリリース(prerelease)。PCからは従来どおり Actions の Artifacts(`mokomon-apk`)も使える。
 
-注意: 現在のAPKは Flutter 既定の**デバッグ鍵署名**(動作確認専用)。ストア配布時は `key.properties` + GitHub Secrets による正式署名に切り替える(`docs/store-release.md`)。署名鍵が変わると上書きインストールできないため、その際は一度アンインストールが必要。
+### APKの署名
+
+- CI・ローカルとも **固定のCI用鍵**(`android/key.properties` + `mokomon-ci.jks`、どちらもgitignore)で署名する。鍵は GitHub Secrets(`ANDROID_KEYSTORE_BASE64` / `ANDROID_KEYSTORE_PASSWORD`)から復元される
+- 署名が毎回同じなので**端末での上書き更新が可能**。かつてデバッグ鍵(ランナーごとに毎回生成)で署名していた時期のAPKからは署名が変わっているため、一度アンインストールが必要
+- `key.properties` が無い環境(フォークPR等)はデバッグ鍵にフォールバックしてビルドだけ検証する
+- ストア配布時はこのCI用鍵ではなく、Play App Signing を前提に別途鍵を用意する(`docs/store-release.md`)
 
 ## iOS の実機配布について
 
