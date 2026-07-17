@@ -193,7 +193,7 @@ class _DriftingEmojiState extends State<_DriftingEmoji>
             opacity: _opacity(_c.value).clamp(0, 1),
             child: Transform.scale(
               scale: 0.4 + 1.3 * t,
-              child: Text(widget.emoji, style: const TextStyle(fontSize: 30)),
+              child: Text(widget.emoji, style: const TextStyle(fontSize: 40)),
             ),
           ),
         );

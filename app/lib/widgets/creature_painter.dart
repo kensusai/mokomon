@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../data/species.dart';
 import 'creature_faces.dart';
+import 'ui_kit.dart';
 
 /// クリーチャー描画。プロトタイプのSVG(viewBox 300x300)を移植。
 /// 体パスの座標はプロトタイプと同一。size に合わせてスケールする。
@@ -432,7 +434,213 @@ class CreaturePainter extends CustomPainter {
             RRect.fromRectAndRadius(const Rect.fromLTWH(170, 137, 18, 7),
                 const Radius.circular(3.5)),
             temple);
+      case 'party': // パーティーぼうし(しましま三角+ぽんぽん)
+        final cone = Path()
+          ..moveTo(150, -8)
+          ..lineTo(116, 58)
+          ..lineTo(184, 58)
+          ..close();
+        canvas.drawPath(cone, Paint()..color = const Color(0xFFFF6EA6));
+        canvas.save();
+        canvas.clipPath(cone);
+        final stripe = Paint()..color = const Color(0xFFFFD23E);
+        canvas.drawRect(const Rect.fromLTWH(100, 8, 100, 12), stripe);
+        canvas.drawRect(const Rect.fromLTWH(100, 34, 100, 12), stripe);
+        canvas.restore();
+        canvas.drawCircle(
+            const Offset(150, -8), 9, Paint()..color = const Color(0xFF54B9FF));
+      case 'wizard': // とんがりぼうし(むらさき+星)
+        final hat = Path()
+          ..moveTo(150, -14)
+          ..lineTo(112, 52)
+          ..lineTo(188, 52)
+          ..close();
+        canvas.drawPath(hat, Paint()..color = const Color(0xFF7C6CF0));
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(150, 54), width: 108, height: 20),
+            Paint()..color = const Color(0xFF6555D6));
+        _star(canvas, const Offset(150, 22), 10, const Color(0xFFFFD23E));
+      case 'tiara': // ティアラ(金バンド+3つの山+宝石)
+        canvas.drawArc(
+            Rect.fromCircle(center: const Offset(150, 76), radius: 52),
+            3.5,
+            2.4,
+            false,
+            Paint()
+              ..color = const Color(0xFFFFD23E)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 9);
+        for (final d in const [
+          (Offset(122, 34), 7.0),
+          (Offset(150, 22), 10.0),
+          (Offset(178, 34), 7.0),
+        ]) {
+          canvas.drawCircle(
+              d.$1, d.$2, Paint()..color = const Color(0xFFFF6EA6));
+          canvas.drawCircle(
+              d.$1,
+              d.$2,
+              Paint()
+                ..color = const Color(0xFFF0A92D)
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 3);
+        }
+      case 'cap': // キャップ(ドーム+つば)
+        final dome = Path()
+          ..moveTo(108, 56)
+          ..cubicTo(108, 12, 192, 12, 192, 56)
+          ..close();
+        canvas.drawPath(dome, Paint()..color = const Color(0xFF3BA4EC));
+        canvas.drawCircle(
+            const Offset(150, 14), 7, Paint()..color = const Color(0xFF2E86C4));
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                const Rect.fromLTWH(140, 48, 92, 14), const Radius.circular(7)),
+            Paint()..color = const Color(0xFF2E86C4));
+      case 'flowercrown': // はなかんむり
+        for (var i = 0; i < 5; i++) {
+          final cx = 106.0 + i * 22;
+          final cy = i.isEven ? 46.0 : 38.0;
+          final petal = Paint()
+            ..color =
+                i.isEven ? const Color(0xFFFF9CC2) : const Color(0xFFFFD23E);
+          for (final a in const [0.0, 1.26, 2.51, 3.77, 5.03]) {
+            canvas.drawCircle(
+                Offset(cx + 7 * cos(a), cy + 7 * sin(a)), 5, petal);
+          }
+          canvas.drawCircle(
+              Offset(cx, cy),
+              4,
+              Paint()
+                ..color = i.isEven ? const Color(0xFFFFD23E) : Colors.white);
+        }
+      case 'propeller': // プロペラぼうし
+        canvas.drawArc(
+            Rect.fromCircle(center: const Offset(150, 58), radius: 40),
+            3.14159,
+            3.14159,
+            true,
+            Paint()..color = const Color(0xFFFF8F1F));
+        canvas.drawLine(
+            const Offset(150, 22),
+            const Offset(150, 40),
+            Paint()
+              ..color = inkColor
+              ..strokeWidth = 5);
+        final blade = Paint()..color = const Color(0xFF54B9FF);
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(118, 20), width: 52, height: 14),
+            blade);
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(182, 20), width: 52, height: 14),
+            blade);
+        canvas.drawCircle(
+            const Offset(150, 20), 7, Paint()..color = const Color(0xFFFFD23E));
+      case 'bearears': // くまみみ
+        final ear = Paint()..color = const Color(0xFF9C6B44);
+        final inner = Paint()..color = const Color(0xFFD9A97E);
+        canvas.drawCircle(const Offset(102, 58), 26, ear);
+        canvas.drawCircle(const Offset(198, 58), 26, ear);
+        canvas.drawCircle(const Offset(102, 60), 14, inner);
+        canvas.drawCircle(const Offset(198, 60), 14, inner);
+      case 'halo': // てんしのわ
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(150, 10), width: 92, height: 24),
+            Paint()
+              ..color = const Color(0xFFFFD23E)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 8);
+      case 'heartglass': // ハートめがね
+        _heart(canvas, const Offset(112, 148), 52, const Color(0xFFFF4F96));
+        _heart(canvas, const Offset(188, 148), 52, const Color(0xFFFF4F96));
+        canvas.drawLine(
+            const Offset(134, 148),
+            const Offset(166, 148),
+            Paint()
+              ..color = const Color(0xFFFF4F96)
+              ..strokeWidth = 6);
+      case 'starglass': // ほしめがね
+        _star(canvas, const Offset(112, 150), 58, const Color(0xFFFFB300));
+        _star(canvas, const Offset(188, 150), 58, const Color(0xFFFFB300));
+        canvas.drawLine(
+            const Offset(134, 150),
+            const Offset(166, 150),
+            Paint()
+              ..color = const Color(0xFFFFB300)
+              ..strokeWidth = 6);
+      case 'groucho': // はなメガネ(めがね+大きな鼻+ひげ)
+        final stroke = Paint()
+          ..color = inkColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6;
+        canvas.drawCircle(const Offset(112, 148), 24, stroke);
+        canvas.drawCircle(const Offset(188, 148), 24, stroke);
+        canvas.drawLine(const Offset(136, 148), const Offset(164, 148), stroke);
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(150, 178), width: 34, height: 42),
+            Paint()..color = const Color(0xFFF2A29B));
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(150, 205), width: 64, height: 18),
+            Paint()..color = const Color(0xFF5C4033));
+      case 'clownnose': // ピエロのはな
+        canvas.drawCircle(const Offset(150, 170), 17,
+            Paint()..color = const Color(0xFFFF4B4B));
+        canvas.drawCircle(const Offset(144, 164), 5,
+            Paint()..color = Colors.white.withValues(alpha: 0.7));
+      case 'monocle': // モノクル(かた目+くさり)
+        canvas.drawCircle(
+            const Offset(188, 150),
+            24,
+            Paint()
+              ..color = const Color(0xFFF0A92D)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 6);
+        final chain = Path()
+          ..moveTo(206, 166)
+          ..quadraticBezierTo(220, 190, 212, 214);
+        canvas.drawPath(
+            chain,
+            Paint()
+              ..color = const Color(0xFFF0A92D)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 4);
+      case 'cheekseal': // ほっぺシール(ハート)
+        _heart(canvas, const Offset(95, 180), 20, const Color(0xFFFF4F96));
+        _heart(canvas, const Offset(205, 180), 20, const Color(0xFFFF4F96));
     }
+  }
+
+  /// アイテム用の小さな星(中心・幅・色)。
+  static void _star(Canvas canvas, Offset c, double size, Color color) {
+    final r = size / 2;
+    final path = Path();
+    for (var i = 0; i < 10; i++) {
+      final rad = i.isEven ? r : r * 0.45;
+      final a = -3.14159 / 2 + i * 3.14159 / 5;
+      final p = Offset(c.dx + rad * cos(a), c.dy + rad * sin(a));
+      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+    }
+    path.close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  /// アイテム用の小さなハート(中心・幅・色)。
+  static void _heart(Canvas canvas, Offset c, double size, Color color) {
+    final w = size / 2;
+    final path = Path()
+      ..moveTo(c.dx, c.dy + w)
+      ..cubicTo(c.dx - w * 1.4, c.dy, c.dx - w * 0.9, c.dy - w * 1.1, c.dx,
+          c.dy - w * 0.3)
+      ..cubicTo(
+          c.dx + w * 0.9, c.dy - w * 1.1, c.dx + w * 1.4, c.dy, c.dx, c.dy + w)
+      ..close();
+    canvas.drawPath(path, Paint()..color = color);
   }
 
   static Color shade(Color c, int amt) {

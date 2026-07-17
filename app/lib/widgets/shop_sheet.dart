@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/backgrounds.dart';
 import '../data/items.dart';
 import '../logic/game_controller.dart';
 import 'toast.dart';
@@ -13,22 +14,27 @@ Future<void> showShopModal(BuildContext context, GameController controller) {
       child: ListenableBuilder(
           listenable: controller,
           builder: (context, _) => Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const ModalTitle('🛍️ きせかえショップ'),
-                  const SizedBox(height: 12),
-                  GridView.count(
-                    crossAxisCount: 3,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 0.82,
-                    children: [
-                      for (final item in shopItems)
-                        _ShopCell(item: item, controller: controller),
-                    ],
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _sectionTitle('👒 あたま'),
+                          _itemGrid(controller, ItemSlot.head),
+                          const SizedBox(height: 10),
+                          _sectionTitle('🕶️ かお'),
+                          _itemGrid(controller, ItemSlot.face),
+                          const SizedBox(height: 10),
+                          _sectionTitle('🖼️ はいけい(むりょう)'),
+                          _bgGrid(controller),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   const Text('かったものは タップで きたり ぬいだり できるよ',
@@ -45,6 +51,96 @@ Future<void> showShopModal(BuildContext context, GameController controller) {
               )),
     ),
   );
+}
+
+Widget _sectionTitle(String text) => Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w800, color: ink2Color)),
+    );
+
+Widget _itemGrid(GameController controller, ItemSlot slot) => GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 0.82,
+      children: [
+        for (final item in shopItems)
+          if (item.slot == slot) _ShopCell(item: item, controller: controller),
+      ],
+    );
+
+/// 背景テーマの切替(無料・個体ごと保存)。docs/game-design.md §13。
+Widget _bgGrid(GameController controller) => GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 0.95,
+      children: [
+        for (var i = 0; i < bgThemes.length; i++)
+          _BgCell(index: i, controller: controller),
+        _BgCell(index: null, controller: controller), // おまかせ(デフォルト)
+      ],
+    );
+
+class _BgCell extends StatelessWidget {
+  final int? index; // null = 種族デフォルトに戻す
+  final GameController controller;
+  const _BgCell({required this.index, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = controller.state;
+    final theme = bgThemes[index ?? speciesDefaultBg[s.species]];
+    final selected = index == null ? s.bg == null : s.bg == index;
+    return Material(
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: selected
+            ? const BorderSide(color: Color(0xFF34C98E), width: 3)
+            : BorderSide.none,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => controller.setBackground(index),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [theme.top, theme.bottom]),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(index == null ? '🎲' : theme.emoji,
+                  style: const TextStyle(fontSize: 30)),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(index == null ? 'おまかせ' : theme.name,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: inkColor)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ShopCell extends StatelessWidget {
@@ -88,11 +184,18 @@ class _ShopCell extends StatelessWidget {
             children: [
               Text(item.emoji, style: const TextStyle(fontSize: 34)),
               const SizedBox(height: 4),
-              Text(item.name,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: inkColor)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(item.name,
+                      maxLines: 1,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: inkColor)),
+                ),
+              ),
               const SizedBox(height: 6),
               Container(
                 padding:

@@ -9,6 +9,9 @@ const _foodGradients = {
   'apple': greenGradient,
   'meat': orangeGradient,
   'cake': pinkGradient,
+  'onigiri': blueGradient,
+  'ramen': [Color(0xFFFF9A62), Color(0xFFE8702A)],
+  'parfait': purpleGradient,
 };
 
 /// ごはんモーダル(プロトタイプ #foodModal)。
@@ -19,26 +22,35 @@ Future<void> showFoodModal(BuildContext context, GameController controller,
     context: context,
     builder: (dialogContext) => MokoModalShell(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const ModalTitle('なにを たべる?'),
           const SizedBox(height: 12),
-          for (final f in foods) ...[
-            _FoodRow(
-              food: f,
-              poor: controller.state.coins < f.cost,
-              onTap: () {
-                if (!controller.feed(f)) {
-                  showToast(context, 'コインが たりないよ! 「あそぶ」で あつめよう🎮');
-                  return;
-                }
-                Navigator.of(dialogContext).pop();
-                onFed(f);
-              },
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final f in foods) ...[
+                    _FoodRow(
+                      food: f,
+                      poor: controller.state.coins < f.cost,
+                      onTap: () {
+                        if (!controller.feed(f)) {
+                          showToast(context, 'コインが たりないよ! 「あそぶ」で あつめよう🎮');
+                          return;
+                        }
+                        Navigator.of(dialogContext).pop();
+                        onFed(f);
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
-          ],
+          ),
           ModalCloseButton(
               label: 'やめる', onTap: () => Navigator.of(dialogContext).pop()),
         ],

@@ -72,11 +72,14 @@ final Map<Sfx, List<_Tone>> _recipes = {
       _Tone(180.0 + i * 75, 0.14, _Wave.square, 0.07, i * 0.17),
   ],
   Sfx.shine: const [_Tone(1400, 0.5, _Wave.sine, 0.15)],
-  // 💨: 低い下降音3連(のこぎり波)
+  // 💨: 低い下降音「ブゥ〜ブブブッ」(こどもFBでおなら感アップ)
   Sfx.puff: const [
-    _Tone(165, 0.09, _Wave.sawtooth, 0.13),
-    _Tone(128, 0.09, _Wave.sawtooth, 0.13, 0.10),
-    _Tone(92, 0.18, _Wave.sawtooth, 0.13, 0.20),
+    _Tone(155, 0.14, _Wave.sawtooth, 0.15),
+    _Tone(150, 0.14, _Wave.sawtooth, 0.12, 0.03), // うなり(ビート)
+    _Tone(118, 0.12, _Wave.sawtooth, 0.15, 0.18),
+    _Tone(95, 0.13, _Wave.sawtooth, 0.15, 0.33),
+    _Tone(78, 0.2, _Wave.sawtooth, 0.16, 0.48),
+    _Tone(66, 0.16, _Wave.sawtooth, 0.12, 0.55),
   ],
   // なでなでの鳴き声: やわらかい2音(くぅ〜ん)
   Sfx.coo: const [

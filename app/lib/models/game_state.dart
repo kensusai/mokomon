@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import '../data/backgrounds.dart';
 import '../data/items.dart';
 import '../data/species.dart';
 
@@ -20,6 +21,7 @@ class CreatureSnapshot {
   String? equipHead;
   String? equipFace;
   String? nickname;
+  int? bg;
 
   CreatureSnapshot({
     required this.stage,
@@ -32,6 +34,7 @@ class CreatureSnapshot {
     this.equipHead,
     this.equipFace,
     this.nickname,
+    this.bg,
   });
 
   Map<String, dynamic> toJson() => {
@@ -45,6 +48,7 @@ class CreatureSnapshot {
         'equipHead': equipHead,
         'equipFace': equipFace,
         'nickname': nickname,
+        'bg': bg,
       };
 
   factory CreatureSnapshot.fromJson(Map<String, dynamic> j) => CreatureSnapshot(
@@ -58,6 +62,7 @@ class CreatureSnapshot {
         equipHead: j['equipHead'],
         equipFace: j['equipFace'],
         nickname: j['nickname'],
+        bg: j['bg'],
       );
 }
 
@@ -85,6 +90,12 @@ class GameState {
 
   /// いまの子のニックネーム(なければ種族名)。端末ローカルのみ。
   String? nickname;
+
+  /// 背景テーマ(bgThemes index)。null は種族デフォルト。端末ローカルのみ。
+  int? bg;
+
+  /// 実際に表示する背景(選択がなければ種族デフォルト)。
+  int get effectiveBg => bg ?? speciesDefaultBg[species];
 
   /// 過去に育てた子の名簿(species index → スナップショット)。端末ローカルのみ。
   Map<int, CreatureSnapshot> roster = {};
@@ -157,6 +168,7 @@ class GameState {
         'color': color,
         'pattern': pattern,
         'nickname': nickname,
+        'bg': bg,
         'roster': {
           for (final e in roster.entries) '${e.key}': e.value.toJson(),
         },
@@ -182,6 +194,7 @@ class GameState {
     color = j['color'] ?? speciesList[species].color.toARGB32();
     pattern = j['pattern'];
     nickname = j['nickname'];
+    bg = j['bg'];
     roster = {
       for (final e in ((j['roster'] as Map?) ?? {}).entries)
         int.parse(e.key as String):
@@ -265,9 +278,10 @@ class GameState {
           ? shopItems[a[10]].key
           : null;
       eggTaps = 0;
-      // 模様・なまえはあいことばに含まれない(仕様§8)。体色は種族の初期色へ
+      // 模様・なまえ・背景はあいことばに含まれない(仕様§8)
       pattern = null;
       nickname = null;
+      bg = null;
       color = speciesList[species].color.toARGB32();
       return true;
     } catch (_) {

@@ -156,9 +156,17 @@ class GameController extends ChangeNotifier {
       ..happy = 80
       ..pattern = null
       ..nickname = null
+      ..bg = null
       ..color = speciesList[next].color.toARGB32();
     _commit();
     return next;
+  }
+
+  /// 背景テーマを変更する(null で種族デフォルトに戻す)。無料・個体ごと保存。
+  void setBackground(int? index) {
+    state.bg = index;
+    sfx.play(Sfx.happy);
+    _commit();
   }
 
   CreatureSnapshot _snapshotCurrent() => CreatureSnapshot(
@@ -172,6 +180,7 @@ class GameController extends ChangeNotifier {
         equipHead: state.equipHead,
         equipFace: state.equipFace,
         nickname: state.nickname,
+        bg: state.bg,
       );
 
   /// 図鑑から過去に育てた子と交代する(docs/game-design.md §12)。
@@ -195,7 +204,8 @@ class GameController extends ChangeNotifier {
         ..pattern = snap.pattern
         ..equipHead = snap.equipHead
         ..equipFace = snap.equipFace
-        ..nickname = snap.nickname;
+        ..nickname = snap.nickname
+        ..bg = snap.bg;
     } else {
       // 記録がない(旧セーブ等)場合はキング姿の初期状態で迎える
       state
@@ -206,6 +216,7 @@ class GameController extends ChangeNotifier {
         ..happy = 80
         ..pattern = null
         ..nickname = null
+        ..bg = null
         ..color = speciesList[speciesIndex].color.toARGB32();
     }
     sfx.playBabble(speciesIndex); // ただいまのごあいさつ

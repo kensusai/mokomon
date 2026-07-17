@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../audio/sound_synth.dart';
+import '../data/backgrounds.dart';
 import '../data/foods.dart';
 import '../logic/game_controller.dart';
 import '../models/game_state.dart';
@@ -224,19 +225,20 @@ class _HomeScreenState extends State<HomeScreen> {
     _creatureKey.currentState?.play(CreatureAnim.wiggle);
     _hint(_puffLines[_rng.nextInt(_puffLines.length)]);
     if (creatureBox == null) return;
-    const emojis = ['💨', '💨', '🌫️'];
+    // おなら感アップ: もくもく5連・大きめ・遠くまで(こどもFB)
+    const emojis = ['💨', '💨', '💨', '🌫️', '🌫️'];
     final field = _particleKey.currentContext?.findRenderObject() as RenderBox?;
     if (field == null) return;
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < emojis.length; i++) {
       final local = Offset(
-        creatureBox.size.width * (0.28 + _rng.nextDouble() * 0.44),
-        creatureBox.size.height * 0.82,
+        creatureBox.size.width * (0.22 + _rng.nextDouble() * 0.56),
+        creatureBox.size.height * (0.78 + _rng.nextDouble() * 0.1),
       );
       _particleKey.currentState?.spawnPuff(
         emojis[i],
         field.globalToLocal(creatureBox.localToGlobal(local)),
-        driftX: (_rng.nextBool() ? -1 : 1) * (24 + _rng.nextDouble() * 36),
-        delay: Duration(milliseconds: i * 120),
+        driftX: (_rng.nextBool() ? -1 : 1) * (34 + _rng.nextDouble() * 56),
+        delay: Duration(milliseconds: i * 100),
       );
     }
   }
@@ -388,13 +390,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bg = bgThemes[s.effectiveBg];
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFBFE9FF), Color(0xFFE8F9EF)],
+            colors: [bg.top, bg.bottom],
           ),
         ),
         child: SafeArea(
@@ -438,13 +441,101 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text(emoji, style: const TextStyle(fontSize: 24)),
       );
 
+  /// 背景テーマごとの飾り(雲・月・あわ・木など)。docs/game-design.md §13。
+  List<Widget> _bgDecor() {
+    const deco = TextStyle(fontSize: 40);
+    switch (bgThemes[s.effectiveBg].key) {
+      case 'yuyake':
+        return [
+          Positioned(
+            top: 30,
+            right: 30,
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                    colors: [Color(0xFFFFE28A), Color(0xFFFFB25E)]),
+              ),
+            ),
+          ),
+          const Positioned(top: 90, left: 30, child: Cloud(width: 62)),
+        ];
+      case 'yozora':
+        return const [
+          Positioned(top: 24, right: 34, child: Text('🌙', style: deco)),
+          Positioned(
+              top: 80,
+              left: 40,
+              child: Text('✨', style: TextStyle(fontSize: 22))),
+          Positioned(
+              top: 40,
+              left: 110,
+              child: Text('✨', style: TextStyle(fontSize: 16))),
+          Positioned(
+              top: 120,
+              right: 90,
+              child: Text('✨', style: TextStyle(fontSize: 18))),
+        ];
+      case 'umi':
+        return [
+          for (final b in const [
+            (30.0, 60.0, 18.0),
+            (90.0, 120.0, 12.0),
+            (300.0, 50.0, 14.0),
+            (260.0, 130.0, 10.0)
+          ])
+            Positioned(
+              left: b.$1,
+              top: b.$2,
+              child: Container(
+                width: b.$3,
+                height: b.$3,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+          const Positioned(
+              top: 40,
+              right: 40,
+              child: Text('🐠', style: TextStyle(fontSize: 28))),
+        ];
+      case 'mori':
+        return const [
+          Positioned(bottom: 10, left: 8, child: Text('🌳', style: deco)),
+          Positioned(bottom: 14, right: 8, child: Text('🌲', style: deco)),
+          Positioned(top: 40, left: 40, child: Cloud(width: 56)),
+        ];
+      case 'yuki':
+        return const [
+          Positioned(top: 40, left: 30, child: Cloud(width: 70)),
+          Positioned(
+              top: 100,
+              right: 50,
+              child: Text('❄️', style: TextStyle(fontSize: 22))),
+          Positioned(
+              top: 50,
+              right: 120,
+              child: Text('❄️', style: TextStyle(fontSize: 16))),
+          Positioned(bottom: 30, right: 20, child: Text('⛄', style: deco)),
+        ];
+      default: // sora
+        return const [
+          Positioned(top: 40, left: 30, child: Cloud(width: 70)),
+          Positioned(top: 90, right: 36, child: Cloud(width: 56)),
+        ];
+    }
+  }
+
   Widget _stage() {
     final creatureSize = min(MediaQuery.sizeOf(context).width * 0.64, 300.0);
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        const Positioned(top: 40, left: 30, child: Cloud(width: 70)),
-        const Positioned(top: 90, right: 36, child: Cloud(width: 56)),
+        ..._bgDecor(),
         // 地面の影
         Align(
           alignment: const Alignment(0, 0.86),

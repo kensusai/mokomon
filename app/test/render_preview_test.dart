@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mokomon/data/items.dart';
 import 'package:mokomon/data/species.dart';
 import 'package:mokomon/widgets/creature_faces.dart';
 import 'package:mokomon/widgets/creature_painter.dart';
@@ -81,5 +82,39 @@ void main() {
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     File('$dir/expressions_sheet.png')
         .writeAsBytesSync(bytes!.buffer.asUint8List());
+  });
+
+  test('render dress-up items preview sheet', () async {
+    if (dir == null) {
+      markTestSkipped('MOKOMON_PREVIEW_DIR not set');
+      return;
+    }
+    const cell = 200.0;
+    const cols = 5;
+    final rows = (shopItems.length / cols).ceil();
+    final recorder = ui.PictureRecorder();
+    final canvas =
+        Canvas(recorder, Rect.fromLTWH(0, 0, cell * cols, cell * rows));
+    canvas.drawRect(Rect.fromLTWH(0, 0, cell * cols, cell * rows),
+        Paint()..color = const Color(0xFFEAF6FF));
+    for (var i = 0; i < shopItems.length; i++) {
+      final item = shopItems[i];
+      canvas.save();
+      canvas.translate((i % cols) * cell + 8, (i ~/ cols) * cell + 8);
+      canvas.scale((cell - 16) / 300);
+      CreaturePainter(
+        speciesIndex: 0,
+        stage: 2,
+        sad: false,
+        equipHead: item.slot == ItemSlot.head ? item.key : null,
+        equipFace: item.slot == ItemSlot.face ? item.key : null,
+      ).paint(canvas, const Size(300, 300));
+      canvas.restore();
+    }
+    final image = await recorder
+        .endRecording()
+        .toImage((cell * cols).toInt(), (cell * rows).toInt());
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    File('$dir/items_sheet.png').writeAsBytesSync(bytes!.buffer.asUint8List());
   });
 }

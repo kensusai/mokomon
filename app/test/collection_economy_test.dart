@@ -1,7 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mokomon/data/backgrounds.dart';
+import 'package:mokomon/data/foods.dart';
 import 'package:mokomon/data/items.dart';
+import 'package:mokomon/data/species.dart';
 import 'package:mokomon/data/save_store.dart';
 import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/models/game_state.dart';
@@ -89,6 +92,49 @@ void main() {
         ..pattern = 'abc');
       c.newEgg();
       expect(c.state.pattern, isNull);
+    });
+  });
+
+  group('expanded content (docs/game-design.md §3, §7, §13)', () {
+    test('6 foods with the new entries', () {
+      expect(foods, hasLength(6));
+      expect(foods.map((f) => f.key).toList().sublist(3),
+          ['onigiri', 'ramen', 'parfait']);
+    });
+
+    test('20 shop items, appended after the original 6', () {
+      expect(shopItems, hasLength(20));
+      expect(shopItems[5].key, 'sunglass'); // 既存の並びは不変
+      expect(shopItems.last.key, 'cheekseal');
+    });
+
+    test('high-index item equips survive あいことば roundtrip', () {
+      final s = GameState()
+        ..owned = {'halo', 'cheekseal'}
+        ..equipHead = 'halo'
+        ..equipFace = 'cheekseal';
+      final restored = GameState();
+      expect(restored.loadCode(s.makeCode()), isTrue);
+      expect(restored.equipHead, 'halo');
+      expect(restored.equipFace, 'cheekseal');
+    });
+
+    test('background defaults per species and per-creature override', () {
+      expect(speciesDefaultBg, hasLength(speciesList.length));
+      final c = fresh(GameState()..species = 14); // obake
+      expect(c.state.effectiveBg, 2); // よぞら
+      c.setBackground(4);
+      expect(c.state.effectiveBg, 4);
+      final viaJson = GameState()..loadJson(c.state.toJson());
+      expect(viaJson.bg, 4);
+      c.setBackground(null);
+      expect(c.state.effectiveBg, 2); // おまかせ=デフォルトへ
+
+      // あいことばには含めない
+      c.setBackground(5);
+      final viaCode = GameState();
+      expect(viaCode.loadCode(c.state.makeCode()), isTrue);
+      expect(viaCode.bg, isNull);
     });
   });
 
