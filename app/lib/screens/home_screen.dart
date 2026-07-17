@@ -138,6 +138,18 @@ class _HomeScreenState extends State<HomeScreen> {
     _oneShotTimers.add(Timer(d, fn));
   }
 
+  double _lastSparkle = 0;
+
+  /// きらきらゲージの途中経過を吹き出しで知らせる(進捗の手ごたえ)。
+  void _sparkleProgressHint() {
+    final v = s.kingSparkle;
+    if (s.stage == 3) {
+      if (_lastSparkle < 50 && v >= 50) _hint('きらきらが たまってきた…!');
+      if (_lastSparkle < 85 && v >= 85) _hint('もうすこしで なにか おこりそう…!');
+    }
+    _lastSparkle = v;
+  }
+
   /// おみやげが発生していたら受け取ってお祝いする(docs §14)。
   void _maybeShowGift() {
     final gift = c.takePendingGift();
@@ -166,6 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Duration(milliseconds: 600), () => _hint('なんだか からだが ひかってる…!'));
     }
     if (!near) _glowHinted = false;
+    _sparkleProgressHint();
     _maybeShowGift();
     _syncPattern();
   }

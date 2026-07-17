@@ -77,7 +77,7 @@ class GameController extends ChangeNotifier {
   void pet() {
     state.happy = min(100, state.happy + 3);
     state.xp += 1;
-    _addSparkle(6);
+    _addSparkle(10);
     sfx.playBabble(state.species);
     _commit();
   }
@@ -101,7 +101,7 @@ class GameController extends ChangeNotifier {
   /// 💨(隠し機能・名前を付けない)。happy +2。docs/game-design.md §9。
   void puff() {
     state.happy = min(100, state.happy + 2);
-    _addSparkle(4);
+    _addSparkle(6);
     sfx.play(Sfx.puff);
     _commit();
   }
@@ -132,7 +132,7 @@ class GameController extends ChangeNotifier {
     state.hunger = min(100, state.hunger + food.hunger);
     state.happy = min(100, state.happy + food.happy);
     state.xp += food.xp;
-    _addSparkle(10);
+    _addSparkle(16);
     sfx.play(Sfx.munch);
     _commit();
     return true;
@@ -144,7 +144,7 @@ class GameController extends ChangeNotifier {
     state.coins += coins;
     state.happy = min(100, state.happy + 12);
     state.xp += 10;
-    _addSparkle(18);
+    _addSparkle(30);
     sfx.playJingle(Sfx.rewardJingle); // 派手に(BGMは一時停止)
     _commit();
   }
@@ -309,7 +309,7 @@ class GameController extends ChangeNotifier {
     state.pattern = patternBase64;
     state.happy = min(100, state.happy + 8);
     state.xp += 4;
-    _addSparkle(14);
+    _addSparkle(25);
     sfx.play(Sfx.happy);
     _commit();
   }

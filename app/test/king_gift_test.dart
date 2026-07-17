@@ -27,13 +27,13 @@ void main() {
 
       final c = king();
       c.pet();
-      expect(c.state.kingSparkle, 6);
+      expect(c.state.kingSparkle, 10);
       c.feed(foods.first);
-      expect(c.state.kingSparkle, 16);
+      expect(c.state.kingSparkle, 26);
       c.finishMinigame(5);
-      expect(c.state.kingSparkle, 34);
+      expect(c.state.kingSparkle, 56);
       c.savePaint('p');
-      expect(c.state.kingSparkle, 48);
+      expect(c.state.kingSparkle, 81);
     });
 
     test('first three gifts unlock stamps in order, then coins', () {
