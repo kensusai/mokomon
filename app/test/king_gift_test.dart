@@ -80,7 +80,7 @@ void main() {
   group('king gift UI', () {
     testWidgets('sparkle meter shows only for kings and gift celebrates',
         (tester) async {
-      final c = await bootApp(tester,
+      await bootApp(tester,
           state: GameState()
             ..stage = 3
             ..kingSparkle = 95,
