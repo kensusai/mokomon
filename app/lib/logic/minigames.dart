@@ -45,6 +45,9 @@ class CatchGame {
 
   bool get finished => timeLeft <= 0;
 
+  /// 残り時間が減るほど速くなる(1.0 → 1.6)。こどもFB「もっとはやく」。
+  double get speedFactor => 1.0 + 0.6 * (1 - timeLeft / catchDurationSec);
+
   /// [dt] 秒進める。範囲は画面サイズ [width]x[height]。
   void update(double dt, double width, double height) {
     if (finished) return;
@@ -56,12 +59,12 @@ class CatchGame {
     }
     _spawnT -= dt;
     if (_spawnT <= 0) {
-      _spawnT = 0.55 + _rng.nextDouble() * 0.5;
+      _spawnT = (0.45 + _rng.nextDouble() * 0.4) / speedFactor;
       final star = _rng.nextDouble() < catchStarChance;
       items.add(CatchItem(
         x: 30 + _rng.nextDouble() * (width - 60),
         y: -40,
-        vy: 90 + _rng.nextDouble() * 70,
+        vy: (120 + _rng.nextDouble() * 100) * speedFactor,
         emoji: star ? '⭐' : catchFruits[_rng.nextInt(catchFruits.length)],
         star: star,
         wobble: _rng.nextDouble() * 2 * pi,
@@ -158,12 +161,12 @@ class PuzzleGame {
 
 // ---------- ペアさがし ----------
 
-const memoryEmoji = ['🍎', '🍌', '🍇', '⭐', '🐟', '🌸'];
-const memoryReward = 12;
+const memoryEmoji = ['🍎', '🍌', '🍇', '⭐', '🐟', '🌸', '🍩', '🐸', '🚗', '🌙'];
+const memoryReward = 20;
 
 enum MemoryFlipResult { first, matched, mismatched, ignored }
 
-/// ペアさがし(3×4=6ペア)。widget 側は結果に応じて演出する。
+/// ペアさがし(4×5=10ペア)。widget 側は結果に応じて演出する。
 class MemoryGame {
   MemoryGame({Random? rng}) {
     cards = [...memoryEmoji, ...memoryEmoji]..shuffle(rng ?? Random());

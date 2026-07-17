@@ -31,12 +31,17 @@ const _bodyColors = [
   0xFFFFB37E,
 ];
 
+/// おもしろスタンプ(タップでペタッ、なぞると連続)
+const _stamps = ['⭐', '🌸', '💖', '⚡', '🌈', '🎀', '🍓', '💩', '😎', '🐟'];
+
 /// 描画座標は体パスと同じ 300x300。線幅はプロトタイプ(320px canvas の 20)相当。
 const _paintSize = 300.0;
 const _brushWidth = 20.0 * 300 / 320;
+const _stampFontSize = 46.0;
 
 /// おえかき(もようがえ)。docs/game-design.md §6。
 /// 保存したら true を返して閉じる(報酬は controller.savePaint が付与)。
+/// パレット類は誤タップ防止のため画面下部に置く(手のひらがキャンバス直下に乗るため)。
 class PaintScreen extends StatefulWidget {
   final GameController controller;
   const PaintScreen({super.key, required this.controller});
@@ -45,16 +50,26 @@ class PaintScreen extends StatefulWidget {
   State<PaintScreen> createState() => _PaintScreenState();
 }
 
-class _Stroke {
+sealed class _PaintOp {}
+
+class _Stroke extends _PaintOp {
   final int color;
   final points = <Offset>[];
   _Stroke(this.color);
 }
 
+class _Stamp extends _PaintOp {
+  final String emoji;
+  final Offset pos;
+  _Stamp(this.emoji, this.pos);
+}
+
 class _PaintScreenState extends State<PaintScreen> {
-  var _brush = _palette.first;
-  final _strokes = <_Stroke>[];
+  int? _brush = _palette.first;
+  String? _stamp;
+  final _ops = <_PaintOp>[];
   ui.Image? _baseImage; // 保存済み模様(この上に描き足す)
+  Offset? _lastStampPos;
 
   @override
   void initState() {
@@ -70,12 +85,37 @@ class _PaintScreenState extends State<PaintScreen> {
   Offset _toBodyCoords(Offset local, double canvasSize) =>
       local * (_paintSize / canvasSize);
 
+  void _onPanStart(Offset p) {
+    setState(() {
+      if (_stamp != null) {
+        _ops.add(_Stamp(_stamp!, p));
+        _lastStampPos = p;
+      } else {
+        _ops.add(_Stroke(_brush!)..points.add(p));
+      }
+    });
+  }
+
+  void _onPanUpdate(Offset p) {
+    setState(() {
+      if (_stamp != null) {
+        // なぞると一定間隔でペタペタ
+        if (_lastStampPos == null || (p - _lastStampPos!).distance > 52) {
+          _ops.add(_Stamp(_stamp!, p));
+          _lastStampPos = p;
+        }
+      } else if (_ops.isNotEmpty && _ops.last is _Stroke) {
+        (_ops.last as _Stroke).points.add(p);
+      }
+    });
+  }
+
   Future<void> _save() async {
     // 体色は含めず、模様レイヤーだけを透明PNGで書き出す(色を後から変えられる)
     final recorder = ui.PictureRecorder();
     final canvas =
         Canvas(recorder, const Rect.fromLTWH(0, 0, _paintSize, _paintSize));
-    _paintStrokes(canvas, _baseImage, _strokes);
+    _paintOps(canvas, _baseImage, _ops);
     final image = await recorder
         .endRecording()
         .toImage(_paintSize.toInt(), _paintSize.toInt());
@@ -87,7 +127,7 @@ class _PaintScreenState extends State<PaintScreen> {
 
   void _clear() {
     setState(() {
-      _strokes.clear();
+      _ops.clear();
       _baseImage = null;
     });
     widget.controller.clearPattern();
@@ -120,77 +160,43 @@ class _PaintScreenState extends State<PaintScreen> {
                               fontWeight: FontWeight.w800,
                               color: inkColor)),
                     ),
-                    const SizedBox(width: 40),
+                    const SizedBox(width: 48),
                   ],
                 ),
+                const SizedBox(height: 8),
                 Expanded(
                   child: LayoutBuilder(builder: (context, box) {
-                    // パレット等の高さを差し引いてキャンバスを正方形で収める
+                    // 下部のパレット類のぶんを差し引いてキャンバスを収める
                     final canvasSize =
-                        min(min(box.maxWidth - 40, 340.0), box.maxHeight - 170)
+                        min(min(box.maxWidth - 40, 340.0), box.maxHeight - 218)
                             .clamp(120.0, 340.0);
                     return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: const [
-                              BoxShadow(
-                                  color: Color(0x1F3A3F52),
-                                  blurRadius: 24,
-                                  offset: Offset(0, 10)),
-                            ],
-                          ),
-                          child: SizedBox(
-                            width: canvasSize,
-                            height: canvasSize,
-                            child: GestureDetector(
-                              onPanStart: (d) => setState(() {
-                                _strokes.add(_Stroke(_brush)
-                                  ..points.add(_toBodyCoords(
-                                      d.localPosition, canvasSize)));
-                              }),
-                              onPanUpdate: (d) => setState(() {
-                                _strokes.last.points.add(
-                                    _toBodyCoords(d.localPosition, canvasSize));
-                              }),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: ListenableBuilder(
-                                  listenable: widget.controller,
-                                  builder: (context, _) => CustomPaint(
-                                    painter: _PaintCanvasPainter(
-                                      bodyColor:
-                                          Color(widget.controller.state.color),
-                                      baseImage: _baseImage,
-                                      strokes: _strokes,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                        // キャンバスは上寄せ(直下は空けて誤タップを防ぐ)
+                        _canvas(canvasSize),
+                        const Spacer(),
+                        _stampRow(),
+                        const SizedBox(height: 8),
                         _swatchRow(_palette, 40,
                             selected: _brush,
-                            onTap: (c) => setState(() => _brush = c)),
-                        const SizedBox(height: 8),
+                            onTap: (c) => setState(() {
+                                  _brush = c;
+                                  _stamp = null;
+                                })),
+                        const SizedBox(height: 6),
                         const Text('からだの いろも えらべるよ ↓',
                             style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: ink2Color)),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         _swatchRow(_bodyColors, 34,
                             onTap: widget.controller.setBodyColor),
                       ],
                     );
                   }),
                 ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -218,6 +224,79 @@ class _PaintScreenState extends State<PaintScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _canvas(double canvasSize) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x1F3A3F52), blurRadius: 24, offset: Offset(0, 10)),
+        ],
+      ),
+      child: SizedBox(
+        width: canvasSize,
+        height: canvasSize,
+        child: GestureDetector(
+          onPanStart: (d) =>
+              _onPanStart(_toBodyCoords(d.localPosition, canvasSize)),
+          onPanUpdate: (d) =>
+              _onPanUpdate(_toBodyCoords(d.localPosition, canvasSize)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: ListenableBuilder(
+              listenable: widget.controller,
+              builder: (context, _) => CustomPaint(
+                painter: _PaintCanvasPainter(
+                  bodyColor: Color(widget.controller.state.color),
+                  baseImage: _baseImage,
+                  ops: _ops,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _stampRow() {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      alignment: WrapAlignment.center,
+      children: [
+        for (final e in _stamps)
+          GestureDetector(
+            onTap: () => setState(() {
+              _stamp = e;
+              _brush = null;
+            }),
+            child: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  if (_stamp == e)
+                    const BoxShadow(color: inkColor, spreadRadius: 3)
+                  else
+                    const BoxShadow(
+                        color: Color(0x1F3A3F52),
+                        blurRadius: 10,
+                        offset: Offset(0, 3)),
+                ],
+              ),
+              child: Text(e, style: const TextStyle(fontSize: 22)),
+            ),
+          ),
+      ],
     );
   }
 
@@ -254,8 +333,8 @@ class _PaintScreenState extends State<PaintScreen> {
   }
 }
 
-/// 模様レイヤー(baseImage+strokes)を体パスでクリップして描く。
-void _paintStrokes(Canvas canvas, ui.Image? baseImage, List<_Stroke> strokes) {
+/// 模様レイヤー(baseImage+線+スタンプ)を体パスでクリップして描く。
+void _paintOps(Canvas canvas, ui.Image? baseImage, List<_PaintOp> ops) {
   canvas.save();
   canvas.clipPath(CreaturePainter.bodyPath());
   if (baseImage != null) {
@@ -267,23 +346,32 @@ void _paintStrokes(Canvas canvas, ui.Image? baseImage, List<_Stroke> strokes) {
       Paint(),
     );
   }
-  for (final stroke in strokes) {
-    final paint = Paint()
-      ..color = Color(stroke.color)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _brushWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    if (stroke.points.length == 1) {
-      canvas.drawCircle(stroke.points.first, _brushWidth / 2,
-          Paint()..color = Color(stroke.color));
-    } else {
-      final path = Path()
-        ..moveTo(stroke.points.first.dx, stroke.points.first.dy);
-      for (final p in stroke.points.skip(1)) {
-        path.lineTo(p.dx, p.dy);
-      }
-      canvas.drawPath(path, paint);
+  for (final op in ops) {
+    switch (op) {
+      case _Stroke():
+        if (op.points.length == 1) {
+          canvas.drawCircle(op.points.first, _brushWidth / 2,
+              Paint()..color = Color(op.color));
+        } else {
+          final paint = Paint()
+            ..color = Color(op.color)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = _brushWidth
+            ..strokeCap = StrokeCap.round
+            ..strokeJoin = StrokeJoin.round;
+          final path = Path()..moveTo(op.points.first.dx, op.points.first.dy);
+          for (final p in op.points.skip(1)) {
+            path.lineTo(p.dx, p.dy);
+          }
+          canvas.drawPath(path, paint);
+        }
+      case _Stamp():
+        final tp = TextPainter(
+          text: TextSpan(
+              text: op.emoji, style: const TextStyle(fontSize: _stampFontSize)),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, op.pos - Offset(tp.width / 2, tp.height / 2));
     }
   }
   canvas.restore();
@@ -292,12 +380,12 @@ void _paintStrokes(Canvas canvas, ui.Image? baseImage, List<_Stroke> strokes) {
 class _PaintCanvasPainter extends CustomPainter {
   final Color bodyColor;
   final ui.Image? baseImage;
-  final List<_Stroke> strokes;
+  final List<_PaintOp> ops;
 
   _PaintCanvasPainter({
     required this.bodyColor,
     required this.baseImage,
-    required this.strokes,
+    required this.ops,
   });
 
   @override
@@ -305,9 +393,9 @@ class _PaintCanvasPainter extends CustomPainter {
     final s = size.width / _paintSize;
     canvas.scale(s, s);
     canvas.drawPath(CreaturePainter.bodyPath(), Paint()..color = bodyColor);
-    _paintStrokes(canvas, baseImage, strokes);
+    _paintOps(canvas, baseImage, ops);
   }
 
   @override
-  bool shouldRepaint(_PaintCanvasPainter old) => true; // strokes はミュータブル
+  bool shouldRepaint(_PaintCanvasPainter old) => true; // ops はミュータブル
 }

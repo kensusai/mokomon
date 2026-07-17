@@ -79,8 +79,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
     }
     await tester.pump(const Duration(milliseconds: 700));
-    expect(find.text('ぜんぶ みつけた! +12 コイン!'), findsOneWidget);
-    expect(c.state.coins, 22);
+    expect(find.text('ぜんぶ みつけた! +20 コイン!'), findsOneWidget);
+    expect(c.state.coins, 30);
 
     await tester.pump(const Duration(seconds: 1));
   });

@@ -100,13 +100,13 @@ class _MemoryScreenState extends State<MemoryScreen> {
                     Expanded(
                       child: Center(
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 340),
+                          constraints: const BoxConstraints(maxWidth: 330),
                           child: GridView.count(
-                            crossAxisCount: 3,
+                            crossAxisCount: 4,
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
                             childAspectRatio: 4 / 5,
                             children: [
                               for (var i = 0; i < _game.cards.length; i++)

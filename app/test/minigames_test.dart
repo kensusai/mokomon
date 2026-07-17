@@ -34,10 +34,17 @@ void main() {
       }
       expect(g.timeLeft, 25);
       expect(g.items, isNotEmpty);
-      // 落下速度は 90〜160px/s
+      // 落下速度は 120〜220px/s × 加速係数(最大1.6)
       for (final it in g.items) {
-        expect(it.vy, inInclusiveRange(90, 160));
+        expect(it.vy, inInclusiveRange(120, 360));
       }
+    });
+
+    test('items spawn faster and fall faster as time runs out', () {
+      final early = CatchGame(rng: Random(1));
+      expect(early.speedFactor, 1.0);
+      early.timeLeft = 1;
+      expect(early.speedFactor, closeTo(1.58, 0.03));
     });
 
     test('tap within 44px scores 1 for fruit and 3 for star', () {
@@ -104,9 +111,10 @@ void main() {
   });
 
   group('MemoryGame', () {
-    test('deck is 6 pairs shuffled', () {
+    test('deck is 10 pairs shuffled (4x5)', () {
       final g = MemoryGame(rng: Random(3));
-      expect(g.cards, hasLength(12));
+      expect(memoryEmoji, hasLength(10));
+      expect(g.cards, hasLength(20));
       for (final e in memoryEmoji) {
         expect(g.cards.where((c) => c == e), hasLength(2));
       }
@@ -136,7 +144,7 @@ void main() {
       expect(g.faceUp, isEmpty);
     });
 
-    test('finishes when all 6 pairs are found', () {
+    test('finishes when all 10 pairs are found', () {
       final g = MemoryGame(rng: Random(3));
       for (final e in memoryEmoji) {
         final i = g.cards.indexOf(e);
