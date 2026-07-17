@@ -89,6 +89,13 @@ class _PaintScreenState extends State<PaintScreen> {
   var _tool = _Tool.brush;
   var _brush = _palette.first;
   var _stamp = _stamps.first;
+
+  /// 基本スタンプ+おみやげで解放された限定スタンプ(docs §14)。
+  late final List<String> _allStamps = [
+    ..._stamps,
+    ...kingGiftStamps
+        .where((e) => widget.controller.state.unlockedStamps.contains(e)),
+  ];
   var _widthIndex = 1;
   final _ops = <_PaintOp>[];
   ui.Image? _baseImage; // 確定済みレイヤー(保存済み模様+ぬりつぶし結果)
@@ -453,7 +460,7 @@ class _PaintScreenState extends State<PaintScreen> {
         runSpacing: 5,
         alignment: WrapAlignment.center,
         children: [
-          for (final e in _stamps)
+          for (final e in _allStamps)
             GestureDetector(
               onTap: () => setState(() => _stamp = e),
               child: Container(

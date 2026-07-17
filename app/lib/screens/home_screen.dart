@@ -138,6 +138,25 @@ class _HomeScreenState extends State<HomeScreen> {
     _oneShotTimers.add(Timer(d, fn));
   }
 
+  /// おみやげが発生していたら受け取ってお祝いする(docs §14)。
+  void _maybeShowGift() {
+    final gift = c.takePendingGift();
+    if (gift == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _creatureKey.currentState?.play(CreatureAnim.spin);
+      showCelebrate(
+        context,
+        sfx: c.sfx,
+        emoji: '🎆',
+        title: 'おうさまの おみやげ!',
+        desc: gift.stamp != null
+            ? 'あたらしい スタンプ「${gift.stamp}」が つかえるように なったよ!(+${gift.coins}コインも!)'
+            : 'コインを ${gift.coins}まい もらったよ!',
+      );
+    });
+  }
+
   /// 予兆に入った瞬間に一度だけ吹き出しを出す(プロトタイプ glowHinted)。
   void _onStateChanged() {
     final near = s.nearEvolve;
@@ -147,6 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Duration(milliseconds: 600), () => _hint('なんだか からだが ひかってる…!'));
     }
     if (!near) _glowHinted = false;
+    _maybeShowGift();
     _syncPattern();
   }
 
@@ -603,6 +623,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: StatPill(s.displayName),
             ),
             const SizedBox(height: 10),
+            if (s.stage == 3) ...[
+              // キング専用: きらきらゲージ(満タンでおみやげ)
+              StatMeter(
+                  icon: '✨',
+                  value: s.kingSparkle,
+                  colors: const [Color(0xFFFFE28A), Color(0xFFF0A92D)]),
+              const SizedBox(height: 10),
+            ],
             StatMeter(
                 icon: '🍖',
                 value: s.hunger,

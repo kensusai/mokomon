@@ -22,6 +22,7 @@ class CreatureSnapshot {
   String? equipFace;
   String? nickname;
   int? bg;
+  double kingSparkle;
 
   CreatureSnapshot({
     required this.stage,
@@ -35,6 +36,7 @@ class CreatureSnapshot {
     this.equipFace,
     this.nickname,
     this.bg,
+    this.kingSparkle = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -49,6 +51,7 @@ class CreatureSnapshot {
         'equipFace': equipFace,
         'nickname': nickname,
         'bg': bg,
+        'kingSparkle': kingSparkle,
       };
 
   factory CreatureSnapshot.fromJson(Map<String, dynamic> j) => CreatureSnapshot(
@@ -63,6 +66,7 @@ class CreatureSnapshot {
         equipFace: j['equipFace'],
         nickname: j['nickname'],
         bg: j['bg'],
+        kingSparkle: (j['kingSparkle'] ?? 0).toDouble(),
       );
 }
 
@@ -93,6 +97,12 @@ class GameState {
 
   /// 背景テーマ(bgThemes index)。null は種族デフォルト。端末ローカルのみ。
   int? bg;
+
+  /// キングのきらきらゲージ(0-100)。満タンでおみやげ。docs §14。
+  double kingSparkle = 0;
+
+  /// おみやげで解放された限定スタンプ(端末ローカル・全個体共通)。
+  Set<String> unlockedStamps = {};
 
   /// 実際に表示する背景(選択がなければ種族デフォルト)。
   int get effectiveBg => bg ?? speciesDefaultBg[species];
@@ -169,6 +179,8 @@ class GameState {
         'pattern': pattern,
         'nickname': nickname,
         'bg': bg,
+        'kingSparkle': kingSparkle,
+        'unlockedStamps': unlockedStamps.toList(),
         'roster': {
           for (final e in roster.entries) '${e.key}': e.value.toJson(),
         },
@@ -195,6 +207,9 @@ class GameState {
     pattern = j['pattern'];
     nickname = j['nickname'];
     bg = j['bg'];
+    kingSparkle = (j['kingSparkle'] ?? 0).toDouble();
+    unlockedStamps =
+        ((j['unlockedStamps'] as List?)?.cast<String>() ?? []).toSet();
     roster = {
       for (final e in ((j['roster'] as Map?) ?? {}).entries)
         int.parse(e.key as String):
@@ -278,10 +293,11 @@ class GameState {
           ? shopItems[a[10]].key
           : null;
       eggTaps = 0;
-      // 模様・なまえ・背景はあいことばに含まれない(仕様§8)
+      // 模様・なまえ・背景・ゲージはあいことばに含まれない(仕様§8)
       pattern = null;
       nickname = null;
       bg = null;
+      kingSparkle = 0;
       color = speciesList[species].color.toARGB32();
       return true;
     } catch (_) {

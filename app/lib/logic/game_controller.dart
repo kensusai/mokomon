@@ -20,6 +20,17 @@ enum CreatureTapOutcome { crack, hatched, petted, puffed }
 /// ショップのセルをタップした結果(docs/game-design.md §7)。
 enum ShopTapOutcome { bought, equipped, unequipped, notEnoughCoins }
 
+/// キングのおみやげ(docs/game-design.md §14)。
+/// [stamp] があれば限定スタンプ解放、なければ [coins] をもらう。
+class KingGift {
+  final String? stamp;
+  final int coins;
+  const KingGift({this.stamp, this.coins = 0});
+}
+
+/// おみやげで順に解放される限定スタンプ。
+const kingGiftStamps = ['👑', '🎆', '🦄'];
+
 /// ユースケース層: ゲーム操作とその副作用(通知・保存)をまとめる。
 /// UI は本クラス経由でのみ状態を変更する。
 class GameController extends ChangeNotifier {
@@ -66,6 +77,7 @@ class GameController extends ChangeNotifier {
   void pet() {
     state.happy = min(100, state.happy + 3);
     state.xp += 1;
+    _addSparkle(6);
     sfx.playBabble(state.species);
     _commit();
   }
@@ -89,6 +101,7 @@ class GameController extends ChangeNotifier {
   /// 💨(隠し機能・名前を付けない)。happy +2。docs/game-design.md §9。
   void puff() {
     state.happy = min(100, state.happy + 2);
+    _addSparkle(4);
     sfx.play(Sfx.puff);
     _commit();
   }
@@ -119,6 +132,7 @@ class GameController extends ChangeNotifier {
     state.hunger = min(100, state.hunger + food.hunger);
     state.happy = min(100, state.happy + food.happy);
     state.xp += food.xp;
+    _addSparkle(10);
     sfx.play(Sfx.munch);
     _commit();
     return true;
@@ -130,6 +144,7 @@ class GameController extends ChangeNotifier {
     state.coins += coins;
     state.happy = min(100, state.happy + 12);
     state.xp += 10;
+    _addSparkle(18);
     sfx.playJingle(Sfx.rewardJingle); // 派手に(BGMは一時停止)
     _commit();
   }
@@ -157,6 +172,7 @@ class GameController extends ChangeNotifier {
       ..pattern = null
       ..nickname = null
       ..bg = null
+      ..kingSparkle = 0
       ..color = speciesList[next].color.toARGB32();
     _commit();
     return next;
@@ -181,6 +197,7 @@ class GameController extends ChangeNotifier {
         equipFace: state.equipFace,
         nickname: state.nickname,
         bg: state.bg,
+        kingSparkle: state.kingSparkle,
       );
 
   /// 図鑑から過去に育てた子と交代する(docs/game-design.md §12)。
@@ -205,7 +222,8 @@ class GameController extends ChangeNotifier {
         ..equipHead = snap.equipHead
         ..equipFace = snap.equipFace
         ..nickname = snap.nickname
-        ..bg = snap.bg;
+        ..bg = snap.bg
+        ..kingSparkle = snap.kingSparkle;
     } else {
       // 記録がない(旧セーブ等)場合はキング姿の初期状態で迎える
       state
@@ -217,6 +235,7 @@ class GameController extends ChangeNotifier {
         ..pattern = null
         ..nickname = null
         ..bg = null
+        ..kingSparkle = 0
         ..color = speciesList[speciesIndex].color.toARGB32();
     }
     sfx.playBabble(speciesIndex); // ただいまのごあいさつ
@@ -290,6 +309,7 @@ class GameController extends ChangeNotifier {
     state.pattern = patternBase64;
     state.happy = min(100, state.happy + 8);
     state.xp += 4;
+    _addSparkle(14);
     sfx.play(Sfx.happy);
     _commit();
   }
@@ -309,6 +329,35 @@ class GameController extends ChangeNotifier {
     sfx.play(Sfx.fanfare);
     _commit();
     return true;
+  }
+
+  KingGift? _pendingGift;
+
+  /// たまっていたおみやげを受け取る(1回だけ返す)。UI側で演出する。
+  KingGift? takePendingGift() {
+    final g = _pendingGift;
+    _pendingGift = null;
+    return g;
+  }
+
+  /// きらきらゲージ(キングのみ)。満タンでおみやげ発生(docs §14)。
+  void _addSparkle(double amount) {
+    if (state.stage != 3) return;
+    state.kingSparkle = min(100, state.kingSparkle + amount);
+    if (state.kingSparkle < 100) return;
+    state.kingSparkle = 0;
+    final locked =
+        kingGiftStamps.where((e) => !state.unlockedStamps.contains(e));
+    if (locked.isNotEmpty) {
+      final stamp = locked.first;
+      state.unlockedStamps.add(stamp);
+      _pendingGift = KingGift(stamp: stamp, coins: 10);
+      state.coins += 10;
+    } else {
+      final coins = 20 + _rng.nextInt(21);
+      state.coins += coins;
+      _pendingGift = KingGift(coins: coins);
+    }
   }
 
   /// 変更を通知し保存する。書き込みは操作のたび(仕様)。
