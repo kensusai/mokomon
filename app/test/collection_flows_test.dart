@@ -153,11 +153,35 @@ void main() {
     final c = GameController(GameState()..stage = 1, SaveStore());
     await tester.pumpWidget(MaterialApp(home: PaintScreen(controller: c)));
 
+    await tester.tap(find.text('スタンプ')); // ツールを切替
+    await tester.pump();
     await tester.tap(find.text('💩')); // おもしろスタンプを選ぶ
     await tester.pump();
     final canvas = find.byType(CustomPaint).first;
     final gesture = await tester.startGesture(tester.getCenter(canvas));
     await gesture.up();
+    await tester.pump();
+
+    await tester.runAsync(() async {
+      await tester.tap(find.text('できた!'));
+      for (var i = 0; i < 20 && c.state.pattern == null; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+    });
+    expect(c.state.pattern, isNotNull);
+  });
+
+  testWidgets('paint: bucket fill produces a savable pattern', (tester) async {
+    final c = GameController(GameState()..stage = 1, SaveStore());
+    await tester.pumpWidget(MaterialApp(home: PaintScreen(controller: c)));
+
+    await tester.tap(find.text('ぬりつぶし'));
+    await tester.pump();
+    final canvas = find.byType(CustomPaint).first;
+    await tester.runAsync(() async {
+      await tester.tap(canvas); // 体の中をタップ → 全面ぬりつぶし
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    });
     await tester.pump();
 
     await tester.runAsync(() async {
