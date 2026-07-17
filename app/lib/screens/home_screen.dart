@@ -54,17 +54,14 @@ const _petParticles = {
   _PetZone.side: ['🎵', '⭐', '💫'],
 };
 
-const _petSounds = {
-  _PetZone.head: [Sfx.coo, Sfx.happy],
-  _PetZone.belly: [Sfx.giggle, Sfx.happy],
-  _PetZone.side: [Sfx.giggle, Sfx.coo],
-};
-
 const _petAnims = {
   _PetZone.head: CreatureAnim.wiggle,
   _PetZone.belly: CreatureAnim.bounce,
   _PetZone.side: CreatureAnim.wiggle,
 };
+
+/// BGMの曲名(🎵ボタンで切替。SfxPlayer.bgmTracks と対応)。
+const _bgmNames = ['そよかぜ', 'わくわく', 'ぽかぽか'];
 
 /// お絵かきを保存したときの褒めセリフ(docs/game-design.md §6)。
 const _paintPraiseLines = [
@@ -193,9 +190,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final lowerBody = box != null && d.localPosition.dy / box.size.height > 0.7;
     final zone =
         box == null ? _PetZone.belly : _zoneOf(d.localPosition, box.size);
-    final petSound = _petSounds[zone]![_rng.nextInt(_petSounds[zone]!.length)];
 
-    switch (c.tapCreature(lowerBody: lowerBody, petSound: petSound)) {
+    switch (c.tapCreature(lowerBody: lowerBody)) {
       case CreatureTapOutcome.crack:
         _creatureKey.currentState?.play(CreatureAnim.wiggle);
         _hint(s.eggTaps == 1 ? 'あれ? なにか きこえる…' : 'ヒビが はいった! もういっかい!');
@@ -404,6 +400,11 @@ class _HomeScreenState extends State<HomeScreen> {
             _iconButton('📖', _onBookPressed),
             const SizedBox(width: 8),
             _iconButton('💾', () => showCodeDialog(context, c)),
+            const SizedBox(width: 8),
+            _iconButton('🎵', () {
+              final track = c.cycleBgm();
+              _hint('♪ ${_bgmNames[track]}');
+            }),
             const SizedBox(width: 8),
             _iconButton(s.sound ? '🔊' : '🔇', c.toggleSound),
           ],

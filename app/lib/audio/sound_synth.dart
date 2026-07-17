@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 /// 効果音の種類(docs/game-design.md §10)。
-/// coo/giggle はなでなでの鳴き声、bgm はホームのループ曲。
+/// coo/giggle は鳴き声、megaFanfare〜dressUp は派手ジングル、bgm* はループ曲。
 enum Sfx {
   tap,
   coin,
@@ -16,7 +16,12 @@ enum Sfx {
   puff,
   coo,
   giggle,
+  megaFanfare,
+  rewardJingle,
+  dressUp,
   bgm,
+  bgm2,
+  bgm3,
 }
 
 enum _Wave { sine, square, sawtooth, triangle }
@@ -84,14 +89,176 @@ final Map<Sfx, List<_Tone>> _recipes = {
     _Tone(880, 0.06, _Wave.triangle, 0.11, 0.07),
     _Tone(1047, 0.09, _Wave.triangle, 0.11, 0.14),
   ],
-  // ホームBGM: ペンタトニックのやさしいループ(約19秒)
+  // 進化リビール用メガファンファーレ(駆け上がり+和音3連+シャンシャン)
+  Sfx.megaFanfare: _megaFanfareTones(),
+  // ミニゲーム報酬「タタタ・ジャーン!」+キラキラ
+  Sfx.rewardJingle: const [
+    _Tone(659, 0.11, _Wave.triangle, 0.12),
+    _Tone(659, 0.11, _Wave.triangle, 0.12, 0.14),
+    _Tone(659, 0.11, _Wave.triangle, 0.12, 0.28),
+    _Tone(880, 0.55, _Wave.triangle, 0.13, 0.45),
+    _Tone(220, 0.5, _Wave.sine, 0.09, 0.45),
+    _Tone(1760, 0.1, _Wave.sine, 0.07, 0.62),
+    _Tone(2093, 0.14, _Wave.sine, 0.07, 0.78),
+  ],
+  // きせかえのハープ風グリッサンド+ベル
+  Sfx.dressUp: const [
+    _Tone(523, 0.16, _Wave.sine, 0.1),
+    _Tone(659, 0.16, _Wave.sine, 0.1, 0.08),
+    _Tone(784, 0.16, _Wave.sine, 0.1, 0.16),
+    _Tone(1047, 0.16, _Wave.sine, 0.1, 0.24),
+    _Tone(1319, 0.2, _Wave.sine, 0.1, 0.32),
+    _Tone(1568, 0.4, _Wave.triangle, 0.09, 0.5),
+  ],
+  // ホームBGM 3曲(docs/game-design.md §10)
   Sfx.bgm: _bgmTones(),
+  Sfx.bgm2: _bgm2Tones(),
+  Sfx.bgm3: _bgm3Tones(),
 };
+
+/// メガファンファーレ: 8音駆け上がり → 和音2連 → ロング和音+高音シャンシャン
+List<_Tone> _megaFanfareTones() {
+  const run = <double>[392, 440, 523, 587, 659, 698, 784, 880];
+  final tones = <_Tone>[
+    for (var i = 0; i < run.length; i++)
+      _Tone(run[i], 0.1, _Wave.square, 0.07, i * 0.07),
+  ];
+  void chord(List<num> freqs, double at, double dur, [double vol = 0.1]) {
+    for (final f in freqs) {
+      tones.add(_Tone(f.toDouble(), dur, _Wave.triangle, vol, at));
+    }
+  }
+
+  chord(const [523, 659, 784], 0.66, 0.28);
+  chord(const [587, 740, 880], 0.98, 0.28);
+  chord(const [523, 659, 784, 1047], 1.32, 0.85, 0.11);
+  tones.add(const _Tone(1568, 0.8, _Wave.sine, 0.08, 1.32));
+  tones.add(const _Tone(2093, 0.5, _Wave.sine, 0.06, 1.6));
+  return tones;
+}
 
 // ---------- BGM(実行時合成のチップチューン風ループ) ----------
 
 const _bpm = 100.0;
 const _beat = 60.0 / _bpm; // 1拍 = 0.6秒
+
+/// メロディ+ベースの音列からBGM用 _Tone 列を組み立てる共通処理。
+List<_Tone> _song({
+  required List<num> melody,
+  required double melodyBeat,
+  required _Wave melodyWave,
+  required double melodyVol,
+  required List<num> bass,
+  required double bassBeat,
+  required double bassVol,
+}) {
+  final tones = <_Tone>[];
+  for (var i = 0; i < melody.length; i++) {
+    if (melody[i] == 0) continue;
+    tones.add(_Tone(melody[i].toDouble(), melodyBeat * 0.9, melodyWave,
+        melodyVol, i * melodyBeat));
+  }
+  for (var i = 0; i < bass.length; i++) {
+    tones.add(_Tone(
+        bass[i].toDouble(), bassBeat * 0.9, _Wave.sine, bassVol, i * bassBeat));
+  }
+  return tones;
+}
+
+/// BGM2「わくわく」: アップテンポ(132bpm)の跳ねるスクエアリード。
+List<_Tone> _bgm2Tones() {
+  // 8分音符 ≒ 0.227s(132bpm)で軽快に
+  return _song(
+    melody: const [
+      523,
+      784,
+      659,
+      784,
+      880,
+      784,
+      659,
+      523,
+      587,
+      659,
+      587,
+      523,
+      659,
+      523,
+      440,
+      523,
+      523,
+      784,
+      659,
+      784,
+      880,
+      1047,
+      880,
+      784,
+      659,
+      784,
+      880,
+      1047,
+      784,
+      659,
+      587,
+      523,
+    ],
+    melodyBeat: 0.227,
+    melodyWave: _Wave.square,
+    melodyVol: 0.03,
+    bass: const [
+      131,
+      131,
+      196,
+      196,
+      175,
+      175,
+      196,
+      196,
+      131,
+      131,
+      196,
+      196,
+      175,
+      196,
+      131,
+      131,
+    ],
+    bassBeat: 0.454,
+    bassVol: 0.05,
+  );
+}
+
+/// BGM3「ぽかぽか」: ゆったり(76bpm)のオルゴール風サインリード。
+List<_Tone> _bgm3Tones() {
+  const beat = 60.0 / 76; // 0.789s
+  return _song(
+    melody: const [
+      659,
+      587,
+      523,
+      587,
+      659,
+      659,
+      587,
+      523,
+      440,
+      523,
+      587,
+      523,
+      440,
+      392,
+      440,
+      523,
+    ],
+    melodyBeat: beat,
+    melodyWave: _Wave.sine,
+    melodyVol: 0.055,
+    bass: const [131, 175, 147, 131],
+    bassBeat: beat * 4,
+    bassVol: 0.05,
+  );
+}
 
 /// メロディ(三角波)+ベース(サイン波)の8小節ループを _Tone 列で組み立てる。
 /// 音量はSFXよりかなり小さく(BGMは背景に徹する)。
@@ -128,11 +295,32 @@ const _sampleRate = 22050;
 /// 再生は audioplayers の BytesSource(呼び出し側)。
 class SoundSynth {
   final _cache = <Sfx, Uint8List>{};
+  final _babbleCache = <int, Uint8List>{};
 
-  Uint8List wavFor(Sfx sfx) => _cache.putIfAbsent(sfx, () => _render(sfx));
+  Uint8List wavFor(Sfx sfx) =>
+      _cache.putIfAbsent(sfx, () => _render(_recipes[sfx]!));
 
-  Uint8List _render(Sfx sfx) {
-    final tones = _recipes[sfx]!;
+  /// しゃべり風バブル音声(どうぶつの森式)。種族ごとに声の高さが変わり、
+  /// variant(0-2)で毎回すこし違う「喋り」になる。決定的に生成しキャッシュ。
+  Uint8List wavForBabble(int species, int variant) {
+    return _babbleCache.putIfAbsent(species * 16 + variant, () {
+      final rng = Random(species * 31 + variant * 7 + 5);
+      final base = 300.0 + (species % 9) * 42; // 種族の声の高さ
+      final syllables = 4 + rng.nextInt(3);
+      final tones = <_Tone>[];
+      var t = 0.0;
+      for (var i = 0; i < syllables; i++) {
+        final f = base * (0.85 + rng.nextDouble() * 0.85);
+        final dur = 0.07 + rng.nextDouble() * 0.06;
+        tones.add(_Tone(f, dur, _Wave.triangle, 0.13, t));
+        tones.add(_Tone(f * 2, dur, _Wave.sine, 0.05, t)); // 倍音で声らしく
+        t += dur + 0.02 + rng.nextDouble() * 0.04;
+      }
+      return _render(tones);
+    });
+  }
+
+  Uint8List _render(List<_Tone> tones) {
     var totalSec = 0.0;
     for (final t in tones) {
       totalSec = max(totalSec, t.delay + t.dur + 0.03);

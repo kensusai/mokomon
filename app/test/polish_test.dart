@@ -186,10 +186,51 @@ void main() {
   });
 
   group('BGM', () {
-    test('renders a long looping track', () {
-      final wav = SoundSynth().wavFor(Sfx.bgm);
-      // 約19秒ループ(22050Hz 16bit mono) ≒ 840KB
-      expect(wav.length, greaterThan(400000));
+    test('renders three looping tracks', () {
+      final synth = SoundSynth();
+      for (final t in [Sfx.bgm, Sfx.bgm2, Sfx.bgm3]) {
+        // どの曲も数秒以上のループ(22050Hz 16bit mono)
+        expect(synth.wavFor(t).length, greaterThan(200000), reason: '$t');
+      }
+    });
+
+    test('cycleBgm rotates tracks and persists the choice', () {
+      final c = GameController(GameState()..stage = 1, SaveStore());
+      expect(c.state.bgmTrack, 0);
+      expect(c.cycleBgm(), 1);
+      expect(c.cycleBgm(), 2);
+      expect(c.cycleBgm(), 0);
+      c.state.bgmTrack = 2;
+      final restored = GameState()..loadJson(c.state.toJson());
+      expect(restored.bgmTrack, 2);
+    });
+
+    testWidgets('🎵 button cycles the track and shows the name',
+        (tester) async {
+      final c = await bootApp(tester, state: GameState()..stage = 1);
+      await tester.tap(find.text('🎵'));
+      await tester.pump();
+      expect(c.state.bgmTrack, 1);
+      expect(find.text('♪ わくわく'), findsWidgets);
+      await drainTimers(tester);
+    });
+  });
+
+  group('babble voice (docs/game-design.md §3)', () {
+    test('renders a valid deterministic voice per species/variant', () {
+      final synth = SoundSynth();
+      for (final species in [0, 4, 8]) {
+        for (var variant = 0; variant < 3; variant++) {
+          final wav = synth.wavForBabble(species, variant);
+          expect(wav.length, greaterThan(44));
+          expect(String.fromCharCodes(wav.sublist(0, 4)), 'RIFF');
+        }
+      }
+      // キャッシュされ、同じ入力は同一バイト列
+      expect(identical(synth.wavForBabble(0, 0), synth.wavForBabble(0, 0)),
+          isTrue);
+      // 種族が違えば別の声
+      expect(synth.wavForBabble(0, 0), isNot(equals(synth.wavForBabble(5, 0))));
     });
   });
 

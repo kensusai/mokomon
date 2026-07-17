@@ -31,8 +31,9 @@ class GameController extends ChangeNotifier {
   final Random _rng;
   Timer? _decayTimer;
 
-  /// 効果音(ミュート設定は state.sound を参照)。
-  late final SfxPlayer sfx = SfxPlayer(enabled: () => state.sound);
+  /// 効果音(ミュート・BGM選択は state を参照)。
+  late final SfxPlayer sfx =
+      SfxPlayer(enabled: () => state.sound, bgmTrack: () => state.bgmTrack);
 
   /// アプリ起動中の減衰(10秒ごと)。docs/game-design.md §3。
   void startDecayTimer() {
@@ -61,20 +62,17 @@ class GameController extends ChangeNotifier {
     return EggTapOutcome.crack;
   }
 
-  /// なでなで: happy +3 / xp +1。docs/game-design.md §3。
-  /// [sound] はタップ位置に応じた鳴き声(UI側が選ぶ)。
-  void pet({Sfx sound = Sfx.happy}) {
+  /// なでなで: happy +3 / xp +1。タップすると種族の声でしゃべる。
+  void pet() {
     state.happy = min(100, state.happy + 3);
     state.xp += 1;
-    sfx.play(sound);
+    sfx.playBabble(state.species);
     _commit();
   }
 
   /// いきものタップの一次判定。たまごなら孵化進行、
   /// 下部30%タップ or 6% で💨、それ以外はなでなで(docs/game-design.md §3, §9)。
-  /// [petSound] はタップ位置に応じた鳴き声(UI側が選ぶ)。
-  CreatureTapOutcome tapCreature(
-      {required bool lowerBody, Sfx petSound = Sfx.happy}) {
+  CreatureTapOutcome tapCreature({required bool lowerBody}) {
     if (state.stage == 0) {
       return tapEgg() == EggTapOutcome.hatched
           ? CreatureTapOutcome.hatched
@@ -84,7 +82,7 @@ class GameController extends ChangeNotifier {
       puff();
       return CreatureTapOutcome.puffed;
     }
-    pet(sound: petSound);
+    pet();
     return CreatureTapOutcome.petted;
   }
 
@@ -93,6 +91,14 @@ class GameController extends ChangeNotifier {
     state.happy = min(100, state.happy + 2);
     sfx.play(Sfx.puff);
     _commit();
+  }
+
+  /// BGMを次の曲へ切り替える(選択は保存)。現在のトラック番号を返す。
+  int cycleBgm() {
+    state.bgmTrack = (state.bgmTrack + 1) % SfxPlayer.bgmTracks.length;
+    sfx.restartBgm();
+    _commit();
+    return state.bgmTrack;
   }
 
   /// サウンドのミュートトグル(設定は保存される)。BGMも連動する。
@@ -124,7 +130,7 @@ class GameController extends ChangeNotifier {
     state.coins += coins;
     state.happy = min(100, state.happy + 12);
     state.xp += 10;
-    sfx.play(Sfx.fanfare);
+    sfx.playJingle(Sfx.rewardJingle); // 派手に(BGMは一時停止)
     _commit();
   }
 
@@ -160,8 +166,9 @@ class GameController extends ChangeNotifier {
     switch (outcome) {
       case ShopTapOutcome.bought:
         sfx.play(Sfx.coin);
+        sfx.playJingle(Sfx.dressUp); // きせかえは派手に
       case ShopTapOutcome.equipped:
-        sfx.play(Sfx.happy);
+        sfx.play(Sfx.dressUp);
       case ShopTapOutcome.unequipped:
         sfx.play(Sfx.tap);
       case ShopTapOutcome.notEnoughCoins:

@@ -53,6 +53,8 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
   void initState() {
     super.initState();
     _shake.forward();
+    // カットシーン中はBGMを止めて演出音を主役にする
+    widget.controller.sfx.syncBgm(suspend: true);
     widget.controller.sfx.play(Sfx.evoRiser);
     _timers.add(Timer(const Duration(milliseconds: 2150), () {
       if (!mounted) return;
@@ -65,13 +67,14 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
   void _reveal() {
     if (!mounted) return;
     widget.controller.applyEvolution(widget.newStage);
-    widget.controller.sfx.play(Sfx.fanfare);
+    widget.controller.sfx.play(Sfx.megaFanfare);
     setState(() => _revealed = true);
     _pop.forward(from: 0);
   }
 
   @override
   void dispose() {
+    widget.controller.sfx.syncBgm(); // BGM再開
     for (final t in _timers) {
       t.cancel();
     }

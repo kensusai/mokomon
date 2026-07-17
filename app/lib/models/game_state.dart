@@ -21,6 +21,9 @@ class GameState {
   String? equipHead;
   String? equipFace;
   bool sound = true;
+
+  /// 選択中のBGMトラック(端末ローカル設定・あいことばに含めない)。
+  int bgmTrack = 0;
   int lastSavedMs = 0;
 
   /// 体色(ARGB)。おえかき画面で変更でき、種族と独立に保持する。
@@ -90,6 +93,7 @@ class GameState {
         'equipHead': equipHead,
         'equipFace': equipFace,
         'sound': sound,
+        'bgmTrack': bgmTrack,
         'color': color,
         'pattern': pattern,
         'last': DateTime.now().millisecondsSinceEpoch,
@@ -110,6 +114,7 @@ class GameState {
     equipHead = j['equipHead'];
     equipFace = j['equipFace'];
     sound = j['sound'] ?? true;
+    bgmTrack = j['bgmTrack'] ?? 0;
     color = j['color'] ?? speciesList[species].color.toARGB32();
     pattern = j['pattern'];
     lastSavedMs = j['last'] ?? 0;

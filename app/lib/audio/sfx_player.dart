@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
@@ -11,16 +13,23 @@ final bool _isFlutterTest =
     !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
 
 /// 効果音プレイヤー(インフラ層)。合成WAVを audioplayers で再生する。
-/// [enabled] でミュート設定(GameState.sound)を参照する。
+/// [enabled] はミュート設定、[bgmTrack] は選択中のBGM(GameState参照)。
 class SfxPlayer {
-  SfxPlayer({required this.enabled});
+  SfxPlayer({required this.enabled, this.bgmTrack});
+
+  /// 選択できるBGMトラック(GameState.bgmTrack の index に対応)。
+  static const bgmTracks = [Sfx.bgm, Sfx.bgm2, Sfx.bgm3];
 
   final bool Function() enabled;
+  final int Function()? bgmTrack;
   final _synth = SoundSynth();
   final _players = <Sfx, AudioPlayer>{};
+  final _rng = Random();
 
   AudioPlayer? _bgm;
+  AudioPlayer? _voice;
   var _bgmStarted = false;
+  Timer? _duckTimer;
 
   Future<void> play(Sfx sfx) async {
     if (_isFlutterTest || !enabled()) return;
@@ -32,6 +41,46 @@ class SfxPlayer {
     } catch (e) {
       // 効果音の失敗でゲームを止めない
       debugPrint('sfx failed: $e');
+    }
+  }
+
+  /// いきもののバブル音声(種族ごとの声・3バリエーションからランダム)。
+  Future<void> playBabble(int species) async {
+    if (_isFlutterTest || !enabled()) return;
+    try {
+      _voice ??= AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
+      await _voice!.stop();
+      await _voice!.play(BytesSource(
+          _synth.wavForBabble(species, _rng.nextInt(3)),
+          mimeType: 'audio/wav'));
+    } catch (e) {
+      debugPrint('sfx failed: $e');
+    }
+  }
+
+  /// 派手ジングル: 鳴っている間はBGMを止めて主役にする。
+  Future<void> playJingle(Sfx sfx) async {
+    if (_isFlutterTest) return;
+    final wav = _synth.wavFor(sfx);
+    final seconds = (wav.length - 44) / 2 / 22050;
+    play(sfx);
+    try {
+      await _bgm?.pause();
+    } catch (_) {}
+    _duckTimer?.cancel();
+    _duckTimer =
+        Timer(Duration(milliseconds: (seconds * 1000).round() + 250), syncBgm);
+  }
+
+  /// BGMトラック変更を反映する(再生し直す)。
+  Future<void> restartBgm() async {
+    if (_isFlutterTest) return;
+    try {
+      await _bgm?.stop();
+      _bgmStarted = false;
+      await syncBgm();
+    } catch (e) {
+      debugPrint('bgm failed: $e');
     }
   }
 
@@ -57,8 +106,10 @@ class SfxPlayer {
           await player.resume();
         } else {
           _bgmStarted = true;
+          final track =
+              bgmTracks[(bgmTrack?.call() ?? 0).clamp(0, bgmTracks.length - 1)];
           await player
-              .play(BytesSource(_synth.wavFor(Sfx.bgm), mimeType: 'audio/wav'));
+              .play(BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'));
         }
       } else {
         await player.pause();
@@ -69,9 +120,11 @@ class SfxPlayer {
   }
 
   void dispose() {
+    _duckTimer?.cancel();
     for (final p in _players.values) {
       p.dispose();
     }
+    _voice?.dispose();
     _bgm?.dispose();
   }
 }
