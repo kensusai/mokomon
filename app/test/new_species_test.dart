@@ -12,8 +12,7 @@ void main() {
       expect(speciesList, hasLength(15));
       expect(speciesList[7].key, 'nyan');
       expect(speciesList[8].key, 'dandy');
-      expect(
-          speciesList.sublist(9).map((s) => s.key).toList(),
+      expect(speciesList.sublist(9).map((s) => s.key).toList(),
           ['mojya', 'guru', 'paku', 'nemu', 'robo', 'obake']);
       expect(secretSpeciesIndex, 3); // 金のたまごは変わらず pika
       // 色・名前・絵文字が全種族で揃っている
