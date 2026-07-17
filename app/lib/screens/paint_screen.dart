@@ -275,13 +275,15 @@ class _PaintScreenState extends State<PaintScreen> {
                 const SizedBox(height: 8),
                 Expanded(
                   child: LayoutBuilder(builder: (context, box) {
+                    // 余白を作らずキャンバスを最大化(下の道具との間は16だけ空ける)
                     final canvasSize =
-                        min(min(box.maxWidth - 40, 340.0), box.maxHeight - 264)
-                            .clamp(120.0, 340.0);
+                        min(min(box.maxWidth - 40, 400.0), box.maxHeight - 216)
+                            .clamp(120.0, 400.0);
                     return Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         _canvas(canvasSize),
-                        const Spacer(),
+                        const SizedBox(height: 16),
                         _toolRow(),
                         const SizedBox(height: 6),
                         if (_tool == _Tool.stamp)

@@ -25,9 +25,11 @@ import '../widgets/shop_sheet.dart';
 import '../widgets/stat_meter.dart';
 import '../widgets/toast.dart';
 import '../widgets/ui_kit.dart';
+import 'balloon_screen.dart';
 import 'catch_screen.dart';
 import 'memory_screen.dart';
 import 'odd_one_screen.dart';
+import 'order_screen.dart';
 import 'paint_screen.dart';
 import 'puzzle_screen.dart';
 import 'trace_screen.dart';
@@ -302,6 +304,8 @@ class _HomeScreenState extends State<HomeScreen> {
       'catch' => CatchScreen(controller: c),
       'puzzle' => PuzzleScreen(controller: c),
       'whack' => WhackScreen(controller: c),
+      'balloon' => BalloonScreen(controller: c),
+      'order' => OrderScreen(controller: c),
       'trace' => TraceScreen(controller: c),
       'odd' => OddOneScreen(controller: c),
       _ => MemoryScreen(controller: c),

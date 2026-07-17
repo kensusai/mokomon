@@ -308,6 +308,11 @@ const oddPairs = [
   ('🐶', '🐺'),
   ('🌸', '🌺'),
   ('🙂', '🙃'),
+  ('😺', '😸'),
+  ('🌕', '🌝'),
+  ('🐥', '🐤'),
+  ('🧸', '🐻'),
+  ('🍪', '🥯'),
 ];
 const oddRounds = 8;
 const oddRewardPerRound = 2;
@@ -326,7 +331,9 @@ class OddOneGame {
 
   bool get finished => round >= oddRounds;
 
-  int get _gridSize => switch (round) { < 2 => 6, < 4 => 9, _ => 12 };
+  // こどもFBで難化: 9 → 12 → 16 → 20枚
+  int get _gridSize =>
+      switch (round) { < 2 => 9, < 4 => 12, < 6 => 16, _ => 20 };
 
   void _newRound() {
     final pair = oddPairs[_rng.nextInt(oddPairs.length)];
@@ -344,6 +351,116 @@ class OddOneGame {
     reward += oddRewardPerRound;
     round++;
     if (!finished) _newRound();
+    return true;
+  }
+}
+
+// ---------- ふうせんわり ----------
+
+const balloonDurationSec = 30;
+const balloonTapRadius = 46.0;
+
+class BalloonItem {
+  double x;
+  double y;
+  final double vy; // 上昇速度(px/s)
+  final String emoji;
+  final bool golden;
+  final bool bomb;
+  double wobble;
+  BalloonItem({
+    required this.x,
+    required this.y,
+    required this.vy,
+    required this.emoji,
+    required this.golden,
+    required this.bomb,
+    required this.wobble,
+  });
+
+  double get renderX => x + sin(wobble) * 8;
+}
+
+/// ふうせんわり: 下からふわふわ上がる風船をタップ。💣は-2(0未満なし)。
+class BalloonGame {
+  BalloonGame({Random? rng}) : _rng = rng ?? Random();
+
+  final Random _rng;
+  final items = <BalloonItem>[];
+  var score = 0;
+  var timeLeft = balloonDurationSec;
+  var _spawnT = 0.0;
+  var _timerAcc = 0.0;
+
+  bool get finished => timeLeft <= 0;
+
+  double get speedFactor => 1.0 + 0.5 * (1 - timeLeft / balloonDurationSec);
+
+  void update(double dt, double width, double height) {
+    if (finished) return;
+    _timerAcc += dt;
+    if (_timerAcc >= 1) {
+      _timerAcc -= 1;
+      timeLeft--;
+      if (finished) return;
+    }
+    _spawnT -= dt;
+    if (_spawnT <= 0) {
+      _spawnT = (0.5 + _rng.nextDouble() * 0.45) / speedFactor;
+      final roll = _rng.nextDouble();
+      final bomb = roll < 0.10;
+      final golden = !bomb && roll < 0.24;
+      items.add(BalloonItem(
+        x: 34 + _rng.nextDouble() * (width - 68),
+        y: height + 40,
+        vy: (95 + _rng.nextDouble() * 85) * speedFactor,
+        emoji: bomb ? '💣' : (golden ? '⭐' : '🎈'),
+        golden: golden,
+        bomb: bomb,
+        wobble: _rng.nextDouble() * 2 * pi,
+      ));
+    }
+    for (final it in items) {
+      it.y -= it.vy * dt;
+      it.wobble += dt * 2.4;
+    }
+    items.removeWhere((it) => it.y < -60);
+  }
+
+  BalloonItem? tapAt(double x, double y) {
+    for (var i = items.length - 1; i >= 0; i--) {
+      final it = items[i];
+      if (sqrt(pow(it.renderX - x, 2) + pow(it.y - y, 2)) < balloonTapRadius) {
+        score = max(0, score + (it.bomb ? -2 : (it.golden ? 3 : 1)));
+        items.removeAt(i);
+        return it;
+      }
+    }
+    return null;
+  }
+}
+
+// ---------- じゅんばんタッチ ----------
+
+/// 1〜9をじゅんばんにタッチ。はやいほどコインが多い。
+class OrderGame {
+  OrderGame({Random? rng}) {
+    cells = List.generate(9, (i) => i + 1)..shuffle(rng ?? Random());
+  }
+
+  late final List<int> cells;
+  var next = 1;
+
+  bool get finished => next > 9;
+
+  /// 何秒で終えたかでコイン(はやい=16 / ふつう=10 / ゆっくり=6)。
+  static int coinsForSeconds(double seconds) =>
+      seconds < 14 ? 16 : (seconds < 24 ? 10 : 6);
+
+  bool tap(int cellIndex) {
+    if (finished) return false;
+    if (cells[cellIndex] != next) return false;
+    next++;
     return true;
   }
 }

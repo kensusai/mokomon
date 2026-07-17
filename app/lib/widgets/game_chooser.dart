@@ -2,72 +2,62 @@ import 'package:flutter/material.dart';
 
 import 'ui_kit.dart';
 
-/// ミニゲーム選択モーダル(プロトタイプ #chooser)。選ばれたキーを返す。
+/// ゲーム一覧(key, 絵文字, 名前, グラデ)。
+const _games = [
+  ('catch', '🍎', 'フルーツキャッチ', blueGradient),
+  ('balloon', '🎈', 'ふうせんわり', pinkGradient),
+  ('whack', '🔨', 'もぐらたたき', greenGradient),
+  ('trace', '✏️', 'なぞってかこう', orangeGradient),
+  ('puzzle', '🧩', 'おなじの どれ?', purpleGradient),
+  ('odd', '👀', 'ちがうの どっち?', [Color(0xFF5BC8E8), Color(0xFF2E9BC0)]),
+  ('memory', '🃏', 'ペアさがし', [Color(0xFF9B8CFF), Color(0xFF6B5BD6)]),
+  ('order', '🔢', 'じゅんばんタッチ', [Color(0xFF7ED6A5), Color(0xFF4CAF7D)]),
+];
+
+/// ミニゲーム選択モーダル。2列グリッドで8種を1画面に(スクロールなし)。
 Future<String?> showGameChooser(BuildContext context) {
   return showDialog<String>(
     context: context,
     builder: (dialogContext) => MokoModalShell(
       child: Column(
-        mainAxisSize: MainAxisSize.max,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const ModalTitle('どれで あそぶ?'),
           const SizedBox(height: 12),
-          Flexible(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _GameCard(
-                    emoji: '🍎',
-                    title: 'フルーツキャッチ',
-                    desc: 'おちてくるフルーツを タッチ!',
-                    colors: blueGradient,
-                    onTap: () => Navigator.of(dialogContext).pop('catch'),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 1.8,
+            children: [
+              for (final (key, emoji, title, colors) in _games)
+                PressableGradient(
+                  colors: colors,
+                  radius: 18,
+                  onTap: () => Navigator.of(dialogContext).pop(key),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(emoji, style: const TextStyle(fontSize: 26)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(title,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white)),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  _GameCard(
-                    emoji: '🧩',
-                    title: 'おなじの どれ?',
-                    desc: 'おなじ かたちを さがそう!',
-                    colors: pinkGradient,
-                    onTap: () => Navigator.of(dialogContext).pop('puzzle'),
-                  ),
-                  const SizedBox(height: 10),
-                  _GameCard(
-                    emoji: '🃏',
-                    title: 'ペアさがし',
-                    desc: 'おなじ カードを めくろう!',
-                    colors: purpleGradient,
-                    onTap: () => Navigator.of(dialogContext).pop('memory'),
-                  ),
-                  const SizedBox(height: 10),
-                  _GameCard(
-                    emoji: '🔨',
-                    title: 'もぐらたたき',
-                    desc: 'でてきた いきものを タッチ!',
-                    colors: greenGradient,
-                    onTap: () => Navigator.of(dialogContext).pop('whack'),
-                  ),
-                  const SizedBox(height: 10),
-                  _GameCard(
-                    emoji: '✏️',
-                    title: 'なぞって かこう',
-                    desc: 'てんせんを なぞって ほしを もらおう!',
-                    colors: orangeGradient,
-                    onTap: () => Navigator.of(dialogContext).pop('trace'),
-                  ),
-                  const SizedBox(height: 10),
-                  _GameCard(
-                    emoji: '👀',
-                    title: 'ちがうの どっち?',
-                    desc: '1つだけ ちがうのを さがそう!',
-                    colors: const [Color(0xFF5BC8E8), Color(0xFF2E9BC0)],
-                    onTap: () => Navigator.of(dialogContext).pop('odd'),
-                  ),
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
           const SizedBox(height: 10),
           ModalCloseButton(
@@ -76,55 +66,4 @@ Future<String?> showGameChooser(BuildContext context) {
       ),
     ),
   );
-}
-
-class _GameCard extends StatelessWidget {
-  final String emoji;
-  final String title;
-  final String desc;
-  final List<Color> colors;
-  final VoidCallback onTap;
-
-  const _GameCard({
-    required this.emoji,
-    required this.title,
-    required this.desc,
-    required this.colors,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return PressableGradient(
-      colors: colors,
-      radius: 20,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 34)),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white)),
-                  Text(desc,
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.92))),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

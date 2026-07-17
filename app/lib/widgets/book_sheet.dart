@@ -135,7 +135,7 @@ class _BookCell extends StatelessWidget {
     final color = liveState?.color ?? snapshot?.color;
     final stage = liveState?.stage ?? snapshot?.stage ?? 3;
     Widget mini = CustomPaint(
-      size: const Size(64, 64),
+      size: const Size(44, 44),
       painter: CreaturePainter(
         speciesIndex: speciesIndex,
         stage: stage == 0 ? 1 : stage,
@@ -157,7 +157,7 @@ class _BookCell extends StatelessWidget {
           ),
           const Text('?',
               style: TextStyle(
-                  fontSize: 30,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFFAAB0C5))),
         ],

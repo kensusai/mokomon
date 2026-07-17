@@ -55,14 +55,14 @@ void main() {
       }
     });
 
-    test('grid grows 6 → 9 → 12 and pays +2 per correct', () {
+    test('grid grows 9 → 12 → 16 → 20 and pays +2 per correct', () {
       final g = OddOneGame(rng: Random(4));
       final sizes = <int>[];
       while (!g.finished) {
         sizes.add(g.cells.length);
         expect(g.guess(g.oddIndex), isTrue);
       }
-      expect(sizes, [6, 6, 9, 9, 12, 12, 12, 12]);
+      expect(sizes, [9, 9, 12, 12, 16, 16, 20, 20]);
       expect(g.reward, 16);
     });
 
@@ -97,6 +97,60 @@ void main() {
       expect(traceScore(0.9), (3, 4));
       expect(traceScore(0.6), (2, 3));
       expect(traceScore(0.2), (1, 1));
+    });
+  });
+
+  group('BalloonGame (ふうせんわり)', () {
+    test('balloons rise, bombs subtract but never below zero', () {
+      final g = BalloonGame(rng: Random(2));
+      g.items.add(BalloonItem(
+          x: 100,
+          y: 300,
+          vy: 0,
+          emoji: '💣',
+          golden: false,
+          bomb: true,
+          wobble: 0));
+      expect(g.tapAt(100, 300)!.bomb, isTrue);
+      expect(g.score, 0); // 0未満にならない
+      g.items.add(BalloonItem(
+          x: 100,
+          y: 300,
+          vy: 0,
+          emoji: '⭐',
+          golden: true,
+          bomb: false,
+          wobble: 0));
+      g.tapAt(100, 300);
+      expect(g.score, 3);
+    });
+
+    test('items rise and despawn above the top', () {
+      final g = BalloonGame(rng: Random(2));
+      for (var i = 0; i < 100; i++) {
+        g.update(0.05, 400, 600); // 5秒
+      }
+      expect(g.timeLeft, 25);
+      expect(g.items.every((it) => it.y > -60), isTrue);
+    });
+  });
+
+  group('OrderGame (じゅんばんタッチ)', () {
+    test('must tap 1..9 in order', () {
+      final g = OrderGame(rng: Random(3));
+      expect(g.cells.toSet(), {1, 2, 3, 4, 5, 6, 7, 8, 9});
+      final wrong = g.cells.indexOf(5);
+      expect(g.tap(wrong), isFalse); // まだ1
+      for (var n = 1; n <= 9; n++) {
+        expect(g.tap(g.cells.indexOf(n)), isTrue);
+      }
+      expect(g.finished, isTrue);
+    });
+
+    test('coins scale with speed', () {
+      expect(OrderGame.coinsForSeconds(10), 16);
+      expect(OrderGame.coinsForSeconds(18), 10);
+      expect(OrderGame.coinsForSeconds(30), 6);
     });
   });
 }

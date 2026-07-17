@@ -96,10 +96,10 @@ void main() {
   });
 
   group('expanded content (docs/game-design.md §3, §7, §13)', () {
-    test('6 foods with the new entries', () {
-      expect(foods, hasLength(6));
+    test('8 foods with the new entries', () {
+      expect(foods, hasLength(8));
       expect(foods.map((f) => f.key).toList().sublist(3),
-          ['onigiri', 'ramen', 'parfait']);
+          ['onigiri', 'ramen', 'parfait', 'tamago', 'pizza']);
     });
 
     test('20 shop items, appended after the original 6', () {

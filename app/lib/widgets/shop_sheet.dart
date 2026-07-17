@@ -6,67 +6,81 @@ import '../logic/game_controller.dart';
 import 'toast.dart';
 import 'ui_kit.dart';
 
-/// きせかえショップ(プロトタイプ #shopModal)。docs/game-design.md §7。
+/// きせかえショップ(docs/game-design.md §7)。
+/// 「あたま/かお/はいけい」のタブ切替で、各タブは1画面(スクロールなし)。
 Future<void> showShopModal(BuildContext context, GameController controller) {
   return showDialog(
     context: context,
     builder: (dialogContext) => MokoModalShell(
-      child: ListenableBuilder(
+      child: DefaultTabController(
+        length: 3,
+        child: ListenableBuilder(
           listenable: controller,
           builder: (context, _) => Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const ModalTitle('🛍️ きせかえショップ'),
-                  const SizedBox(height: 8),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _sectionTitle('👒 あたま'),
-                          _itemGrid(controller, ItemSlot.head),
-                          const SizedBox(height: 10),
-                          _sectionTitle('🕶️ かお'),
-                          _itemGrid(controller, ItemSlot.face),
-                          const SizedBox(height: 10),
-                          _sectionTitle('🖼️ はいけい(むりょう)'),
-                          _bgGrid(controller),
-                        ],
-                      ),
-                    ),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const ModalTitle('🛍️ きせかえショップ'),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: fieldGray,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: TabBar(
+                  indicator: BoxDecoration(
+                    color: const Color(0xFF34C98E),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  const SizedBox(height: 8),
-                  const Text('かったものは タップで きたり ぬいだり できるよ',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: ink2Color)),
-                  const SizedBox(height: 10),
-                  ModalCloseButton(
-                      label: 'とじる',
-                      onTap: () => Navigator.of(dialogContext).pop()),
-                ],
-              )),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerHeight: 0,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: ink2Color,
+                  labelStyle: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w800),
+                  tabs: const [
+                    Tab(height: 40, text: '👒 あたま'),
+                    Tab(height: 40, text: '🕶️ かお'),
+                    Tab(height: 40, text: '🖼️ はいけい'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 320,
+                child: TabBarView(
+                  children: [
+                    _itemGrid(controller, ItemSlot.head),
+                    _itemGrid(controller, ItemSlot.face),
+                    _bgGrid(controller),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text('かったものは タップで きたり ぬいだり できるよ',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: ink2Color)),
+              const SizedBox(height: 8),
+              ModalCloseButton(
+                  label: 'とじる', onTap: () => Navigator.of(dialogContext).pop()),
+            ],
+          ),
+        ),
+      ),
     ),
   );
 }
 
-Widget _sectionTitle(String text) => Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w800, color: ink2Color)),
-    );
-
 Widget _itemGrid(GameController controller, ItemSlot slot) => GridView.count(
-      crossAxisCount: 3,
+      crossAxisCount: 4,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 0.82,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 0.74,
       children: [
         for (final item in shopItems)
           if (item.slot == slot) _ShopCell(item: item, controller: controller),
@@ -75,12 +89,12 @@ Widget _itemGrid(GameController controller, ItemSlot slot) => GridView.count(
 
 /// 背景テーマの切替(無料・個体ごと保存)。docs/game-design.md §13。
 Widget _bgGrid(GameController controller) => GridView.count(
-      crossAxisCount: 3,
+      crossAxisCount: 4,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 0.95,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 0.8,
       children: [
         for (var i = 0; i < bgThemes.length; i++)
           _BgCell(index: i, controller: controller),
@@ -101,13 +115,13 @@ class _BgCell extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         side: selected
             ? const BorderSide(color: Color(0xFF34C98E), width: 3)
             : BorderSide.none,
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => controller.setBackground(index),
         child: Container(
           decoration: BoxDecoration(
@@ -115,23 +129,23 @@ class _BgCell extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [theme.top, theme.bottom]),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(index == null ? '🎲' : theme.emoji,
-                  style: const TextStyle(fontSize: 30)),
-              const SizedBox(height: 4),
+                  style: const TextStyle(fontSize: 24)),
+              const SizedBox(height: 3),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(index == null ? 'おまかせ' : theme.name,
                     style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: inkColor)),
               ),
@@ -159,13 +173,13 @@ class _ShopCell extends StatelessWidget {
     return Material(
       color: equipped ? const Color(0xFFEAFAF1) : const Color(0xFFF4F6FB),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         side: equipped
             ? const BorderSide(color: Color(0xFF34C98E), width: 3)
             : BorderSide.none,
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
           switch (controller.tapShopItem(item)) {
             case ShopTapOutcome.bought:
@@ -178,42 +192,38 @@ class _ShopCell extends StatelessWidget {
           }
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(item.emoji, style: const TextStyle(fontSize: 34)),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(item.name,
-                      maxLines: 1,
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: inkColor)),
-                ),
+              Text(item.emoji, style: const TextStyle(fontSize: 26)),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(item.name,
+                    maxLines: 1,
+                    style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: inkColor)),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: const [
                     BoxShadow(
                         color: Color(0x143A3F52),
-                        blurRadius: 8,
-                        offset: Offset(0, 3)),
+                        blurRadius: 6,
+                        offset: Offset(0, 2)),
                   ],
                 ),
                 child: Text(
                   owned ? (equipped ? 'きてる✓' : 'きる') : '🪙${item.cost}',
                   style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: poor ? const Color(0xFFD05555) : inkColor),
                 ),

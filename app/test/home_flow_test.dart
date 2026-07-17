@@ -48,7 +48,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('なにを たべる?'), findsOneWidget);
 
-    await tester.tap(find.text('りんご'));
+    await tester.tap(find.textContaining('りんご'));
     await tester.pump();
     expect(c.state.coins, 7);
     expect(c.state.hunger, 95);
