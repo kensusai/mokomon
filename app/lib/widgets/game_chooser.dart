@@ -8,33 +8,66 @@ Future<String?> showGameChooser(BuildContext context) {
     context: context,
     builder: (dialogContext) => MokoModalShell(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const ModalTitle('どっちで あそぶ?'),
+          const ModalTitle('どれで あそぶ?'),
           const SizedBox(height: 12),
-          _GameCard(
-            emoji: '🍎',
-            title: 'フルーツキャッチ',
-            desc: 'おちてくるフルーツを タッチ!',
-            colors: blueGradient,
-            onTap: () => Navigator.of(dialogContext).pop('catch'),
-          ),
-          const SizedBox(height: 10),
-          _GameCard(
-            emoji: '🧩',
-            title: 'おなじの どれ?',
-            desc: 'おなじ かたちを さがそう!',
-            colors: pinkGradient,
-            onTap: () => Navigator.of(dialogContext).pop('puzzle'),
-          ),
-          const SizedBox(height: 10),
-          _GameCard(
-            emoji: '🃏',
-            title: 'ペアさがし',
-            desc: 'おなじ カードを めくろう!',
-            colors: purpleGradient,
-            onTap: () => Navigator.of(dialogContext).pop('memory'),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _GameCard(
+                    emoji: '🍎',
+                    title: 'フルーツキャッチ',
+                    desc: 'おちてくるフルーツを タッチ!',
+                    colors: blueGradient,
+                    onTap: () => Navigator.of(dialogContext).pop('catch'),
+                  ),
+                  const SizedBox(height: 10),
+                  _GameCard(
+                    emoji: '🧩',
+                    title: 'おなじの どれ?',
+                    desc: 'おなじ かたちを さがそう!',
+                    colors: pinkGradient,
+                    onTap: () => Navigator.of(dialogContext).pop('puzzle'),
+                  ),
+                  const SizedBox(height: 10),
+                  _GameCard(
+                    emoji: '🃏',
+                    title: 'ペアさがし',
+                    desc: 'おなじ カードを めくろう!',
+                    colors: purpleGradient,
+                    onTap: () => Navigator.of(dialogContext).pop('memory'),
+                  ),
+                  const SizedBox(height: 10),
+                  _GameCard(
+                    emoji: '🔨',
+                    title: 'もぐらたたき',
+                    desc: 'でてきた いきものを タッチ!',
+                    colors: greenGradient,
+                    onTap: () => Navigator.of(dialogContext).pop('whack'),
+                  ),
+                  const SizedBox(height: 10),
+                  _GameCard(
+                    emoji: '✏️',
+                    title: 'なぞって かこう',
+                    desc: 'てんせんを なぞって ほしを もらおう!',
+                    colors: orangeGradient,
+                    onTap: () => Navigator.of(dialogContext).pop('trace'),
+                  ),
+                  const SizedBox(height: 10),
+                  _GameCard(
+                    emoji: '👀',
+                    title: 'ちがうの どっち?',
+                    desc: '1つだけ ちがうのを さがそう!',
+                    colors: const [Color(0xFF5BC8E8), Color(0xFF2E9BC0)],
+                    onTap: () => Navigator.of(dialogContext).pop('odd'),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 10),
           ModalCloseButton(

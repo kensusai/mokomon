@@ -211,3 +211,139 @@ class MemoryGame {
     pendingMismatch = null;
   }
 }
+
+// ---------- もぐらたたき ----------
+
+const whackDurationSec = 30;
+const whackHoles = 9; // 3x3
+
+/// 穴から顔を出すいきもの。golden=ぴか(+3)、stinky=💨(0コイン・おふざけ)。
+class WhackMole {
+  final int hole;
+  final int speciesIndex;
+  final bool golden;
+  final bool stinky;
+  double ttl;
+  WhackMole({
+    required this.hole,
+    required this.speciesIndex,
+    required this.golden,
+    required this.stinky,
+    required this.ttl,
+  });
+}
+
+/// もぐらたたきの状態機械。widget 側の Ticker から [update] を呼ぶ。
+class WhackGame {
+  WhackGame({Random? rng}) : _rng = rng ?? Random();
+
+  final Random _rng;
+  final moles = <WhackMole>[];
+  var score = 0;
+  var timeLeft = whackDurationSec;
+  var _spawnT = 0.0;
+  var _timerAcc = 0.0;
+
+  bool get finished => timeLeft <= 0;
+
+  /// 終盤ほど速く(1.0 → 1.5)。
+  double get speedFactor => 1.0 + 0.5 * (1 - timeLeft / whackDurationSec);
+
+  void update(double dt) {
+    if (finished) return;
+    _timerAcc += dt;
+    if (_timerAcc >= 1) {
+      _timerAcc -= 1;
+      timeLeft--;
+      if (finished) {
+        moles.clear();
+        return;
+      }
+    }
+    for (final m in moles) {
+      m.ttl -= dt;
+    }
+    moles.removeWhere((m) => m.ttl <= 0);
+
+    _spawnT -= dt;
+    if (_spawnT <= 0 && moles.length < 3) {
+      _spawnT = (0.5 + _rng.nextDouble() * 0.4) / speedFactor;
+      final used = moles.map((m) => m.hole).toSet();
+      final free = [
+        for (var i = 0; i < whackHoles; i++)
+          if (!used.contains(i)) i
+      ];
+      if (free.isNotEmpty) {
+        final roll = _rng.nextDouble();
+        moles.add(WhackMole(
+          hole: free[_rng.nextInt(free.length)],
+          speciesIndex: _rng.nextInt(15),
+          golden: roll < 0.12,
+          stinky: roll >= 0.12 && roll < 0.22,
+          ttl: (0.9 + _rng.nextDouble() * 0.5) / speedFactor,
+        ));
+      }
+    }
+  }
+
+  /// 穴をタップ。いきものがいれば得点して返す(ぴか+3/💨0/ふつう+1)。
+  WhackMole? tapHole(int hole) {
+    final i = moles.indexWhere((m) => m.hole == hole);
+    if (i < 0) return null;
+    final mole = moles.removeAt(i);
+    score += mole.golden ? 3 : (mole.stinky ? 0 : 1);
+    return mole;
+  }
+}
+
+// ---------- ちがうのどっち? ----------
+
+/// にている絵文字ペア(左が多数派、右が1つだけまざる)
+const oddPairs = [
+  ('🍎', '🍅'),
+  ('😀', '😃'),
+  ('🐱', '🐯'),
+  ('⭐', '🌟'),
+  ('🍦', '🍨'),
+  ('🐶', '🐺'),
+  ('🌸', '🌺'),
+  ('🙂', '🙃'),
+];
+const oddRounds = 8;
+const oddRewardPerRound = 2;
+
+/// 「ちがうのどっち?」1つだけ違う絵文字を探す。ラウンドが進むと枚数が増える。
+class OddOneGame {
+  OddOneGame({Random? rng}) : _rng = rng ?? Random() {
+    _newRound();
+  }
+
+  final Random _rng;
+  var round = 0;
+  var reward = 0;
+  late List<String> cells;
+  late int oddIndex;
+
+  bool get finished => round >= oddRounds;
+
+  int get _gridSize => switch (round) { < 2 => 6, < 4 => 9, _ => 12 };
+
+  void _newRound() {
+    final pair = oddPairs[_rng.nextInt(oddPairs.length)];
+    final flip = _rng.nextBool();
+    final common = flip ? pair.$2 : pair.$1;
+    final odd = flip ? pair.$1 : pair.$2;
+    cells = List.filled(_gridSize, common);
+    oddIndex = _rng.nextInt(_gridSize);
+    cells[oddIndex] = odd;
+  }
+
+  bool guess(int index) {
+    if (finished) return false;
+    if (index != oddIndex) return false;
+    reward += oddRewardPerRound;
+    round++;
+    if (!finished) _newRound();
+    return true;
+  }
+}

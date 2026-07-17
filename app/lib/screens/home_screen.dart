@@ -27,8 +27,11 @@ import '../widgets/toast.dart';
 import '../widgets/ui_kit.dart';
 import 'catch_screen.dart';
 import 'memory_screen.dart';
+import 'odd_one_screen.dart';
 import 'paint_screen.dart';
 import 'puzzle_screen.dart';
+import 'trace_screen.dart';
+import 'whack_screen.dart';
 
 /// 💨の吹き出し(docs/game-design.md §9)。UIに説明は一切出さない。
 const _puffLines = [
@@ -265,6 +268,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final screen = switch (key) {
       'catch' => CatchScreen(controller: c),
       'puzzle' => PuzzleScreen(controller: c),
+      'whack' => WhackScreen(controller: c),
+      'trace' => TraceScreen(controller: c),
+      'odd' => OddOneScreen(controller: c),
       _ => MemoryScreen(controller: c),
     };
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
