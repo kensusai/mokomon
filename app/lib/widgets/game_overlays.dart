@@ -164,7 +164,7 @@ class BackIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return CircleIconButton(
       onTap: onTap,
-      child: const Icon(Icons.arrow_back, size: 20, color: inkColor),
+      child: const Icon(Icons.arrow_back, size: 26, color: inkColor),
     );
   }
 }

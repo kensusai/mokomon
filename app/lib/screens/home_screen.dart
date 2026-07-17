@@ -19,6 +19,7 @@ import '../widgets/evolution_overlay.dart';
 import '../widgets/food_sheet.dart';
 import '../widgets/game_chooser.dart';
 import '../widgets/particles.dart';
+import '../widgets/rename_dialog.dart';
 import '../widgets/shop_sheet.dart';
 import '../widgets/stat_meter.dart';
 import '../widgets/toast.dart';
@@ -300,18 +301,41 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _onRenamePressed() async {
+    if (s.stage == 0) {
+      _hint('うまれたら なまえを つけられるよ!');
+      return;
+    }
+    final name = await showRenameDialog(context, current: s.nickname);
+    if (name == null || !mounted) return;
+    c.rename(name);
+    _creatureKey.currentState?.flashMood(CreatureMood.happy);
+    _creatureKey.currentState?.play(CreatureAnim.bounce);
+    _hint(s.nickname == null ? 'なまえを もとに もどしたよ!' : '「${s.nickname}」って よんでね!');
+  }
+
   Future<void> _onBookPressed() async {
-    final newSpecies = await showBookModal(context, c);
-    if (newSpecies == null || !mounted) return;
-    if (newSpecies == 3) {
-      await showCelebrate(context,
-          sfx: c.sfx,
-          emoji: '🌟',
-          title: 'なにこれ!?',
-          desc: 'きんいろに かがやく たまごが とどいた…!');
-    } else {
-      c.sfx.play(Sfx.happy);
-      _hint('あたらしい たまごが きたよ! タッチしてみて! 👆');
+    final result = await showBookModal(context, c);
+    if (result == null || !mounted) return;
+    switch (result) {
+      case BookNewEgg(species: final sp):
+        if (sp == 3) {
+          await showCelebrate(context,
+              sfx: c.sfx,
+              emoji: '🌟',
+              title: 'なにこれ!?',
+              desc: 'きんいろに かがやく たまごが とどいた…!');
+        } else {
+          c.sfx.play(Sfx.happy);
+          _hint('あたらしい たまごが きたよ! タッチしてみて! 👆');
+        }
+      case BookSwitch(species: final sp):
+        if (c.switchCreature(sp)) {
+          _creatureKey.currentState?.flashMood(CreatureMood.happy);
+          _creatureKey.currentState?.play(CreatureAnim.spin);
+          _hint(
+              '「${s.nickname ?? s.currentSpecies.names[s.stage]}」が あそびに きたよ!');
+        }
     }
   }
 
@@ -395,8 +419,6 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             StatPill('🪙 ${s.coins}'),
             const Spacer(),
-            StatPill(s.displayName),
-            const Spacer(),
             _iconButton('📖', _onBookPressed),
             const SizedBox(width: 8),
             _iconButton('💾', () => showCodeDialog(context, c)),
@@ -413,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _iconButton(String emoji, VoidCallback onTap) => CircleIconButton(
         onTap: onTap,
-        child: Text(emoji, style: const TextStyle(fontSize: 18)),
+        child: Text(emoji, style: const TextStyle(fontSize: 24)),
       );
 
   Widget _stage() {
@@ -451,6 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         Positioned.fill(child: ParticleField(key: _particleKey)),
+
         // セリフ(枠なしカラフル文字・上/左/右に出る)
         Positioned.fill(
           child: Padding(
@@ -477,6 +500,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Column(
           children: [
+            // なまえ(タップで改名)
+            GestureDetector(
+              onTap: _onRenamePressed,
+              child: StatPill(s.displayName),
+            ),
+            const SizedBox(height: 10),
             StatMeter(
                 icon: '🍖',
                 value: s.hunger,
@@ -558,8 +587,8 @@ class _SpeechText extends StatelessWidget {
   /// 上・左・右(左右はいきものの顔の高さあたり)
   static const _aligns = [
     Alignment(0, -1),
-    Alignment(-0.95, -0.55),
-    Alignment(0.95, -0.55),
+    Alignment(-0.95, -0.5),
+    Alignment(0.95, -0.5),
   ];
 
   @override

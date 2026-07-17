@@ -19,6 +19,18 @@ void paintCreatureFace(Canvas canvas,
       _faceNyan(canvas, sad);
     case 8:
       _faceDandy(canvas, sad);
+    case 9:
+      _faceMojya(canvas, sad);
+    case 10:
+      _faceGuru(canvas, sad);
+    case 11:
+      _facePaku(canvas, sad);
+    case 12:
+      _faceNemu(canvas, sad);
+    case 13:
+      _faceRobo(canvas, sad);
+    case 14:
+      _faceObake(canvas, sad);
     default:
       _faceDefault(canvas, sad);
   }
@@ -280,6 +292,138 @@ void _faceDandy(Canvas canvas, bool sad) {
     mouth.quadraticBezierTo(150, 220, 162, 208);
   }
   canvas.drawPath(mouth, inkStroke(6));
+}
+
+/// mojya: もじゃもじゃ頭に埋もれた ちいさな目と口
+void _faceMojya(Canvas canvas, bool sad) {
+  canvas.drawCircle(const Offset(120, 158), 7, inkFill);
+  canvas.drawCircle(const Offset(180, 158), 7, inkFill);
+  _cheeks(canvas, 98, 202, 182);
+  final mouth = Path();
+  if (sad) {
+    mouth.moveTo(138, 200);
+    mouth.quadraticBezierTo(150, 190, 162, 200);
+  } else {
+    mouth.moveTo(138, 192);
+    mouth.quadraticBezierTo(150, 204, 162, 192);
+  }
+  canvas.drawPath(mouth, inkStroke(5));
+}
+
+/// guru: ぐるぐる目+ふらふらの口
+void _faceGuru(Canvas canvas, bool sad) {
+  for (final cx in [112.0, 188.0]) {
+    canvas.drawArc(Rect.fromCircle(center: Offset(cx, 150), radius: 15), 0, 4.7,
+        false, inkStroke(6));
+    canvas.drawArc(Rect.fromCircle(center: Offset(cx, 150), radius: 7), 3.1,
+        4.7, false, inkStroke(5));
+  }
+  _cheeks(canvas, 95, 205, 182);
+  // ふらふら波線の口(悲しいときは波が下向きに)
+  final mouth = Path()..moveTo(124, sad ? 202 : 194);
+  final amp = sad ? -7.0 : 7.0;
+  mouth.relativeQuadraticBezierTo(9, amp, 17, 0);
+  mouth.relativeQuadraticBezierTo(9, -amp, 17, 0);
+  mouth.relativeQuadraticBezierTo(9, amp, 17, 0);
+  canvas.drawPath(mouth, inkStroke(6));
+}
+
+/// paku: 顔の半分が口。目は上のほうに ちょこん
+void _facePaku(Canvas canvas, bool sad) {
+  canvas.drawCircle(const Offset(122, 112), 9, inkFill);
+  canvas.drawCircle(const Offset(178, 112), 9, inkFill);
+  if (sad) {
+    final mouth = Path()
+      ..moveTo(96, 216)
+      ..quadraticBezierTo(150, 176, 204, 216);
+    canvas.drawPath(mouth, inkStroke(9));
+    return;
+  }
+  final mouth = Path()
+    ..moveTo(92, 150)
+    ..quadraticBezierTo(150, 132, 208, 150)
+    ..quadraticBezierTo(214, 226, 150, 238)
+    ..quadraticBezierTo(86, 226, 92, 150)
+    ..close();
+  canvas.drawPath(mouth, inkFill);
+  canvas.save();
+  canvas.clipPath(mouth);
+  // 上の歯と舌
+  canvas.drawRect(
+      const Rect.fromLTWH(92, 138, 116, 22), Paint()..color = Colors.white);
+  canvas.drawOval(
+      Rect.fromCenter(center: const Offset(150, 236), width: 84, height: 52),
+      Paint()..color = const Color(0xFFFF7EB0));
+  canvas.restore();
+}
+
+/// nemu: いつも寝てる。とじた目+よだれ+すーすー
+void _faceNemu(Canvas canvas, bool sad) {
+  final eye = inkStroke(6);
+  canvas.drawLine(const Offset(98, 152), const Offset(128, 152), eye);
+  canvas.drawLine(const Offset(172, 152), const Offset(202, 152), eye);
+  _cheeks(canvas, 95, 205, 180);
+  final mouth = Path();
+  if (sad) {
+    mouth.moveTo(136, 202);
+    mouth.quadraticBezierTo(150, 192, 164, 202);
+  } else {
+    mouth.moveTo(140, 194);
+    mouth.quadraticBezierTo(150, 202, 160, 194);
+  }
+  canvas.drawPath(mouth, inkStroke(5));
+  // よだれ
+  canvas.drawOval(
+      Rect.fromCenter(center: const Offset(168, 210), width: 12, height: 18),
+      Paint()..color = const Color(0xAA9CD8FF));
+}
+
+/// robo: 四角い目+ギザギザの口
+void _faceRobo(Canvas canvas, bool sad) {
+  for (final cx in [112.0, 188.0]) {
+    final r = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx, 148), width: 34, height: 28),
+        const Radius.circular(6));
+    canvas.drawRRect(r, Paint()..color = Colors.white);
+    canvas.drawRRect(r, inkStroke(5));
+    canvas.drawRect(
+        Rect.fromCenter(
+            center: Offset(cx, sad ? 154 : 148), width: 12, height: 12),
+        inkFill);
+  }
+  final mouth = Path()..moveTo(120, sad ? 204 : 196);
+  final amp = sad ? -10.0 : 10.0;
+  mouth.relativeLineTo(10, amp);
+  mouth.relativeLineTo(10, -amp);
+  mouth.relativeLineTo(10, amp);
+  mouth.relativeLineTo(10, -amp);
+  mouth.relativeLineTo(10, amp);
+  mouth.relativeLineTo(10, -amp);
+  canvas.drawPath(mouth, inkStroke(6));
+}
+
+/// obake: うつろな たて長の目+まんまるの口
+void _faceObake(Canvas canvas, bool sad) {
+  canvas.drawOval(
+      Rect.fromCenter(center: const Offset(115, 148), width: 20, height: 34),
+      inkFill);
+  canvas.drawOval(
+      Rect.fromCenter(center: const Offset(185, 148), width: 20, height: 34),
+      inkFill);
+  if (sad) {
+    final mouth = Path()
+      ..moveTo(132, 206)
+      ..quadraticBezierTo(150, 192, 168, 206);
+    canvas.drawPath(mouth, inkStroke(6));
+    // なみだ
+    canvas.drawOval(
+        Rect.fromCenter(center: const Offset(107, 176), width: 10, height: 16),
+        Paint()..color = const Color(0xAA9CD8FF));
+    return;
+  }
+  canvas.drawOval(
+      Rect.fromCenter(center: const Offset(150, 202), width: 34, height: 42),
+      inkFill);
 }
 
 // ---------- リアクション用の大げさ表情(全種族共通・一時的に顔を差し替える) ----------

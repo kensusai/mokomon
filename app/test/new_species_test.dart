@@ -8,11 +8,19 @@ import 'package:mokomon/widgets/creature_painter.dart';
 
 void main() {
   group('new species: にゃん / ダンディ (index 7, 8)', () {
-    test('are appended after the original 7 so あいことば stay compatible', () {
-      expect(speciesList, hasLength(9));
+    test('are appended in order so あいことば stay compatible', () {
+      expect(speciesList, hasLength(15));
       expect(speciesList[7].key, 'nyan');
       expect(speciesList[8].key, 'dandy');
+      expect(
+          speciesList.sublist(9).map((s) => s.key).toList(),
+          ['mojya', 'guru', 'paku', 'nemu', 'robo', 'obake']);
       expect(secretSpeciesIndex, 3); // 金のたまごは変わらず pika
+      // 色・名前・絵文字が全種族で揃っている
+      for (final sp in speciesList) {
+        expect(sp.names, hasLength(4), reason: sp.key);
+        expect(sp.emojis, hasLength(4), reason: sp.key);
+      }
     });
 
     test('display names follow the stage pattern', () {
@@ -53,13 +61,13 @@ void main() {
       expect(restored.collection[0], isFalse);
     });
 
-    test('egg lottery can draw the new species', () {
+    test('egg lottery can draw every new species', () {
       final s = GameState();
       final drawn = <int>{};
-      for (var i = 0; i < 300; i++) {
+      for (var i = 0; i < 2000; i++) {
         drawn.add(s.nextEggSpecies(Random(i)));
       }
-      expect(drawn, containsAll([7, 8]));
+      expect(drawn, containsAll([7, 8, 9, 10, 11, 12, 13, 14]));
     });
 
     testWidgets('every species renders at every stage without throwing',

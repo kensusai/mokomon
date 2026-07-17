@@ -143,8 +143,9 @@ class GameController extends ChangeNotifier {
   }
 
   /// 新しいたまごを迎える(抽選は docs/game-design.md §4)。
-  /// コイン・ずかん・きせかえは引き継ぎ、育成状態はリセットする。
+  /// いまのキングは名簿(roster)に保存され、あとで図鑑から呼び戻せる。
   int newEgg() {
+    state.roster[state.species] = _snapshotCurrent();
     final next = state.nextEggSpecies(_rng);
     state
       ..species = next
@@ -154,9 +155,71 @@ class GameController extends ChangeNotifier {
       ..hunger = 80
       ..happy = 80
       ..pattern = null
+      ..nickname = null
       ..color = speciesList[next].color.toARGB32();
     _commit();
     return next;
+  }
+
+  CreatureSnapshot _snapshotCurrent() => CreatureSnapshot(
+        stage: state.stage,
+        xp: state.xp,
+        eggTaps: state.eggTaps,
+        hunger: state.hunger,
+        happy: state.happy,
+        color: state.color,
+        pattern: state.pattern,
+        equipHead: state.equipHead,
+        equipFace: state.equipFace,
+        nickname: state.nickname,
+      );
+
+  /// 図鑑から過去に育てた子と交代する(docs/game-design.md §12)。
+  /// いまの子は名簿へ退避。未入手種・現在の種族へは交代できない。
+  bool switchCreature(int speciesIndex) {
+    if (speciesIndex == state.species) return false;
+    final hasRecord = state.roster.containsKey(speciesIndex);
+    if (!state.collection[speciesIndex] && !hasRecord) return false;
+
+    state.roster[state.species] = _snapshotCurrent();
+    final snap = state.roster.remove(speciesIndex);
+    state.species = speciesIndex;
+    if (snap != null) {
+      state
+        ..stage = snap.stage
+        ..xp = snap.xp
+        ..eggTaps = snap.eggTaps
+        ..hunger = snap.hunger
+        ..happy = snap.happy
+        ..color = snap.color
+        ..pattern = snap.pattern
+        ..equipHead = snap.equipHead
+        ..equipFace = snap.equipFace
+        ..nickname = snap.nickname;
+    } else {
+      // 記録がない(旧セーブ等)場合はキング姿の初期状態で迎える
+      state
+        ..stage = 3
+        ..xp = 0
+        ..eggTaps = 0
+        ..hunger = 80
+        ..happy = 80
+        ..pattern = null
+        ..nickname = null
+        ..color = speciesList[speciesIndex].color.toARGB32();
+    }
+    sfx.playBabble(speciesIndex); // ただいまのごあいさつ
+    _commit();
+    return true;
+  }
+
+  /// ニックネームを付ける(空なら種族名に戻す・最大10文字)。
+  void rename(String name) {
+    final t = name.trim();
+    state.nickname =
+        t.isEmpty ? null : (t.length > 10 ? t.substring(0, 10) : t);
+    sfx.play(Sfx.happy);
+    _commit();
   }
 
   /// ショップのセルをタップ: 未所持なら購入(即装備)、

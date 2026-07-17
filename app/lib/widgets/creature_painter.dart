@@ -246,6 +246,40 @@ class CreaturePainter extends CustomPainter {
                 ..strokeWidth = 3
                 ..strokeJoin = StrokeJoin.round);
         }
+      case 9: // mojya: もじゃもじゃアフロ
+        for (final c in const [
+          Offset(90, 70),
+          Offset(120, 48),
+          Offset(150, 40),
+          Offset(180, 48),
+          Offset(210, 70),
+          Offset(105, 95),
+          Offset(195, 95),
+        ]) {
+          canvas.drawCircle(c, 34, acc);
+        }
+      case 12: // nemu: アホ毛(くるん)
+        final ahoge = Path()
+          ..moveTo(150, 60)
+          ..cubicTo(146, 26, 176, 18, 180, 40)
+          ..cubicTo(182, 54, 168, 58, 162, 50);
+        canvas.drawPath(
+            ahoge,
+            Paint()
+              ..color = shade(bodyColor, -22)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 8
+              ..strokeCap = StrokeCap.round);
+      case 13: // robo: アンテナ
+        canvas.drawLine(
+            const Offset(150, 62),
+            const Offset(150, 22),
+            Paint()
+              ..color = shade(bodyColor, -40)
+              ..strokeWidth = 7
+              ..strokeCap = StrokeCap.round);
+        canvas.drawCircle(const Offset(150, 16), 11,
+            Paint()..color = const Color(0xFFFF6E6E));
       case 7: // nyan: ねこ耳(三角)+内耳
         canvas.drawPath(
             Path()

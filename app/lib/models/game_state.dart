@@ -7,6 +7,60 @@ import '../data/species.dart';
 /// 進化しきい値(隠しパラメータ)。docs/game-design.md §3。
 const evolveXp = [0, 30, 80];
 
+/// ずかんの「名簿」に保存する個体スナップショット(docs/game-design.md §12)。
+/// 交代・新しいたまごの際に、見た目ときせかえ・なまえを保持する。
+class CreatureSnapshot {
+  int stage;
+  double xp;
+  int eggTaps;
+  double hunger;
+  double happy;
+  int color;
+  String? pattern;
+  String? equipHead;
+  String? equipFace;
+  String? nickname;
+
+  CreatureSnapshot({
+    required this.stage,
+    required this.xp,
+    required this.eggTaps,
+    required this.hunger,
+    required this.happy,
+    required this.color,
+    this.pattern,
+    this.equipHead,
+    this.equipFace,
+    this.nickname,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'stage': stage,
+        'xp': xp,
+        'eggTaps': eggTaps,
+        'hunger': hunger,
+        'happy': happy,
+        'color': color,
+        'pattern': pattern,
+        'equipHead': equipHead,
+        'equipFace': equipFace,
+        'nickname': nickname,
+      };
+
+  factory CreatureSnapshot.fromJson(Map<String, dynamic> j) => CreatureSnapshot(
+        stage: j['stage'] ?? 3,
+        xp: (j['xp'] ?? 0).toDouble(),
+        eggTaps: j['eggTaps'] ?? 0,
+        hunger: (j['hunger'] ?? 80).toDouble(),
+        happy: (j['happy'] ?? 80).toDouble(),
+        color: j['color'] ?? 0,
+        pattern: j['pattern'],
+        equipHead: j['equipHead'],
+        equipFace: j['equipFace'],
+        nickname: j['nickname'],
+      );
+}
+
 /// ゲーム状態。プロトタイプの `S` オブジェクトに対応。
 class GameState {
   int stage = 0; // 0=たまご 1=ベビー 2=中間 3=キング
@@ -29,12 +83,18 @@ class GameState {
   /// 体色(ARGB)。おえかき画面で変更でき、種族と独立に保持する。
   int color = speciesList[0].color.toARGB32();
 
+  /// いまの子のニックネーム(なければ種族名)。端末ローカルのみ。
+  String? nickname;
+
+  /// 過去に育てた子の名簿(species index → スナップショット)。端末ローカルのみ。
+  Map<int, CreatureSnapshot> roster = {};
+
   /// お絵かき模様(PNG の base64)。端末ローカルのみ・あいことばに含めない。
   String? pattern;
 
   Species get currentSpecies => speciesList[species];
   String get displayName =>
-      '${currentSpecies.emojis[stage]} ${currentSpecies.names[stage]}';
+      '${currentSpecies.emojis[stage]} ${nickname ?? currentSpecies.names[stage]}';
 
   bool get isSad => hunger < 30 || happy < 30;
 
@@ -96,6 +156,10 @@ class GameState {
         'bgmTrack': bgmTrack,
         'color': color,
         'pattern': pattern,
+        'nickname': nickname,
+        'roster': {
+          for (final e in roster.entries) '${e.key}': e.value.toJson(),
+        },
         'last': DateTime.now().millisecondsSinceEpoch,
       };
 
@@ -117,6 +181,12 @@ class GameState {
     bgmTrack = j['bgmTrack'] ?? 0;
     color = j['color'] ?? speciesList[species].color.toARGB32();
     pattern = j['pattern'];
+    nickname = j['nickname'];
+    roster = {
+      for (final e in ((j['roster'] as Map?) ?? {}).entries)
+        int.parse(e.key as String):
+            CreatureSnapshot.fromJson((e.value as Map).cast<String, dynamic>()),
+    };
     lastSavedMs = j['last'] ?? 0;
   }
 
@@ -195,8 +265,9 @@ class GameState {
           ? shopItems[a[10]].key
           : null;
       eggTaps = 0;
-      // 模様はあいことばに含まれない(仕様§8)。体色も種族の初期色へ戻す
+      // 模様・なまえはあいことばに含まれない(仕様§8)。体色は種族の初期色へ
       pattern = null;
+      nickname = null;
       color = speciesList[species].color.toARGB32();
       return true;
     } catch (_) {

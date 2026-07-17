@@ -78,6 +78,42 @@ const speciesList = <Species>[
     names: ['たまご', 'ひげ', 'ダンディ', 'キングダンディ'],
     emojis: ['🥚', '🥸', '🧔', '👑'],
   ),
+  Species(
+    key: 'mojya',
+    color: Color(0xFFB08968),
+    names: ['たまご', 'もじゃ', 'もじゃもじゃ', 'キングもじゃ'],
+    emojis: ['🥚', '🧶', '🦁', '👑'],
+  ),
+  Species(
+    key: 'guru',
+    color: Color(0xFF7FE0E0),
+    names: ['たまご', 'ぐる', 'ぐるりん', 'キングぐるりん'],
+    emojis: ['🥚', '😵', '🌀', '👑'],
+  ),
+  Species(
+    key: 'paku',
+    color: Color(0xFFF2E86D),
+    names: ['たまご', 'ぱく', 'ぱっくん', 'キングぱっくん'],
+    emojis: ['🥚', '😮', '🦈', '👑'],
+  ),
+  Species(
+    key: 'nemu',
+    color: Color(0xFFB9C3E8),
+    names: ['たまご', 'ねむ', 'ねむりん', 'キングねむりん'],
+    emojis: ['🥚', '😪', '💤', '👑'],
+  ),
+  Species(
+    key: 'robo',
+    color: Color(0xFFAEBFD0),
+    names: ['たまご', 'ろぼ', 'ろぼっち', 'キングろぼっち'],
+    emojis: ['🥚', '🤖', '🔩', '👑'],
+  ),
+  Species(
+    key: 'obake',
+    color: Color(0xFFE6E9F5),
+    names: ['たまご', 'おば', 'おばけん', 'キングおばけん'],
+    emojis: ['🥚', '👻', '🌙', '👑'],
+  ),
 ];
 
 /// シークレット種(金のたまご)の index
