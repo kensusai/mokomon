@@ -30,6 +30,8 @@ class SfxPlayer {
   AudioPlayer? _voice;
   var _bgmStarted = false;
   Timer? _duckTimer;
+  Sfx? _overrideTrack; // ゲームBGM・勝利曲など一時的な差し替え
+  Timer? _overrideTimer;
 
   Future<void> play(Sfx sfx) async {
     if (_isFlutterTest || !enabled()) return;
@@ -72,6 +74,44 @@ class SfxPlayer {
         Timer(Duration(milliseconds: (seconds * 1000).round() + 250), syncBgm);
   }
 
+  /// BGMを一時的に差し替える(ゲームBGM・勝利曲)。
+  /// [loop] が false のときは曲が終わると自動で元のBGMへ戻る。
+  Future<void> playOverrideBgm(Sfx track, {bool loop = true}) async {
+    if (_isFlutterTest) return;
+    _overrideTimer?.cancel();
+    _overrideTrack = track;
+    try {
+      _bgm ??= AudioPlayer();
+      await _bgm!.stop();
+      await _bgm!.setReleaseMode(loop ? ReleaseMode.loop : ReleaseMode.release);
+      _bgmStarted = true;
+      if (enabled()) {
+        await _bgm!
+            .play(BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'));
+      }
+      if (!loop) {
+        final seconds = (_synth.wavFor(track).length - 44) / 2 / 22050;
+        _overrideTimer =
+            Timer(Duration(milliseconds: (seconds * 1000).round() + 300), () {
+          if (_overrideTrack == track) clearOverrideBgm();
+        });
+      }
+    } catch (e) {
+      debugPrint('bgm failed: $e');
+    }
+  }
+
+  /// 差し替えを解除して通常のBGM(選択中トラック)に戻す。
+  Future<void> clearOverrideBgm() async {
+    if (_isFlutterTest) return;
+    _overrideTimer?.cancel();
+    _overrideTrack = null;
+    try {
+      await _bgm?.setReleaseMode(ReleaseMode.loop);
+    } catch (_) {}
+    await restartBgm();
+  }
+
   /// BGMトラック変更を反映する(再生し直す)。
   Future<void> restartBgm() async {
     if (_isFlutterTest) return;
@@ -106,7 +146,7 @@ class SfxPlayer {
           await player.resume();
         } else {
           _bgmStarted = true;
-          final track =
+          final track = _overrideTrack ??
               bgmTracks[(bgmTrack?.call() ?? 0).clamp(0, bgmTracks.length - 1)];
           await player
               .play(BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'));
@@ -121,6 +161,7 @@ class SfxPlayer {
 
   void dispose() {
     _duckTimer?.cancel();
+    _overrideTimer?.cancel();
     for (final p in _players.values) {
       p.dispose();
     }

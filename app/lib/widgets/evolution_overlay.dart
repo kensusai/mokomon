@@ -67,14 +67,15 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
   void _reveal() {
     if (!mounted) return;
     widget.controller.applyEvolution(widget.newStage);
-    widget.controller.sfx.play(Sfx.megaFanfare);
+    // 「〜にしんかした!!」の瞬間は勝利曲で派手に(こどもFB)
+    widget.controller.sfx.playOverrideBgm(Sfx.victoryTune, loop: false);
     setState(() => _revealed = true);
     _pop.forward(from: 0);
   }
 
   @override
   void dispose() {
-    widget.controller.sfx.syncBgm(); // BGM再開
+    widget.controller.sfx.clearOverrideBgm(); // ホームBGMへ
     for (final t in _timers) {
       t.cancel();
     }

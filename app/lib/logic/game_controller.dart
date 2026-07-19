@@ -31,6 +31,9 @@ class KingGift {
 /// おみやげで順に解放される限定スタンプ。
 const kingGiftStamps = ['👑', '🎆', '🦄'];
 
+/// ミニゲームで「すごいスコア」とみなすコイン数(勝利曲が流れる)。
+const bigScoreCoins = 20;
+
 /// ユースケース層: ゲーム操作とその副作用(通知・保存)をまとめる。
 /// UI は本クラス経由でのみ状態を変更する。
 class GameController extends ChangeNotifier {
@@ -145,7 +148,12 @@ class GameController extends ChangeNotifier {
     state.happy = min(100, state.happy + 12);
     state.xp += 10;
     _addSparkle(30);
-    sfx.playJingle(Sfx.rewardJingle); // 派手に(BGMは一時停止)
+    if (coins >= bigScoreCoins) {
+      // すごいスコア! 勝利曲でお祝い(終わると元のBGMへ)
+      sfx.playOverrideBgm(Sfx.victoryTune, loop: false);
+    } else {
+      sfx.playJingle(Sfx.rewardJingle); // 派手に(BGMは一時停止)
+    }
     _commit();
   }
 

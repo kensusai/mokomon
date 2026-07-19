@@ -300,6 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     final key = await showGameChooser(context);
     if (key == null || !mounted) return;
+    c.sfx.playOverrideBgm(Sfx.bgmGame); // ゲーム中は専用BGM
     final screen = switch (key) {
       'catch' => CatchScreen(controller: c),
       'puzzle' => PuzzleScreen(controller: c),
@@ -311,6 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _ => MemoryScreen(controller: c),
     };
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    c.sfx.clearOverrideBgm(); // ホームBGMへ戻す(勝利曲中なら曲側が戻す)
     if (mounted) await _checkEvolve();
   }
 

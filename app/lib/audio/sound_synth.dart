@@ -22,6 +22,8 @@ enum Sfx {
   bgm,
   bgm2,
   bgm3,
+  bgmGame,
+  victoryTune,
 }
 
 enum _Wave { sine, square, sawtooth, triangle }
@@ -117,7 +119,124 @@ final Map<Sfx, List<_Tone>> _recipes = {
   Sfx.bgm: _bgmTones(),
   Sfx.bgm2: _bgm2Tones(),
   Sfx.bgm3: _bgm3Tones(),
+  // ミニゲーム中の専用BGM(疾走感・ループ)
+  Sfx.bgmGame: _bgmGameTones(),
+  // ハイスコア・進化リビール用の勝利曲(約9秒・ループしない)
+  Sfx.victoryTune: _victoryTuneTones(),
 };
+
+/// ゲームBGM: 140bpmで駆けるスクエアリード+刻むベース。
+List<_Tone> _bgmGameTones() {
+  // 8分音符 ≒ 0.214s(140bpm)
+  return _song(
+    melody: const [
+      659,
+      784,
+      880,
+      784,
+      1047,
+      880,
+      784,
+      659,
+      587,
+      659,
+      784,
+      880,
+      784,
+      659,
+      587,
+      523,
+      659,
+      784,
+      880,
+      1047,
+      1175,
+      1047,
+      880,
+      784,
+      880,
+      784,
+      659,
+      587,
+      659,
+      587,
+      523,
+      587,
+    ],
+    melodyBeat: 0.214,
+    melodyWave: _Wave.square,
+    melodyVol: 0.032,
+    bass: const [
+      131,
+      175,
+      196,
+      175,
+      131,
+      175,
+      196,
+      196,
+      131,
+      175,
+      196,
+      175,
+      147,
+      175,
+      131,
+      131,
+    ],
+    bassBeat: 0.428,
+    bassVol: 0.06,
+  );
+}
+
+/// 勝利曲: ファンファーレ導入 → 明るいメロディ → 大団円(約9秒)。
+List<_Tone> _victoryTuneTones() {
+  final tones = <_Tone>[];
+  // 導入の駆け上がり
+  const run = <double>[523, 659, 784, 1047];
+  for (var i = 0; i < run.length; i++) {
+    tones.add(_Tone(run[i], 0.14, _Wave.square, 0.08, i * 0.09));
+  }
+  // 和音ドン!
+  for (final f in const <double>[523, 659, 784]) {
+    tones.add(_Tone(f, 0.5, _Wave.triangle, 0.1, 0.5));
+  }
+  tones.add(const _Tone(131, 0.5, _Wave.sine, 0.07, 0.5));
+  // メロディ(100bpm)
+  const beat = 0.6;
+  const melody = [
+    784,
+    880,
+    1047,
+    880,
+    784,
+    659,
+    784,
+    880,
+    1047,
+    1175,
+    1047,
+    880,
+  ];
+  const bass = <double>[175, 196, 131, 175, 196, 131];
+  for (var i = 0; i < melody.length; i++) {
+    tones.add(_Tone(melody[i].toDouble(), beat * 0.9, _Wave.triangle, 0.07,
+        1.3 + i * beat * 0.5));
+  }
+  for (var i = 0; i < bass.length; i++) {
+    tones.add(_Tone(bass[i], beat * 0.9, _Wave.sine, 0.06, 1.3 + i * beat));
+  }
+  // 大団円の和音+シャンシャン
+  const endAt = 1.3 + 12 * 0.3 + 0.3; // ≒ 5.2
+  for (final f in const <double>[523, 659, 784, 1047]) {
+    tones.add(_Tone(f, 1.6, _Wave.triangle, 0.11, endAt));
+  }
+  tones.add(const _Tone(1319, 1.6, _Wave.triangle, 0.09, endAt));
+  tones.add(const _Tone(1568, 1.2, _Wave.sine, 0.08, endAt + 0.3));
+  tones.add(const _Tone(2093, 0.9, _Wave.sine, 0.06, endAt + 0.6));
+  tones.add(const _Tone(131, 1.6, _Wave.sine, 0.08, endAt));
+  return tones;
+}
 
 /// メガファンファーレ: 8音駆け上がり → 和音2連 → ロング和音+高音シャンシャン
 List<_Tone> _megaFanfareTones() {
