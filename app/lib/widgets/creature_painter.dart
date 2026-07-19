@@ -613,6 +613,57 @@ class CreaturePainter extends CustomPainter {
       case 'cheekseal': // ほっぺシール(ハート)
         _heart(canvas, const Offset(95, 180), 20, const Color(0xFFFF4F96));
         _heart(canvas, const Offset(205, 180), 20, const Color(0xFFFF4F96));
+      case 'eyepatch': // かいぞくがんたい(右目)
+        canvas.drawLine(
+            const Offset(64, 122),
+            const Offset(228, 158),
+            Paint()
+              ..color = inkColor
+              ..strokeWidth = 9);
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(188, 150), width: 52, height: 44),
+            Paint()..color = inkColor);
+      case 'whiskers': // ねこひげ+ピンクの鼻
+        final w = Paint()
+          ..color = inkColor
+          ..strokeWidth = 5
+          ..strokeCap = StrokeCap.round;
+        canvas.drawLine(const Offset(46, 160), const Offset(92, 166), w);
+        canvas.drawLine(const Offset(44, 180), const Offset(92, 180), w);
+        canvas.drawLine(const Offset(46, 200), const Offset(92, 194), w);
+        canvas.drawLine(const Offset(254, 160), const Offset(208, 166), w);
+        canvas.drawLine(const Offset(256, 180), const Offset(208, 180), w);
+        canvas.drawLine(const Offset(254, 200), const Offset(208, 194), w);
+        canvas.drawPath(
+            Path()
+              ..moveTo(143, 170)
+              ..lineTo(157, 170)
+              ..lineTo(150, 179)
+              ..close(),
+            Paint()..color = const Color(0xFFFF6EA6));
+      case 'mask': // ますく
+        final maskRect = RRect.fromRectAndRadius(
+            Rect.fromCenter(
+                center: const Offset(150, 196), width: 116, height: 74),
+            const Radius.circular(24));
+        canvas.drawRRect(maskRect, Paint()..color = Colors.white);
+        canvas.drawRRect(
+            maskRect,
+            Paint()
+              ..color = const Color(0xFFD8DBE8)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 4);
+        final strap = Paint()
+          ..color = const Color(0xFFD8DBE8)
+          ..strokeWidth = 5;
+        canvas.drawLine(const Offset(92, 186), const Offset(58, 168), strap);
+        canvas.drawLine(const Offset(208, 186), const Offset(242, 168), strap);
+      case 'starcheeks': // キラキラほっぺ
+        _star(canvas, const Offset(95, 180), 26, const Color(0xFFFFB300));
+        _star(canvas, const Offset(205, 180), 26, const Color(0xFFFFB300));
+        _star(canvas, const Offset(108, 202), 14, const Color(0xFFFFD23E));
+        _star(canvas, const Offset(192, 202), 14, const Color(0xFFFFD23E));
     }
   }
 

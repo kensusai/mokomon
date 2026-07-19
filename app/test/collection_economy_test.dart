@@ -102,24 +102,25 @@ void main() {
           ['onigiri', 'ramen', 'parfait', 'tamago', 'pizza']);
     });
 
-    test('20 shop items, appended after the original 6', () {
-      expect(shopItems, hasLength(20));
+    test('24 shop items, appended after the original 6', () {
+      expect(shopItems, hasLength(24));
       expect(shopItems[5].key, 'sunglass'); // 既存の並びは不変
-      expect(shopItems.last.key, 'cheekseal');
+      expect(shopItems.last.key, 'starcheeks');
     });
 
     test('high-index item equips survive あいことば roundtrip', () {
       final s = GameState()
-        ..owned = {'halo', 'cheekseal'}
+        ..owned = {'halo', 'starcheeks'}
         ..equipHead = 'halo'
-        ..equipFace = 'cheekseal';
+        ..equipFace = 'starcheeks';
       final restored = GameState();
       expect(restored.loadCode(s.makeCode()), isTrue);
       expect(restored.equipHead, 'halo');
-      expect(restored.equipFace, 'cheekseal');
+      expect(restored.equipFace, 'starcheeks');
     });
 
     test('background defaults per species and per-creature override', () {
+      expect(bgThemes, hasLength(11));
       expect(speciesDefaultBg, hasLength(speciesList.length));
       final c = fresh(GameState()..species = 14); // obake
       expect(c.state.effectiveBg, 2); // よぞら

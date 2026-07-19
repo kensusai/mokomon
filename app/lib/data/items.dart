@@ -34,4 +34,8 @@ const shopItems = <ShopItem>[
   ShopItem('clownnose', '🔴', 'ピエロのはな', 15, ItemSlot.face),
   ShopItem('monocle', '🧐', 'モノクル', 20, ItemSlot.face),
   ShopItem('cheekseal', '💟', 'ほっぺシール', 10, ItemSlot.face),
+  ShopItem('eyepatch', '🏴‍☠️', 'かいぞくがんたい', 20, ItemSlot.face),
+  ShopItem('whiskers', '🐈', 'ねこひげ', 15, ItemSlot.face),
+  ShopItem('mask', '😷', 'ますく', 15, ItemSlot.face),
+  ShopItem('starcheeks', '✨', 'キラキラほっぺ', 10, ItemSlot.face),
 ];
