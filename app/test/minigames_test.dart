@@ -34,7 +34,7 @@ void main() {
       }
       expect(g.timeLeft, 25);
       expect(g.items, isNotEmpty);
-      // 落下速度は 120〜220px/s × 加速係数(最大1.6)
+      // 落下速度は 120〜220px/s × 加速係数(最大1.9)
       for (final it in g.items) {
         expect(it.vy, inInclusiveRange(120, 360));
       }
@@ -44,7 +44,7 @@ void main() {
       final early = CatchGame(rng: Random(1));
       expect(early.speedFactor, 1.0);
       early.timeLeft = 1;
-      expect(early.speedFactor, closeTo(1.58, 0.03));
+      expect(early.speedFactor, closeTo(1.87, 0.03));
     });
 
     test('tap within 44px scores 1 for fruit and 3 for star', () {
@@ -80,11 +80,11 @@ void main() {
   });
 
   group('PuzzleGame', () {
-    test('always includes the target among 3 unique choices', () {
+    test('always includes the target among 4 unique choices', () {
       for (var seed = 0; seed < 30; seed++) {
         final g = PuzzleGame(rng: Random(seed));
-        expect(g.choices, hasLength(3));
-        expect(g.choices.toSet(), hasLength(3));
+        expect(g.choices, hasLength(4));
+        expect(g.choices.toSet(), hasLength(4));
         expect(g.choices, contains(g.target));
       }
     });

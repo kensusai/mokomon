@@ -45,8 +45,8 @@ class CatchGame {
 
   bool get finished => timeLeft <= 0;
 
-  /// 残り時間が減るほど速くなる(1.0 → 1.6)。こどもFB「もっとはやく」。
-  double get speedFactor => 1.0 + 0.6 * (1 - timeLeft / catchDurationSec);
+  /// 残り時間が減るほど速くなる(1.0 → 1.9)。こどもFB「もっとむずかしく」。
+  double get speedFactor => 1.0 + 0.9 * (1 - timeLeft / catchDurationSec);
 
   /// [dt] 秒進める。範囲は画面サイズ [width]x[height]。
   void update(double dt, double width, double height) {
@@ -118,7 +118,7 @@ class PuzzlePiece {
   int get hashCode => Object.hash(shape, color);
 }
 
-/// 「おなじのどれ?」8ラウンド。不正解ペナルティなし(再挑戦可)。
+/// 「おなじのどれ?」8ラウンド・4択(難化)。不正解ペナルティなし(再挑戦可)。
 class PuzzleGame {
   PuzzleGame({Random? rng}) : _rng = rng ?? Random() {
     _newRound();
@@ -140,7 +140,7 @@ class PuzzleGame {
   void _newRound() {
     target = _randomPiece();
     final opts = <PuzzlePiece>[target];
-    while (opts.length < 3) {
+    while (opts.length < 4) {
       final o = _randomPiece();
       if (!opts.contains(o)) opts.add(o);
     }
@@ -246,8 +246,8 @@ class WhackGame {
 
   bool get finished => timeLeft <= 0;
 
-  /// 終盤ほど速く(1.0 → 1.5)。
-  double get speedFactor => 1.0 + 0.5 * (1 - timeLeft / whackDurationSec);
+  /// 終盤ほど速く(1.0 → 1.8)。こどもFB「もっとむずかしく」。
+  double get speedFactor => 1.0 + 0.8 * (1 - timeLeft / whackDurationSec);
 
   void update(double dt) {
     if (finished) return;
@@ -280,7 +280,7 @@ class WhackGame {
           speciesIndex: _rng.nextInt(15),
           golden: roll < 0.12,
           stinky: roll >= 0.12 && roll < 0.22,
-          ttl: (0.9 + _rng.nextDouble() * 0.5) / speedFactor,
+          ttl: (0.75 + _rng.nextDouble() * 0.45) / speedFactor,
         ));
       }
     }
@@ -331,9 +331,9 @@ class OddOneGame {
 
   bool get finished => round >= oddRounds;
 
-  // こどもFBで難化: 9 → 12 → 16 → 20枚
+  // こどもFBでさらに難化: 12 → 16 → 20 → 25枚
   int get _gridSize =>
-      switch (round) { < 2 => 9, < 4 => 12, < 6 => 16, _ => 20 };
+      switch (round) { < 2 => 12, < 4 => 16, < 6 => 20, _ => 25 };
 
   void _newRound() {
     final pair = oddPairs[_rng.nextInt(oddPairs.length)];
@@ -394,7 +394,8 @@ class BalloonGame {
 
   bool get finished => timeLeft <= 0;
 
-  double get speedFactor => 1.0 + 0.5 * (1 - timeLeft / balloonDurationSec);
+  /// 終盤ほど速く(1.0 → 1.8)。こどもFB「もっとむずかしく」。
+  double get speedFactor => 1.0 + 0.8 * (1 - timeLeft / balloonDurationSec);
 
   void update(double dt, double width, double height) {
     if (finished) return;
@@ -408,8 +409,8 @@ class BalloonGame {
     if (_spawnT <= 0) {
       _spawnT = (0.5 + _rng.nextDouble() * 0.45) / speedFactor;
       final roll = _rng.nextDouble();
-      final bomb = roll < 0.10;
-      final golden = !bomb && roll < 0.24;
+      final bomb = roll < 0.14; // 難化: 💣ちょっと増量
+      final golden = !bomb && roll < 0.28;
       items.add(BalloonItem(
         x: 34 + _rng.nextDouble() * (width - 68),
         y: height + 40,
@@ -453,14 +454,112 @@ class OrderGame {
 
   bool get finished => next > 9;
 
-  /// 何秒で終えたかでコイン(はやい=16 / ふつう=10 / ゆっくり=6)。
+  /// 何秒で終えたかでコイン(はやい=16 / ふつう=10 / ゆっくり=6)。難化で基準タイム短縮。
   static int coinsForSeconds(double seconds) =>
-      seconds < 14 ? 16 : (seconds < 24 ? 10 : 6);
+      seconds < 11 ? 16 : (seconds < 20 ? 10 : 6);
 
   bool tap(int cellIndex) {
     if (finished) return false;
     if (cells[cellIndex] != next) return false;
     next++;
     return true;
+  }
+}
+
+// ---------- かぞえてタッチ ----------
+
+const countRounds = 6;
+const countRewardPerRound = 3;
+
+/// (かぞえる対象, まぎれもの2種)。似すぎない絵文字で6〜7歳向けに。
+const countSets = [
+  ('🐟', ['🐙', '🦀']),
+  ('🦋', ['🐝', '🐞']),
+  ('🍓', ['🍒', '🍎']),
+  ('⭐', ['🌙', '☁️']),
+  ('🐤', ['🐸', '🐰']),
+  ('🎈', ['🎁', '🎀']),
+];
+
+/// 「かぞえてタッチ」: ちらばった絵文字から対象をかぞえて3択で答える。
+/// ラウンドが進むほど個数が増えて難しくなる。
+class CountGame {
+  CountGame({Random? rng}) : _rng = rng ?? Random() {
+    _newRound();
+  }
+
+  final Random _rng;
+  var round = 0;
+  var reward = 0;
+  late String target;
+  late List<String> items;
+  late int answer;
+  late List<int> choices;
+
+  bool get finished => round >= countRounds;
+
+  int get _itemCount => 9 + round * 3; // 9 → 24枚
+
+  void _newRound() {
+    final set = countSets[_rng.nextInt(countSets.length)];
+    target = set.$1;
+    answer = 2 + _rng.nextInt(min(7, _itemCount - 2)); // 2〜8こ
+    items = [
+      for (var i = 0; i < answer; i++) target,
+      for (var i = answer; i < _itemCount; i++) set.$2[_rng.nextInt(2)],
+    ]..shuffle(_rng);
+    final base = answer - 1; // answer は最小2なので base >= 1
+    choices = [base, base + 1, base + 2]..shuffle(_rng);
+  }
+
+  /// 正解なら true を返し次ラウンドへ。不正解は何も変えない(数えなおし可)。
+  bool guess(int choiceIndex) {
+    if (finished) return false;
+    if (choices[choiceIndex] != answer) return false;
+    reward += countRewardPerRound;
+    round++;
+    if (!finished) _newRound();
+    return true;
+  }
+}
+
+// ---------- おぼえてタッチ ----------
+
+const simonPads = 4;
+const simonMaxLen = 7;
+const simonRewardPerRound = 3;
+
+enum SimonInput { progress, roundComplete, gameComplete, wrong }
+
+/// 「おぼえてタッチ」: 光ったじゅんばんを覚えてタッチ(サイモン)。
+/// 2連から始まり、クリアごとに1つ伸びて最大7連。間違えたらそこで終了
+/// (それまでのごほうびは持ち帰り)。
+class SimonGame {
+  SimonGame({Random? rng}) : _rng = rng ?? Random() {
+    sequence = [_rng.nextInt(simonPads), _rng.nextInt(simonPads)];
+  }
+
+  final Random _rng;
+  late final List<int> sequence;
+  var _pos = 0;
+  var reward = 0;
+  var finished = false;
+
+  SimonInput input(int pad) {
+    if (finished) return SimonInput.wrong;
+    if (pad != sequence[_pos]) {
+      finished = true;
+      return SimonInput.wrong;
+    }
+    _pos++;
+    if (_pos < sequence.length) return SimonInput.progress;
+    reward += simonRewardPerRound;
+    _pos = 0;
+    if (sequence.length >= simonMaxLen) {
+      finished = true;
+      return SimonInput.gameComplete;
+    }
+    sequence.add(_rng.nextInt(simonPads));
+    return SimonInput.roundComplete;
   }
 }

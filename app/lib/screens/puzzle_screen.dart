@@ -183,7 +183,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
         borderRadius: BorderRadius.circular(22),
         onTap: () => _choose(i),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(8),
           child: CustomPaint(
             size: const Size(64, 64),
             painter:

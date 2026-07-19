@@ -98,7 +98,12 @@ class _OddOneScreenState extends State<OddOneScreen> {
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 330),
                               child: GridView.count(
-                                crossAxisCount: 3,
+                                // 難化で最大25枚: 枚数に応じて列数を増やす
+                                crossAxisCount: _game.cells.length >= 25
+                                    ? 5
+                                    : _game.cells.length >= 16
+                                        ? 4
+                                        : 3,
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 mainAxisSpacing: 10,

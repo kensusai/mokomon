@@ -12,9 +12,11 @@ const _games = [
   ('odd', '👀', 'ちがうの どっち?', [Color(0xFF5BC8E8), Color(0xFF2E9BC0)]),
   ('memory', '🃏', 'ペアさがし', [Color(0xFF9B8CFF), Color(0xFF6B5BD6)]),
   ('order', '🔢', 'じゅんばんタッチ', [Color(0xFF7ED6A5), Color(0xFF4CAF7D)]),
+  ('count', '🧮', 'かぞえてタッチ', [Color(0xFFFFB65C), Color(0xFFE8892A)]),
+  ('simon', '💡', 'おぼえてタッチ', [Color(0xFFB78CFF), Color(0xFF7E5BD6)]),
 ];
 
-/// ミニゲーム選択モーダル。2列グリッドで8種を1画面に(スクロールなし)。
+/// ミニゲーム選択モーダル。2列グリッドで10種を1画面に(スクロールなし)。
 Future<String?> showGameChooser(BuildContext context) {
   return showDialog<String>(
     context: context,
@@ -31,7 +33,7 @@ Future<String?> showGameChooser(BuildContext context) {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
-            childAspectRatio: 1.8,
+            childAspectRatio: 2.15,
             children: [
               for (final (key, emoji, title, colors) in _games)
                 PressableGradient(

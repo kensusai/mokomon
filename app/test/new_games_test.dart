@@ -40,7 +40,7 @@ void main() {
       final g = WhackGame(rng: Random(1));
       expect(g.speedFactor, 1.0);
       g.timeLeft = 1;
-      expect(g.speedFactor, closeTo(1.48, 0.03));
+      expect(g.speedFactor, closeTo(1.77, 0.03));
     });
   });
 
@@ -55,14 +55,14 @@ void main() {
       }
     });
 
-    test('grid grows 9 → 12 → 16 → 20 and pays +2 per correct', () {
+    test('grid grows 12 → 16 → 20 → 25 and pays +2 per correct', () {
       final g = OddOneGame(rng: Random(4));
       final sizes = <int>[];
       while (!g.finished) {
         sizes.add(g.cells.length);
         expect(g.guess(g.oddIndex), isTrue);
       }
-      expect(sizes, [9, 9, 12, 12, 16, 16, 20, 20]);
+      expect(sizes, [12, 12, 16, 16, 20, 20, 25, 25]);
       expect(g.reward, 16);
     });
 

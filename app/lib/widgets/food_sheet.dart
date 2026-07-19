@@ -14,9 +14,11 @@ const _foodGradients = {
   'parfait': purpleGradient,
   'tamago': [Color(0xFFFFD86B), Color(0xFFF0B429)],
   'pizza': [Color(0xFFFF8A65), Color(0xFFE05B3A)],
+  'burger': [Color(0xFFD9A05B), Color(0xFFB0722E)],
+  'ice': [Color(0xFF9AD9F5), Color(0xFF5FB4E0)],
 };
 
-/// ごはんモーダル。2列グリッドで8種を1画面に(スクロールなし)。
+/// ごはんモーダル。2列グリッドで10種を1画面に(スクロールなし)。
 /// 給餌に成功したら閉じて [onFed] を呼ぶ。コイン不足はトーストで誘導。
 Future<void> showFoodModal(BuildContext context, GameController controller,
     {required void Function(Food) onFed}) {
@@ -35,7 +37,7 @@ Future<void> showFoodModal(BuildContext context, GameController controller,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
-            childAspectRatio: 1.7,
+            childAspectRatio: 2.05,
             children: [
               for (final f in foods)
                 Opacity(

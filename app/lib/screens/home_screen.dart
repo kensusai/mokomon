@@ -27,6 +27,8 @@ import '../widgets/toast.dart';
 import '../widgets/ui_kit.dart';
 import 'balloon_screen.dart';
 import 'catch_screen.dart';
+import 'count_screen.dart';
+import 'simon_screen.dart';
 import 'memory_screen.dart';
 import 'odd_one_screen.dart';
 import 'order_screen.dart';
@@ -343,6 +345,8 @@ class _HomeScreenState extends State<HomeScreen> {
       'order' => OrderScreen(controller: c),
       'trace' => TraceScreen(controller: c),
       'odd' => OddOneScreen(controller: c),
+      'count' => CountScreen(controller: c),
+      'simon' => SimonScreen(controller: c),
       _ => MemoryScreen(controller: c),
     };
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
