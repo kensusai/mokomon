@@ -23,6 +23,8 @@ enum Sfx {
   bgm2,
   bgm3,
   bgmGame,
+  bgmGame2,
+  bgmPaint,
   victoryTune,
 }
 
@@ -119,8 +121,11 @@ final Map<Sfx, List<_Tone>> _recipes = {
   Sfx.bgm: _bgmTones(),
   Sfx.bgm2: _bgm2Tones(),
   Sfx.bgm3: _bgm3Tones(),
-  // ミニゲーム中の専用BGM(疾走感・ループ)
+  // ミニゲーム中の専用BGM(疾走感・ループ)。2曲からランダム
   Sfx.bgmGame: _bgmGameTones(),
+  Sfx.bgmGame2: _bgmGame2Tones(),
+  // おえかき中のまったり曲(オルゴール風アルペジオ)
+  Sfx.bgmPaint: _bgmPaintTones(),
   // ハイスコア・進化リビール用の勝利曲(約9秒・ループしない)
   Sfx.victoryTune: _victoryTuneTones(),
 };
@@ -186,6 +191,116 @@ List<_Tone> _bgmGameTones() {
     ],
     bassBeat: 0.428,
     bassVol: 0.06,
+  );
+}
+
+/// ゲームBGM2: 120bpmのはずむポップ(三角波リード+スクエアベース)。
+List<_Tone> _bgmGame2Tones() {
+  return _song(
+    melody: const [
+      523,
+      659,
+      523,
+      784,
+      659,
+      880,
+      784,
+      659,
+      587,
+      784,
+      587,
+      880,
+      784,
+      1047,
+      880,
+      784,
+      659,
+      880,
+      659,
+      1047,
+      880,
+      1175,
+      1047,
+      880,
+      784,
+      659,
+      587,
+      659,
+      523,
+      587,
+      659,
+      523,
+    ],
+    melodyBeat: 0.25,
+    melodyWave: _Wave.triangle,
+    melodyVol: 0.055,
+    bass: const [
+      131,
+      196,
+      175,
+      196,
+      131,
+      196,
+      175,
+      196,
+      147,
+      196,
+      175,
+      196,
+      131,
+      175,
+      147,
+      131,
+    ],
+    bassBeat: 0.5,
+    bassVol: 0.045,
+  );
+}
+
+/// おえかきBGM: 84bpmのやさしいアルペジオ(サイン波)。
+List<_Tone> _bgmPaintTones() {
+  const beat = 60.0 / 84 / 2; // 8分 ≒ 0.357s
+  return _song(
+    melody: const [
+      523,
+      659,
+      784,
+      659,
+      880,
+      784,
+      659,
+      784,
+      440,
+      587,
+      659,
+      587,
+      784,
+      659,
+      587,
+      659,
+      523,
+      659,
+      784,
+      659,
+      1047,
+      880,
+      784,
+      659,
+      587,
+      659,
+      587,
+      523,
+      440,
+      523,
+      587,
+      523,
+    ],
+    melodyBeat: beat,
+    melodyWave: _Wave.sine,
+    melodyVol: 0.05,
+    bass: const [131, 147, 175, 131],
+    bassBeat: beat * 8,
+    bassVol: 0.05,
   );
 }
 
@@ -428,14 +543,14 @@ class SoundSynth {
     return _babbleCache.putIfAbsent(species * 16 + variant, () {
       final rng = Random(species * 31 + variant * 7 + 5);
       final base = 300.0 + (species % 9) * 42; // 種族の声の高さ
-      final syllables = 4 + rng.nextInt(3);
+      final syllables = 5 + rng.nextInt(4);
       final tones = <_Tone>[];
       var t = 0.0;
       for (var i = 0; i < syllables; i++) {
         final f = base * (0.85 + rng.nextDouble() * 0.85);
         final dur = 0.07 + rng.nextDouble() * 0.06;
-        tones.add(_Tone(f, dur, _Wave.triangle, 0.13, t));
-        tones.add(_Tone(f * 2, dur, _Wave.sine, 0.05, t)); // 倍音で声らしく
+        tones.add(_Tone(f, dur, _Wave.triangle, 0.17, t));
+        tones.add(_Tone(f * 2, dur, _Wave.sine, 0.07, t)); // 倍音で声らしく
         t += dur + 0.02 + rng.nextDouble() * 0.04;
       }
       return _render(tones);

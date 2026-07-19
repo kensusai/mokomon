@@ -70,6 +70,18 @@ const _petAnims = {
 /// BGMの曲名(🎵ボタンで切替。SfxPlayer.bgmTracks と対応)。
 const _bgmNames = ['そよかぜ', 'わくわく', 'ぽかぽか'];
 
+/// ひとりごと(放置中に勝手にしゃべる。docs/game-design.md §3)。
+const _idleLines = [
+  'ねえねえ、あそぼ〜!',
+  'なでなで して〜',
+  'おなか すいたかも…',
+  'ふんふんふ〜ん♪',
+  'きょうも いい てんき!',
+  'ひまだな〜',
+  'こっち みて〜!',
+  'だいすきだよ♪',
+];
+
 /// お絵かきを保存したときの褒めセリフ(docs/game-design.md §6)。
 const _paintPraiseLines = [
   'わあ! すてきな もよう!',
@@ -101,6 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _hintSeq = 0; // 変わるたびに吹き出しのポップ演出をやり直す
   Timer? _hintTimer;
   Timer? _sparkleTimer;
+  Timer? _idleTimer;
   final _oneShotTimers = <Timer>[];
   bool _glowHinted = false;
   bool _evoBusy = false;
@@ -123,6 +136,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     // 既にしきい値を超えていた場合の追いつき進化
     _later(const Duration(milliseconds: 1200), _checkEvolve);
+    _scheduleIdleChatter();
+  }
+
+  /// 放置中のひとりごと(20〜32秒ごと)。単調さ対策(こどもFB)。
+  void _scheduleIdleChatter() {
+    _idleTimer?.cancel();
+    _idleTimer = Timer(Duration(milliseconds: 20000 + _rng.nextInt(12000)), () {
+      if (!mounted) return;
+      if (s.stage == 0) {
+        // たまごがときどき ゆれる
+        _creatureKey.currentState?.play(CreatureAnim.wiggle);
+        _hint('たまごが ゆれた…!?');
+      } else {
+        c.sfx.playBabble(s.species);
+        _creatureKey.currentState?.play(CreatureAnim.wiggle);
+        _hint(_idleLines[_rng.nextInt(_idleLines.length)]);
+      }
+      _scheduleIdleChatter();
+    });
   }
 
   @override
@@ -130,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
     c.removeListener(_onStateChanged);
     _hintTimer?.cancel();
     _sparkleTimer?.cancel();
+    _idleTimer?.cancel();
     for (final t in _oneShotTimers) {
       t.cancel();
     }
@@ -300,7 +333,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     final key = await showGameChooser(context);
     if (key == null || !mounted) return;
-    c.sfx.playOverrideBgm(Sfx.bgmGame); // ゲーム中は専用BGM
+    // ゲーム中は専用BGM(2曲からランダムでメリハリ)
+    c.sfx.playOverrideBgm(_rng.nextBool() ? Sfx.bgmGame : Sfx.bgmGame2);
     final screen = switch (key) {
       'catch' => CatchScreen(controller: c),
       'puzzle' => PuzzleScreen(controller: c),
@@ -313,7 +347,10 @@ class _HomeScreenState extends State<HomeScreen> {
     };
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     c.sfx.clearOverrideBgm(); // ホームBGMへ戻す(勝利曲中なら曲側が戻す)
-    if (mounted) await _checkEvolve();
+    if (!mounted) return;
+    c.sfx.playBabble(s.species);
+    _hint('たのしかった〜!');
+    await _checkEvolve();
   }
 
   Future<void> _onPaintPressed() async {
@@ -321,8 +358,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _hint('うまれてから おえかき できるよ!');
       return;
     }
+    c.sfx.playOverrideBgm(Sfx.bgmPaint); // おえかき中はまったり曲
     final saved = await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => PaintScreen(controller: c)));
+    c.sfx.clearOverrideBgm();
     if (saved == true && mounted) {
       _celebratePaint();
       await _checkEvolve();

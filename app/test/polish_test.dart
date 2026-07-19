@@ -249,4 +249,40 @@ void main() {
       await drainTimers(tester);
     });
   });
+
+  group('idle chatter (docs/game-design.md §3)', () {
+    const idleLines = [
+      'ねえねえ、あそぼ〜!',
+      'なでなで して〜',
+      'おなか すいたかも…',
+      'ふんふんふ〜ん♪',
+      'きょうも いい てんき!',
+      'ひまだな〜',
+      'こっち みて〜!',
+      'だいすきだよ♪',
+    ];
+
+    testWidgets('the creature talks by itself while idle', (tester) async {
+      await bootApp(tester, state: GameState()..stage = 1, rng: NoPuffRandom());
+      var seen = false;
+      // ひとりごとは20〜32秒ごと。1秒刻みで40秒待つ
+      for (var i = 0; i < 40 && !seen; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        seen = idleLines.any((l) => find.text(l).evaluate().isNotEmpty);
+      }
+      expect(seen, isTrue);
+      await drainTimers(tester);
+    });
+
+    testWidgets('the egg wiggles instead of talking', (tester) async {
+      await bootApp(tester, state: GameState());
+      var seen = false;
+      for (var i = 0; i < 40 && !seen; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        seen = find.text('たまごが ゆれた…!?').evaluate().isNotEmpty;
+      }
+      expect(seen, isTrue);
+      await drainTimers(tester);
+    });
+  });
 }
