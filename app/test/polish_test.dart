@@ -186,12 +186,14 @@ void main() {
   });
 
   group('BGM', () {
-    test('renders three looping tracks', () {
+    test('renders five tracks (home x3, game, victory)', () {
       final synth = SoundSynth();
-      for (final t in [Sfx.bgm, Sfx.bgm2, Sfx.bgm3]) {
-        // どの曲も数秒以上のループ(22050Hz 16bit mono)
+      for (final t in [Sfx.bgm, Sfx.bgm2, Sfx.bgm3, Sfx.bgmGame]) {
+        // どの曲も数秒以上(22050Hz 16bit mono)
         expect(synth.wavFor(t).length, greaterThan(200000), reason: '$t');
       }
+      // 勝利曲は約9秒の一発もの
+      expect(synth.wavFor(Sfx.victoryTune).length, greaterThan(250000));
     });
 
     test('cycleBgm rotates tracks and persists the choice', () {
