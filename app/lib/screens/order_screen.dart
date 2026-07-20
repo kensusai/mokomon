@@ -5,6 +5,7 @@ import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
+import 'mistake_game_over.dart';
 
 /// じゅんばんタッチ(docs/game-design.md §5)。1〜9を順に、はやくタッチ!
 class OrderScreen extends StatefulWidget {
@@ -19,15 +20,21 @@ class OrderScreen extends StatefulWidget {
   State<OrderScreen> createState() => _OrderScreenState();
 }
 
-class _OrderScreenState extends State<OrderScreen> {
+class _OrderScreenState extends State<OrderScreen>
+    with MistakeGameOverMixin<OrderScreen> {
   late final _game = widget.game ?? OrderGame();
   final _watch = Stopwatch();
   var _ended = false;
-  var _gameOver = false;
   var _coins = 0;
 
+  @override
+  GameController get controller => widget.controller;
+
+  @override
+  void resetMistakes() => _game.continueAfterFail();
+
   void _tap(int index) {
-    if (_ended || _gameOver) return;
+    if (_ended || gameOver) return;
     if (!_watch.isRunning) _watch.start();
     if (_game.tap(index)) {
       widget.controller.sfx.play(Sfx.tap);
@@ -43,15 +50,8 @@ class _OrderScreenState extends State<OrderScreen> {
       widget.controller.sfx.play(Sfx.wrong);
       if (_game.failed) {
         _watch.stop();
-        setState(() => _gameOver = true);
+        failGame();
       }
-    }
-  }
-
-  void _continue() {
-    if (widget.controller.payToContinue(minigameContinueCost)) {
-      _game.continueAfterFail();
-      setState(() => _gameOver = false);
     }
   }
 
@@ -73,20 +73,9 @@ class _OrderScreenState extends State<OrderScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        BackIconButton(
-                            onTap: () => Navigator.of(context).pop()),
-                        const Expanded(
-                          child: Text('🔢 じゅんばんタッチ',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: inkColor)),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
+                    GameHeaderBar(
+                      title: '🔢 じゅんばんタッチ',
+                      onBack: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -122,14 +111,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   result: 'ぜんぶ おせた! +$_coins コイン!',
                   onDone: () => Navigator.of(context).pop(),
                 ),
-              if (_gameOver)
-                GameOverOverlay(
-                  cost: minigameContinueCost,
-                  canAfford:
-                      widget.controller.state.coins >= minigameContinueCost,
-                  onContinue: _continue,
-                  onGiveUp: () => Navigator.of(context).pop(),
-                ),
+              if (gameOver) buildGameOverOverlay(context),
             ],
           ),
         ),

@@ -235,3 +235,69 @@ class BackIconButton extends StatelessWidget {
     );
   }
 }
+
+/// ミニゲーム共通のヘッダー行: 戻るボタン+中央タイトル。
+/// 右側は戻るボタンの見た目の幅とバランスさせるための空白(既定48px)。
+class GameHeaderBar extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+  final double trailingWidth;
+  const GameHeaderBar({
+    super.key,
+    required this.title,
+    required this.onBack,
+    this.trailingWidth = 48,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        BackIconButton(onTap: onBack),
+        Expanded(
+          child: Text(title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w800, color: inkColor)),
+        ),
+        SizedBox(width: trailingWidth),
+      ],
+    );
+  }
+}
+
+/// ラウンド進捗ドット(パズル/ちがうのどっち/かぞえて 共通)。
+class RoundProgressDots extends StatelessWidget {
+  final int total;
+  final int current;
+  final double size;
+  final Color color;
+  final Color trackColor;
+  const RoundProgressDots({
+    super.key,
+    required this.total,
+    required this.current,
+    this.size = 14,
+    this.color = const Color(0xFF34C98E),
+    this.trackColor = const Color(0xFFDFE3EF),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < total; i++)
+          Container(
+            width: size,
+            height: size,
+            margin: EdgeInsets.symmetric(horizontal: size >= 14 ? 4 : 3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: i < current ? color : trackColor,
+            ),
+          ),
+      ],
+    );
+  }
+}

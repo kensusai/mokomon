@@ -9,6 +9,7 @@ import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
 import '../widgets/shape_painter.dart';
+import 'mistake_game_over.dart';
 
 /// おなじのどれ?(docs/game-design.md §5)。8ラウンド、不正解ペナルティなし。
 class PuzzleScreen extends StatefulWidget {
@@ -24,14 +25,19 @@ class PuzzleScreen extends StatefulWidget {
 }
 
 class _PuzzleScreenState extends State<PuzzleScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, MistakeGameOverMixin<PuzzleScreen> {
   late final _game = widget.game ?? PuzzleGame();
   var _ended = false;
-  var _gameOver = false;
   var _locked = false;
   int? _shakingIndex;
   late final AnimationController _shake;
   final _timers = <Timer>[];
+
+  @override
+  GameController get controller => widget.controller;
+
+  @override
+  void resetMistakes() => _game.continueAfterFail();
 
   @override
   void initState() {
@@ -50,7 +56,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
   }
 
   void _choose(int index) {
-    if (_locked || _ended || _gameOver) return;
+    if (_locked || _ended || gameOver) return;
     if (_game.guess(index)) {
       widget.controller.sfx.play(Sfx.happy);
       _locked = true;
@@ -68,20 +74,13 @@ class _PuzzleScreenState extends State<PuzzleScreen>
     } else {
       widget.controller.sfx.play(Sfx.wrong);
       if (_game.failed) {
-        setState(() => _gameOver = true);
+        failGame();
         return;
       }
       setState(() => _shakingIndex = index);
       _shake.forward(from: 0).whenComplete(() {
         if (mounted) setState(() => _shakingIndex = null);
       });
-    }
-  }
-
-  void _continue() {
-    if (widget.controller.payToContinue(minigameContinueCost)) {
-      _game.continueAfterFail();
-      setState(() => _gameOver = false);
     }
   }
 
@@ -103,20 +102,10 @@ class _PuzzleScreenState extends State<PuzzleScreen>
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        BackIconButton(
-                            onTap: () => Navigator.of(context).pop()),
-                        const Expanded(
-                          child: Text('🧩 おなじの どれ?',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: inkColor)),
-                        ),
-                        const SizedBox(width: 40),
-                      ],
+                    GameHeaderBar(
+                      title: '🧩 おなじの どれ?',
+                      trailingWidth: 40,
+                      onBack: () => Navigator.of(context).pop(),
                     ),
                     Expanded(
                       child: Column(
@@ -139,14 +128,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
                   result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
                   onDone: () => Navigator.of(context).pop(),
                 ),
-              if (_gameOver)
-                GameOverOverlay(
-                  cost: minigameContinueCost,
-                  canAfford:
-                      widget.controller.state.coins >= minigameContinueCost,
-                  onContinue: _continue,
-                  onGiveUp: () => Navigator.of(context).pop(),
-                ),
+              if (gameOver) buildGameOverOverlay(context),
             ],
           ),
         ),
@@ -226,21 +208,6 @@ class _PuzzleScreenState extends State<PuzzleScreen>
     return AspectRatio(aspectRatio: 1, child: cell);
   }
 
-  Widget _dots() => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (var i = 0; i < puzzleRounds; i++)
-            Container(
-              width: 14,
-              height: 14,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: i < _game.round
-                    ? const Color(0xFF34C98E)
-                    : const Color(0xFFDFE3EF),
-              ),
-            ),
-        ],
-      );
+  Widget _dots() =>
+      RoundProgressDots(total: puzzleRounds, current: _game.round);
 }

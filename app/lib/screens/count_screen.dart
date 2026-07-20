@@ -7,6 +7,7 @@ import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
+import 'mistake_game_over.dart';
 
 /// かぞえてタッチ(docs/game-design.md §5)。対象をかぞえて3択で答える。
 class CountScreen extends StatefulWidget {
@@ -21,11 +22,17 @@ class CountScreen extends StatefulWidget {
   State<CountScreen> createState() => _CountScreenState();
 }
 
-class _CountScreenState extends State<CountScreen> {
+class _CountScreenState extends State<CountScreen>
+    with MistakeGameOverMixin<CountScreen> {
   late final _game = widget.game ?? CountGame();
   var _ended = false;
-  var _gameOver = false;
   final _timers = <Timer>[];
+
+  @override
+  GameController get controller => widget.controller;
+
+  @override
+  void resetMistakes() => _game.continueAfterFail();
 
   @override
   void dispose() {
@@ -36,7 +43,7 @@ class _CountScreenState extends State<CountScreen> {
   }
 
   void _choose(int index) {
-    if (_ended || _gameOver) return;
+    if (_ended || gameOver) return;
     if (_game.guess(index)) {
       widget.controller.sfx.play(Sfx.happy);
       if (_game.finished) {
@@ -49,14 +56,7 @@ class _CountScreenState extends State<CountScreen> {
       setState(() {});
     } else {
       widget.controller.sfx.play(Sfx.wrong);
-      if (_game.failed) setState(() => _gameOver = true);
-    }
-  }
-
-  void _continue() {
-    if (widget.controller.payToContinue(minigameContinueCost)) {
-      _game.continueAfterFail();
-      setState(() => _gameOver = false);
+      if (_game.failed) failGame();
     }
   }
 
@@ -78,20 +78,9 @@ class _CountScreenState extends State<CountScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        BackIconButton(
-                            onTap: () => Navigator.of(context).pop()),
-                        const Expanded(
-                          child: Text('🧮 かぞえてタッチ',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: inkColor)),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
+                    GameHeaderBar(
+                      title: '🧮 かぞえてタッチ',
+                      onBack: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(height: 6),
                     Text('「${_game.target}」は なんこ?',
@@ -134,14 +123,7 @@ class _CountScreenState extends State<CountScreen> {
                   result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
                   onDone: () => Navigator.of(context).pop(),
                 ),
-              if (_gameOver)
-                GameOverOverlay(
-                  cost: minigameContinueCost,
-                  canAfford:
-                      widget.controller.state.coins >= minigameContinueCost,
-                  onContinue: _continue,
-                  onGiveUp: () => Navigator.of(context).pop(),
-                ),
+              if (gameOver) buildGameOverOverlay(context),
             ],
           ),
         ),
@@ -171,21 +153,10 @@ class _CountScreenState extends State<CountScreen> {
         ),
       );
 
-  Widget _dots() => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (var i = 0; i < countRounds; i++)
-            Container(
-              width: 10,
-              height: 10,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: i < _game.round
-                    ? const Color(0xFF34C98E)
-                    : const Color(0xFFD9DEEA),
-              ),
-            ),
-        ],
+  Widget _dots() => RoundProgressDots(
+        total: countRounds,
+        current: _game.round,
+        size: 10,
+        trackColor: const Color(0xFFD9DEEA),
       );
 }

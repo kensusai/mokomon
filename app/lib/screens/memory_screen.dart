@@ -7,7 +7,6 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
-import '../widgets/ui_kit.dart';
 
 /// ペアさがし(docs/game-design.md §5)。3×4=6ペア。
 class MemoryScreen extends StatefulWidget {
@@ -82,20 +81,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        BackIconButton(
-                            onTap: () => Navigator.of(context).pop()),
-                        const Expanded(
-                          child: Text('🃏 ペアさがし',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: inkColor)),
-                        ),
-                        const SizedBox(width: 40),
-                      ],
+                    GameHeaderBar(
+                      title: '🃏 ペアさがし',
+                      trailingWidth: 40,
+                      onBack: () => Navigator.of(context).pop(),
                     ),
                     Expanded(
                       child: Center(

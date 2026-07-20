@@ -67,7 +67,8 @@ lib/
 | `ConfettiBurst` | widgets/confetti.dart | 紙吹雪 |
 | `showToast` | widgets/toast.dart | 下部トースト(2.2秒) |
 | `showCelebrate` / `StartButton` | widgets/celebrate_overlay.dart | お祝いオーバーレイ・緑大ボタン |
-| `GameStartOverlay` / `GameEndOverlay` / `GameCountdown` / `BackIconButton` | widgets/game_overlays.dart | ミニゲーム共通UI |
+| `GameStartOverlay` / `GameEndOverlay` / `GameOverOverlay` / `GameCountdown` / `BackIconButton` / `GameHeaderBar` / `RoundProgressDots` | widgets/game_overlays.dart | ミニゲーム共通UI。`GameHeaderBar`(戻る+タイトル)と `RoundProgressDots`(ラウンド進捗ドット)は新しいミニゲーム画面でも必ず使う |
+| `MistakeGameOverMixin` | screens/mistake_game_over.dart | 正誤判定つきミニゲームの「ミス上限→ゲームオーバー→コインで続行」配線をまとめた mixin。`GameController get controller` と `void resetMistakes()` を実装して使う(例: puzzle/odd_one/order/count screen) |
 
 ## UI実装ルール
 

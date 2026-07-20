@@ -131,20 +131,9 @@ class _SimonScreenState extends State<SimonScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        BackIconButton(
-                            onTap: () => Navigator.of(context).pop()),
-                        const Expanded(
-                          child: Text('💡 おぼえてタッチ',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: inkColor)),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
+                    GameHeaderBar(
+                      title: '💡 おぼえてタッチ',
+                      onBack: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(height: 6),
                     Text('${_game.sequence.length}れんぞく! $_hint',

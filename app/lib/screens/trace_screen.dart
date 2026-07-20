@@ -79,20 +79,9 @@ class _TraceScreenState extends State<TraceScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        BackIconButton(
-                            onTap: () => Navigator.of(context).pop()),
-                        const Expanded(
-                          child: Text('✏️ なぞって かこう!',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: inkColor)),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
+                    GameHeaderBar(
+                      title: '✏️ なぞって かこう!',
+                      onBack: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(height: 6),
                     Text('${_shapeIndex + 1} / ${_shapes.length}  てんせんを なぞってね',

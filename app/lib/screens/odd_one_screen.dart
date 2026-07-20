@@ -7,6 +7,7 @@ import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
+import 'mistake_game_over.dart';
 
 /// ちがうのどっち?(docs/game-design.md §5)。1つだけ違う絵文字を探す。
 class OddOneScreen extends StatefulWidget {
@@ -21,11 +22,17 @@ class OddOneScreen extends StatefulWidget {
   State<OddOneScreen> createState() => _OddOneScreenState();
 }
 
-class _OddOneScreenState extends State<OddOneScreen> {
+class _OddOneScreenState extends State<OddOneScreen>
+    with MistakeGameOverMixin<OddOneScreen> {
   late final _game = widget.game ?? OddOneGame();
   var _ended = false;
-  var _gameOver = false;
   final _timers = <Timer>[];
+
+  @override
+  GameController get controller => widget.controller;
+
+  @override
+  void resetMistakes() => _game.continueAfterFail();
 
   @override
   void dispose() {
@@ -36,7 +43,7 @@ class _OddOneScreenState extends State<OddOneScreen> {
   }
 
   void _choose(int index) {
-    if (_ended || _gameOver) return;
+    if (_ended || gameOver) return;
     if (_game.guess(index)) {
       widget.controller.sfx.play(Sfx.happy);
       if (_game.finished) {
@@ -49,14 +56,7 @@ class _OddOneScreenState extends State<OddOneScreen> {
       setState(() {});
     } else {
       widget.controller.sfx.play(Sfx.wrong);
-      if (_game.failed) setState(() => _gameOver = true);
-    }
-  }
-
-  void _continue() {
-    if (widget.controller.payToContinue(minigameContinueCost)) {
-      _game.continueAfterFail();
-      setState(() => _gameOver = false);
+      if (_game.failed) failGame();
     }
   }
 
@@ -78,20 +78,9 @@ class _OddOneScreenState extends State<OddOneScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        BackIconButton(
-                            onTap: () => Navigator.of(context).pop()),
-                        const Expanded(
-                          child: Text('👀 ちがうの どっち?',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: inkColor)),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
+                    GameHeaderBar(
+                      title: '👀 ちがうの どっち?',
+                      onBack: () => Navigator.of(context).pop(),
                     ),
                     Expanded(
                       child: Column(
@@ -138,14 +127,7 @@ class _OddOneScreenState extends State<OddOneScreen> {
                   result: 'ぜんぶ みつけた! +${_game.reward} コイン!',
                   onDone: () => Navigator.of(context).pop(),
                 ),
-              if (_gameOver)
-                GameOverOverlay(
-                  cost: minigameContinueCost,
-                  canAfford:
-                      widget.controller.state.coins >= minigameContinueCost,
-                  onContinue: _continue,
-                  onGiveUp: () => Navigator.of(context).pop(),
-                ),
+              if (gameOver) buildGameOverOverlay(context),
             ],
           ),
         ),
@@ -170,21 +152,5 @@ class _OddOneScreenState extends State<OddOneScreen> {
     );
   }
 
-  Widget _dots() => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (var i = 0; i < oddRounds; i++)
-            Container(
-              width: 14,
-              height: 14,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: i < _game.round
-                    ? const Color(0xFF34C98E)
-                    : const Color(0xFFDFE3EF),
-              ),
-            ),
-        ],
-      );
+  Widget _dots() => RoundProgressDots(total: oddRounds, current: _game.round);
 }
