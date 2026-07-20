@@ -11,63 +11,61 @@ import 'ui_kit.dart';
 Future<void> showShopModal(BuildContext context, GameController controller) {
   return showDialog(
     context: context,
-    builder: (dialogContext) => MokoModalShell(
-      child: DefaultTabController(
-        length: 3,
-        child: ListenableBuilder(
-          listenable: controller,
-          builder: (context, _) => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const ModalTitle('🛍️ きせかえショップ'),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: fieldGray,
+    builder: (dialogContext) => DefaultTabController(
+      length: 3,
+      child: ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) => MokoModalShell(
+          header: [
+            const ModalTitle('🛍️ きせかえショップ'),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: fieldGray,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: TabBar(
+                indicator: BoxDecoration(
+                  color: const Color(0xFF34C98E),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: TabBar(
-                  indicator: BoxDecoration(
-                    color: const Color(0xFF34C98E),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerHeight: 0,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: ink2Color,
-                  labelStyle: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w800),
-                  tabs: const [
-                    Tab(height: 40, text: '👒 あたま'),
-                    Tab(height: 40, text: '🕶️ かお'),
-                    Tab(height: 40, text: '🖼️ はいけい'),
-                  ],
-                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerHeight: 0,
+                labelColor: Colors.white,
+                unselectedLabelColor: ink2Color,
+                labelStyle:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                tabs: const [
+                  Tab(height: 40, text: '👒 あたま'),
+                  Tab(height: 40, text: '🕶️ かお'),
+                  Tab(height: 40, text: '🖼️ はいけい'),
+                ],
               ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 320,
-                child: TabBarView(
-                  children: [
-                    _itemGrid(controller, ItemSlot.head),
-                    _itemGrid(controller, ItemSlot.face),
-                    _bgGrid(controller),
-                  ],
-                ),
+            ),
+          ],
+          body: [
+            SizedBox(
+              height: 320,
+              child: TabBarView(
+                children: [
+                  _itemGrid(controller, ItemSlot.head),
+                  _itemGrid(controller, ItemSlot.face),
+                  _bgGrid(controller),
+                ],
               ),
-              const SizedBox(height: 6),
-              const Text('かったものは タップで きたり ぬいだり できるよ',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: ink2Color)),
-              const SizedBox(height: 8),
-              ModalCloseButton(
-                  label: 'とじる', onTap: () => Navigator.of(dialogContext).pop()),
-            ],
-          ),
+            ),
+            const SizedBox(height: 6),
+            const Text('かったものは タップで きたり ぬいだり できるよ',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: ink2Color)),
+          ],
+          footer: [
+            ModalCloseButton(
+                label: 'とじる', onTap: () => Navigator.of(dialogContext).pop()),
+          ],
         ),
       ),
     ),

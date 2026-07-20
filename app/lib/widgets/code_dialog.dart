@@ -50,90 +50,82 @@ class _CodeDialogBodyState extends State<_CodeDialogBody> {
   @override
   Widget build(BuildContext context) {
     return MokoModalShell(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const ModalTitle('💾 セーブ'),
-            const SizedBox(height: 8),
-            const Text(
-              '「あいことば」を メモしておくと、べつの スマホや パソコンでも つづきから あそべるよ!\n(もようの おえかきは ひきつがれないよ)',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 12,
-                  height: 1.7,
-                  fontWeight: FontWeight.w700,
-                  color: ink2Color),
-            ),
-            const SizedBox(height: 12),
-            _bigButton(
-              emoji: '🔑',
-              label: 'あいことばを つくる',
-              colors: greenGradient,
-              onTap: () =>
-                  setState(() => _code = widget.controller.state.makeCode()),
-            ),
-            if (_code != null) ...[
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE3E6F0), width: 3),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: SelectableText(_code!,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: inkColor)),
-              ),
-              const SizedBox(height: 8),
-              ModalCloseButton(
-                label: '📋 コピーする',
-                onTap: () async {
-                  await Clipboard.setData(ClipboardData(text: _code!));
-                  if (context.mounted) {
-                    showToast(widget.rootContext, 'コピーしたよ! メモちょうに はっておいてね📝');
-                  }
-                },
-              ),
-            ],
-            const SizedBox(height: 12),
-            const Divider(color: Color(0xFFE3E6F0), thickness: 3),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _input,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w700, color: inkColor),
-              decoration: InputDecoration(
-                hintText: 'あいことばを ここに いれてね',
-                contentPadding: const EdgeInsets.all(10),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide:
-                      const BorderSide(color: Color(0xFFE3E6F0), width: 3),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide:
-                      const BorderSide(color: Color(0xFF34C98E), width: 3),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            _bigButton(
-              emoji: '📥',
-              label: 'よみこむ',
-              colors: orangeGradient,
-              onTap: _load,
-            ),
-            const SizedBox(height: 10),
-            ModalCloseButton(
-                label: 'とじる', onTap: () => Navigator.of(context).pop()),
-          ],
+      header: const [ModalTitle('💾 セーブ')],
+      body: [
+        const Text(
+          '「あいことば」を メモしておくと、べつの スマホや パソコンでも つづきから あそべるよ!\n(もようの おえかきは ひきつがれないよ)',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              fontSize: 12,
+              height: 1.7,
+              fontWeight: FontWeight.w700,
+              color: ink2Color),
         ),
-      ),
+        const SizedBox(height: 12),
+        _bigButton(
+          emoji: '🔑',
+          label: 'あいことばを つくる',
+          colors: greenGradient,
+          onTap: () =>
+              setState(() => _code = widget.controller.state.makeCode()),
+        ),
+        if (_code != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFE3E6F0), width: 3),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: SelectableText(_code!,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: inkColor)),
+          ),
+          const SizedBox(height: 8),
+          ModalCloseButton(
+            label: '📋 コピーする',
+            onTap: () async {
+              await Clipboard.setData(ClipboardData(text: _code!));
+              if (context.mounted) {
+                showToast(widget.rootContext, 'コピーしたよ! メモちょうに はっておいてね📝');
+              }
+            },
+          ),
+        ],
+        const SizedBox(height: 12),
+        const Divider(color: Color(0xFFE3E6F0), thickness: 3),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _input,
+          style: const TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w700, color: inkColor),
+          decoration: InputDecoration(
+            hintText: 'あいことばを ここに いれてね',
+            contentPadding: const EdgeInsets.all(10),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFFE3E6F0), width: 3),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFF34C98E), width: 3),
+            ),
+          ),
+        ),
+      ],
+      footer: [
+        _bigButton(
+          emoji: '📥',
+          label: 'よみこむ',
+          colors: orangeGradient,
+          onTap: _load,
+        ),
+        const SizedBox(height: 10),
+        ModalCloseButton(
+            label: 'とじる', onTap: () => Navigator.of(context).pop()),
+      ],
     );
   }
 

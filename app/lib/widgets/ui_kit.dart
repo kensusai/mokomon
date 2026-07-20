@@ -178,19 +178,52 @@ class ModalCloseButton extends StatelessWidget {
 }
 
 /// モーダル共通の外枠(白・角丸28・最大幅360)。CSS .modal .box 相当。
+///
+/// [header] と [footer] はスクロールしても常に画面内に留まり、
+/// [body] だけが必要なときにスクロールする(こどもFB「操作ボタンまで
+/// スクロールせずに見えるようにしたい」)。ダイアログの高さは端末の
+/// 画面サイズに合わせて自動で収まる(レスポンシブ)。
 class MokoModalShell extends StatelessWidget {
-  final Widget child;
-  const MokoModalShell({super.key, required this.child});
+  final List<Widget> header;
+  final List<Widget> body;
+  final List<Widget> footer;
+  const MokoModalShell({
+    super.key,
+    this.header = const [],
+    this.body = const [],
+    this.footer = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.86;
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 360),
-        padding: const EdgeInsets.all(20),
-        child: child,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 360, maxHeight: maxHeight),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ...header,
+              if (header.isNotEmpty) const SizedBox(height: 12),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: body,
+                  ),
+                ),
+              ),
+              if (footer.isNotEmpty) const SizedBox(height: 10),
+              ...footer,
+            ],
+          ),
+        ),
       ),
     );
   }
