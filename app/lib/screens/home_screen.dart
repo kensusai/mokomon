@@ -620,18 +620,7 @@ class _HomeScreenState extends State<HomeScreen> {
             (180.0, 40.0, 9.0),
             (330.0, 110.0, 12.0)
           ])
-            Positioned(
-              left: b.$1,
-              top: b.$2,
-              child: Container(
-                width: b.$3,
-                height: b.$3,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
+            _dot(b.$1, b.$2, b.$3, Colors.white.withValues(alpha: 0.5)),
         ];
       case 'mori':
         return const [
