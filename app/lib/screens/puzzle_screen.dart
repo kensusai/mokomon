@@ -27,6 +27,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
     with SingleTickerProviderStateMixin {
   late final _game = widget.game ?? PuzzleGame();
   var _ended = false;
+  var _gameOver = false;
   var _locked = false;
   int? _shakingIndex;
   late final AnimationController _shake;
@@ -49,7 +50,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
   }
 
   void _choose(int index) {
-    if (_locked || _ended) return;
+    if (_locked || _ended || _gameOver) return;
     if (_game.guess(index)) {
       widget.controller.sfx.play(Sfx.happy);
       _locked = true;
@@ -66,10 +67,21 @@ class _PuzzleScreenState extends State<PuzzleScreen>
       }));
     } else {
       widget.controller.sfx.play(Sfx.wrong);
+      if (_game.failed) {
+        setState(() => _gameOver = true);
+        return;
+      }
       setState(() => _shakingIndex = index);
       _shake.forward(from: 0).whenComplete(() {
         if (mounted) setState(() => _shakingIndex = null);
       });
+    }
+  }
+
+  void _continue() {
+    if (widget.controller.payToContinue(minigameContinueCost)) {
+      _game.continueAfterFail();
+      setState(() => _gameOver = false);
     }
   }
 
@@ -126,6 +138,14 @@ class _PuzzleScreenState extends State<PuzzleScreen>
                   emoji: '🏆',
                   result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
                   onDone: () => Navigator.of(context).pop(),
+                ),
+              if (_gameOver)
+                GameOverOverlay(
+                  cost: minigameContinueCost,
+                  canAfford:
+                      widget.controller.state.coins >= minigameContinueCost,
+                  onContinue: _continue,
+                  onGiveUp: () => Navigator.of(context).pop(),
                 ),
             ],
           ),

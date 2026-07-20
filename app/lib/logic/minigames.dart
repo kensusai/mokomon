@@ -4,6 +4,13 @@ library;
 
 import 'dart:math';
 
+/// 正誤のある4ゲーム(パズル/ちがうのどっち/じゅんばん/かぞえて)共通:
+/// これだけ間違えるとゲームオーバー(報酬なし)。コインを払えば続けられる。
+const minigameMaxMistakes = 3;
+
+/// コインで続行するときのコスト。
+const minigameContinueCost = 5;
+
 // ---------- フルーツキャッチ ----------
 
 const catchDurationSec = 30;
@@ -127,10 +134,14 @@ class PuzzleGame {
   final Random _rng;
   var round = 0;
   var reward = 0;
+  var mistakes = 0;
   late PuzzlePiece target;
   late List<PuzzlePiece> choices;
 
-  bool get finished => round >= puzzleRounds;
+  /// ミス回数の上限に達した(コインを払わない限りゲームオーバー)。
+  bool get failed => mistakes >= minigameMaxMistakes;
+
+  bool get finished => round >= puzzleRounds || failed;
 
   PuzzlePiece _randomPiece() => PuzzlePiece(
         PuzzleShape.values[_rng.nextInt(PuzzleShape.values.length)],
@@ -148,15 +159,21 @@ class PuzzleGame {
     choices = opts;
   }
 
-  /// 正解なら true を返し次ラウンドへ。不正解は何も変えない。
+  /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
   bool guess(int choiceIndex) {
     if (finished) return false;
-    if (choices[choiceIndex] != target) return false;
+    if (choices[choiceIndex] != target) {
+      mistakes++;
+      return false;
+    }
     reward += puzzleRewardPerRound;
     round++;
     if (!finished) _newRound();
     return true;
   }
+
+  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
+  void continueAfterFail() => mistakes = 0;
 }
 
 // ---------- ペアさがし ----------
@@ -326,10 +343,13 @@ class OddOneGame {
   final Random _rng;
   var round = 0;
   var reward = 0;
+  var mistakes = 0;
   late List<String> cells;
   late int oddIndex;
 
-  bool get finished => round >= oddRounds;
+  bool get failed => mistakes >= minigameMaxMistakes;
+
+  bool get finished => round >= oddRounds || failed;
 
   // こどもFBでさらに難化: 12 → 16 → 20 → 25枚
   int get _gridSize =>
@@ -347,12 +367,18 @@ class OddOneGame {
 
   bool guess(int index) {
     if (finished) return false;
-    if (index != oddIndex) return false;
+    if (index != oddIndex) {
+      mistakes++;
+      return false;
+    }
     reward += oddRewardPerRound;
     round++;
     if (!finished) _newRound();
     return true;
   }
+
+  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
+  void continueAfterFail() => mistakes = 0;
 }
 
 // ---------- ふうせんわり ----------
@@ -451,8 +477,11 @@ class OrderGame {
 
   late final List<int> cells;
   var next = 1;
+  var mistakes = 0;
 
-  bool get finished => next > 9;
+  bool get failed => mistakes >= minigameMaxMistakes;
+
+  bool get finished => next > 9 || failed;
 
   /// 何秒で終えたかでコイン(はやい=16 / ふつう=10 / ゆっくり=6)。難化で基準タイム短縮。
   static int coinsForSeconds(double seconds) =>
@@ -460,10 +489,16 @@ class OrderGame {
 
   bool tap(int cellIndex) {
     if (finished) return false;
-    if (cells[cellIndex] != next) return false;
+    if (cells[cellIndex] != next) {
+      mistakes++;
+      return false;
+    }
     next++;
     return true;
   }
+
+  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
+  void continueAfterFail() => mistakes = 0;
 }
 
 // ---------- かぞえてタッチ ----------
@@ -491,12 +526,15 @@ class CountGame {
   final Random _rng;
   var round = 0;
   var reward = 0;
+  var mistakes = 0;
   late String target;
   late List<String> items;
   late int answer;
   late List<int> choices;
 
-  bool get finished => round >= countRounds;
+  bool get failed => mistakes >= minigameMaxMistakes;
+
+  bool get finished => round >= countRounds || failed;
 
   int get _itemCount => 9 + round * 3; // 9 → 24枚
 
@@ -512,15 +550,21 @@ class CountGame {
     choices = [base, base + 1, base + 2]..shuffle(_rng);
   }
 
-  /// 正解なら true を返し次ラウンドへ。不正解は何も変えない(数えなおし可)。
+  /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす(数えなおし可)。
   bool guess(int choiceIndex) {
     if (finished) return false;
-    if (choices[choiceIndex] != answer) return false;
+    if (choices[choiceIndex] != answer) {
+      mistakes++;
+      return false;
+    }
     reward += countRewardPerRound;
     round++;
     if (!finished) _newRound();
     return true;
   }
+
+  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
+  void continueAfterFail() => mistakes = 0;
 }
 
 // ---------- おぼえてタッチ ----------

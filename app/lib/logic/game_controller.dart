@@ -161,6 +161,16 @@ class GameController extends ChangeNotifier {
     _commit();
   }
 
+  /// ミニゲームでミスしすぎてゲームオーバーになったとき、コインを払って続行する。
+  /// 払えたら true(呼び出し側でゲームのミス数をリセットすること)。
+  bool payToContinue(int cost) {
+    if (state.coins < cost) return false;
+    state.coins -= cost;
+    sfx.play(Sfx.coin);
+    _commit();
+    return true;
+  }
+
   /// 進化を確定する。カットシーンのリビール時点で呼ぶこと
   /// (判定は state.evolveCheck())。キング到達でずかん登録。
   void applyEvolution(int newStage) {

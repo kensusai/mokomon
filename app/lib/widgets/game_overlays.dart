@@ -96,6 +96,73 @@ class GameEndOverlay extends StatelessWidget {
   }
 }
 
+/// ミス回数の上限に達したときのオーバーレイ(報酬なしで終了)。
+/// コインを払えば [onContinue]、あきらめれば [onGiveUp]。
+class GameOverOverlay extends StatelessWidget {
+  final int cost;
+  final bool canAfford;
+  final VoidCallback onContinue;
+  final VoidCallback onGiveUp;
+
+  const GameOverOverlay({
+    super.key,
+    required this.cost,
+    required this.canAfford,
+    required this.onContinue,
+    required this.onGiveUp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white.withValues(alpha: 0.85),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('😣', style: TextStyle(fontSize: 56)),
+          const SizedBox(height: 10),
+          const Text('まちがえすぎ! ゲームオーバー',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 22, fontWeight: FontWeight.w800, color: inkColor)),
+          const SizedBox(height: 16),
+          Opacity(
+            opacity: canAfford ? 1 : 0.5,
+            child: StartButton(
+              label: '🪙$cost コインで つづける',
+              onPressed: canAfford ? onContinue : onGiveUp,
+            ),
+          ),
+          if (!canAfford) ...[
+            const SizedBox(height: 8),
+            const Text('コインが たりないよ',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: ink2Color)),
+          ],
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: onGiveUp,
+            style: TextButton.styleFrom(
+              backgroundColor: fieldGray,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Text('あきらめる',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: ink2Color)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// 3・2・1 カウントダウン(700ms間隔)。終わると [onDone]。
 /// [onTick] は数字が出るたびに呼ばれる(効果音用)。
 class GameCountdown extends StatefulWidget {

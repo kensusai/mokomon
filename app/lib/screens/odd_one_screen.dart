@@ -24,6 +24,7 @@ class OddOneScreen extends StatefulWidget {
 class _OddOneScreenState extends State<OddOneScreen> {
   late final _game = widget.game ?? OddOneGame();
   var _ended = false;
+  var _gameOver = false;
   final _timers = <Timer>[];
 
   @override
@@ -35,7 +36,7 @@ class _OddOneScreenState extends State<OddOneScreen> {
   }
 
   void _choose(int index) {
-    if (_ended) return;
+    if (_ended || _gameOver) return;
     if (_game.guess(index)) {
       widget.controller.sfx.play(Sfx.happy);
       if (_game.finished) {
@@ -48,6 +49,14 @@ class _OddOneScreenState extends State<OddOneScreen> {
       setState(() {});
     } else {
       widget.controller.sfx.play(Sfx.wrong);
+      if (_game.failed) setState(() => _gameOver = true);
+    }
+  }
+
+  void _continue() {
+    if (widget.controller.payToContinue(minigameContinueCost)) {
+      _game.continueAfterFail();
+      setState(() => _gameOver = false);
     }
   }
 
@@ -128,6 +137,14 @@ class _OddOneScreenState extends State<OddOneScreen> {
                   emoji: '🏆',
                   result: 'ぜんぶ みつけた! +${_game.reward} コイン!',
                   onDone: () => Navigator.of(context).pop(),
+                ),
+              if (_gameOver)
+                GameOverOverlay(
+                  cost: minigameContinueCost,
+                  canAfford:
+                      widget.controller.state.coins >= minigameContinueCost,
+                  onContinue: _continue,
+                  onGiveUp: () => Navigator.of(context).pop(),
                 ),
             ],
           ),

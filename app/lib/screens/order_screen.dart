@@ -23,10 +23,11 @@ class _OrderScreenState extends State<OrderScreen> {
   late final _game = widget.game ?? OrderGame();
   final _watch = Stopwatch();
   var _ended = false;
+  var _gameOver = false;
   var _coins = 0;
 
   void _tap(int index) {
-    if (_ended) return;
+    if (_ended || _gameOver) return;
     if (!_watch.isRunning) _watch.start();
     if (_game.tap(index)) {
       widget.controller.sfx.play(Sfx.tap);
@@ -40,6 +41,17 @@ class _OrderScreenState extends State<OrderScreen> {
       setState(() {});
     } else {
       widget.controller.sfx.play(Sfx.wrong);
+      if (_game.failed) {
+        _watch.stop();
+        setState(() => _gameOver = true);
+      }
+    }
+  }
+
+  void _continue() {
+    if (widget.controller.payToContinue(minigameContinueCost)) {
+      _game.continueAfterFail();
+      setState(() => _gameOver = false);
     }
   }
 
@@ -109,6 +121,14 @@ class _OrderScreenState extends State<OrderScreen> {
                   emoji: '🏆',
                   result: 'ぜんぶ おせた! +$_coins コイン!',
                   onDone: () => Navigator.of(context).pop(),
+                ),
+              if (_gameOver)
+                GameOverOverlay(
+                  cost: minigameContinueCost,
+                  canAfford:
+                      widget.controller.state.coins >= minigameContinueCost,
+                  onContinue: _continue,
+                  onGiveUp: () => Navigator.of(context).pop(),
                 ),
             ],
           ),
