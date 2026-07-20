@@ -84,8 +84,13 @@ class SfxPlayer {
       _bgm ??= AudioPlayer();
       await _bgm!.stop();
       await _bgm!.setReleaseMode(loop ? ReleaseMode.loop : ReleaseMode.release);
-      _bgmStarted = true;
+      // stop() で音源が外れるので、いったん「再生中でない」扱いにする。
+      // ここを立てたままにすると、ミュート中に呼ばれた場合や再生に
+      // 失敗した場合、後で syncBgm() が音源未設定のまま resume() して
+      // しまい無音になる(docs/review-findings.md #2)。
+      _bgmStarted = false;
       if (enabled()) {
+        _bgmStarted = true;
         await _bgm!
             .play(BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'));
       }
