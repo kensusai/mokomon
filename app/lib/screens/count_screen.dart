@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
@@ -44,20 +43,14 @@ class _CountScreenState extends State<CountScreen>
 
   void _choose(int index) {
     if (_ended || gameOver) return;
-    if (_game.guess(index)) {
-      widget.controller.sfx.play(Sfx.happy);
-      if (_game.finished) {
-        _timers.add(Timer(const Duration(milliseconds: 400), () {
-          if (!mounted) return;
-          widget.controller.finishMinigame(_game.reward);
-          setState(() => _ended = true);
-        }));
-      }
-      setState(() {});
-    } else {
-      widget.controller.sfx.play(Sfx.wrong);
-      if (_game.failed) failGame();
-    }
+    handleGuess(
+      correct: _game.guess(index),
+      failed: _game.failed,
+      finished: _game.finished,
+      reward: _game.reward,
+      timers: _timers,
+      onFinished: () => setState(() => _ended = true),
+    );
   }
 
   @override

@@ -11,6 +11,17 @@ const minigameMaxMistakes = 3;
 /// コインで続行するときのコスト。
 const minigameContinueCost = 5;
 
+/// 正誤のある4ゲーム共通のミス数管理(docs/review-findings.md #8)。
+mixin MistakeTracker {
+  var mistakes = 0;
+
+  /// ミス回数の上限に達した(コインを払わない限りゲームオーバー)。
+  bool get failed => mistakes >= minigameMaxMistakes;
+
+  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
+  void continueAfterFail() => mistakes = 0;
+}
+
 // ---------- フルーツキャッチ ----------
 
 const catchDurationSec = 30;
@@ -126,7 +137,7 @@ class PuzzlePiece {
 }
 
 /// 「おなじのどれ?」8ラウンド・4択(難化)。不正解ペナルティなし(再挑戦可)。
-class PuzzleGame {
+class PuzzleGame with MistakeTracker {
   PuzzleGame({Random? rng}) : _rng = rng ?? Random() {
     _newRound();
   }
@@ -134,12 +145,8 @@ class PuzzleGame {
   final Random _rng;
   var round = 0;
   var reward = 0;
-  var mistakes = 0;
   late PuzzlePiece target;
   late List<PuzzlePiece> choices;
-
-  /// ミス回数の上限に達した(コインを払わない限りゲームオーバー)。
-  bool get failed => mistakes >= minigameMaxMistakes;
 
   bool get finished => round >= puzzleRounds || failed;
 
@@ -171,9 +178,6 @@ class PuzzleGame {
     if (!finished) _newRound();
     return true;
   }
-
-  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
-  void continueAfterFail() => mistakes = 0;
 }
 
 // ---------- ペアさがし ----------
@@ -335,7 +339,7 @@ const oddRounds = 8;
 const oddRewardPerRound = 2;
 
 /// 「ちがうのどっち?」1つだけ違う絵文字を探す。ラウンドが進むと枚数が増える。
-class OddOneGame {
+class OddOneGame with MistakeTracker {
   OddOneGame({Random? rng}) : _rng = rng ?? Random() {
     _newRound();
   }
@@ -343,11 +347,8 @@ class OddOneGame {
   final Random _rng;
   var round = 0;
   var reward = 0;
-  var mistakes = 0;
   late List<String> cells;
   late int oddIndex;
-
-  bool get failed => mistakes >= minigameMaxMistakes;
 
   bool get finished => round >= oddRounds || failed;
 
@@ -376,9 +377,6 @@ class OddOneGame {
     if (!finished) _newRound();
     return true;
   }
-
-  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
-  void continueAfterFail() => mistakes = 0;
 }
 
 // ---------- ふうせんわり ----------
@@ -470,16 +468,13 @@ class BalloonGame {
 // ---------- じゅんばんタッチ ----------
 
 /// 1〜9をじゅんばんにタッチ。はやいほどコインが多い。
-class OrderGame {
+class OrderGame with MistakeTracker {
   OrderGame({Random? rng}) {
     cells = List.generate(9, (i) => i + 1)..shuffle(rng ?? Random());
   }
 
   late final List<int> cells;
   var next = 1;
-  var mistakes = 0;
-
-  bool get failed => mistakes >= minigameMaxMistakes;
 
   bool get finished => next > 9 || failed;
 
@@ -496,9 +491,6 @@ class OrderGame {
     next++;
     return true;
   }
-
-  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
-  void continueAfterFail() => mistakes = 0;
 }
 
 // ---------- かぞえてタッチ ----------
@@ -518,7 +510,7 @@ const countSets = [
 
 /// 「かぞえてタッチ」: ちらばった絵文字から対象をかぞえて3択で答える。
 /// ラウンドが進むほど個数が増えて難しくなる。
-class CountGame {
+class CountGame with MistakeTracker {
   CountGame({Random? rng}) : _rng = rng ?? Random() {
     _newRound();
   }
@@ -526,13 +518,10 @@ class CountGame {
   final Random _rng;
   var round = 0;
   var reward = 0;
-  var mistakes = 0;
   late String target;
   late List<String> items;
   late int answer;
   late List<int> choices;
-
-  bool get failed => mistakes >= minigameMaxMistakes;
 
   bool get finished => round >= countRounds || failed;
 
@@ -562,9 +551,6 @@ class CountGame {
     if (!finished) _newRound();
     return true;
   }
-
-  /// コインを払ってゲームオーバーから復帰する(ミス数をリセット)。
-  void continueAfterFail() => mistakes = 0;
 }
 
 // ---------- おぼえてタッチ ----------
