@@ -4,6 +4,8 @@ library;
 
 import 'dart:math';
 
+import '../data/species.dart';
+
 /// 正誤のある4ゲーム(パズル/ちがうのどっち/じゅんばん/かぞえて)共通:
 /// これだけ間違えるとゲームオーバー(報酬なし)。コインを払えば続けられる。
 const minigameMaxMistakes = 3;
@@ -256,9 +258,15 @@ class WhackMole {
 
 /// もぐらたたきの状態機械。widget 側の Ticker から [update] を呼ぶ。
 class WhackGame {
-  WhackGame({Random? rng}) : _rng = rng ?? Random();
+  WhackGame({Random? rng, int? speciesCount})
+      : _rng = rng ?? Random(),
+        _speciesCount = speciesCount ?? speciesList.length;
 
   final Random _rng;
+
+  /// 出現させる種族の範囲(既定は speciesList 全体)。
+  /// docs/review-findings.md #6: ハードコードせず種族数から取る。
+  final int _speciesCount;
   final moles = <WhackMole>[];
   var score = 0;
   var timeLeft = whackDurationSec;
@@ -298,7 +306,7 @@ class WhackGame {
         final roll = _rng.nextDouble();
         moles.add(WhackMole(
           hole: free[_rng.nextInt(free.length)],
-          speciesIndex: _rng.nextInt(15),
+          speciesIndex: _rng.nextInt(_speciesCount),
           golden: roll < 0.12,
           stinky: roll >= 0.12 && roll < 0.22,
           ttl: (0.75 + _rng.nextDouble() * 0.45) / speedFactor,

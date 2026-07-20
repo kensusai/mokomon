@@ -1,11 +1,34 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mokomon/data/species.dart';
 import 'package:mokomon/logic/minigames.dart';
 import 'package:mokomon/logic/trace_game.dart';
 
 void main() {
   group('WhackGame (もぐらたたき)', () {
+    test(
+        'spawned speciesIndex defaults to speciesList.length, not a hardcoded number',
+        () {
+      // docs/review-findings.md #6: 種族数はハードコードせず speciesList から取る。
+      final g = WhackGame(rng: Random(7));
+      for (var i = 0; i < 400; i++) {
+        g.update(0.05);
+      }
+      for (final m in g.moles) {
+        expect(m.speciesIndex, inInclusiveRange(0, speciesList.length - 1));
+      }
+    });
+
+    test('accepts an explicit speciesCount override for testing', () {
+      final g = WhackGame(rng: Random(3), speciesCount: 2);
+      for (var i = 0; i < 400; i++) {
+        g.update(0.05);
+      }
+      for (final m in g.moles) {
+        expect(m.speciesIndex, inInclusiveRange(0, 1));
+      }
+    });
     test('spawns up to 3 moles in distinct holes and expires them', () {
       final g = WhackGame(rng: Random(1));
       for (var i = 0; i < 60; i++) {
