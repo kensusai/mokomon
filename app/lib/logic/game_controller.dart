@@ -288,10 +288,12 @@ class GameController extends ChangeNotifier {
   }
 
   /// ニックネームを付ける(空なら種族名に戻す・最大10文字)。
+  /// 絵文字(サロゲートペア)を途中で分割しないよう Unicode コードポイント単位で数える。
   void rename(String name) {
     final t = name.trim();
-    state.nickname =
-        t.isEmpty ? null : (t.length > 10 ? t.substring(0, 10) : t);
+    state.nickname = t.isEmpty
+        ? null
+        : (t.runes.length > 10 ? String.fromCharCodes(t.runes.take(10)) : t);
     sfx.play(Sfx.happy);
     _commit();
   }

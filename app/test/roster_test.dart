@@ -100,5 +100,13 @@ void main() {
       expect(c.state.nickname, isNull);
       expect(c.state.displayName, '🐣 もこ');
     });
+
+    test('caps at 10 chars without splitting an emoji surrogate pair', () {
+      // docs/review-findings.md #14: 絵文字がちょうど10文字目に来ても壊れない。
+      final c = fresh(GameState()..stage = 1);
+      c.rename('あいうえおかきくけ😺こさし'); // 9文字+絵文字+3文字=13文字
+      expect(c.state.nickname, 'あいうえおかきくけ😺');
+      expect(c.state.nickname!.runes.length, 10);
+    });
   });
 }
