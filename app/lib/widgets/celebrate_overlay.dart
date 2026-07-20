@@ -7,14 +7,24 @@ import 'ui_kit.dart';
 
 /// お祝い全画面オーバーレイ(誕生・金のたまご等)。
 /// プロトタイプの celebrate() に対応。ボタンで閉じるまで待つ。
+///
+/// [sound] は再生する効果音(既定はふつうのファンファーレ)。
+/// [duckBgm] を true にすると、進化リビールと同じくBGMを一時停止して
+/// 効果音を主役にする(たまご孵化など、より劇的にしたい場面で使う)。
 Future<void> showCelebrate(
   BuildContext context, {
   required String emoji,
   required String title,
   required String desc,
   SfxPlayer? sfx,
+  Sfx sound = Sfx.fanfare,
+  bool duckBgm = false,
 }) {
-  sfx?.play(Sfx.fanfare);
+  if (duckBgm) {
+    sfx?.playJingle(sound);
+  } else {
+    sfx?.play(sound);
+  }
   return showDialog(
     context: context,
     barrierDismissible: false,

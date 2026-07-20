@@ -272,8 +272,11 @@ class _HomeScreenState extends State<HomeScreen> {
         _hint(s.eggTaps == 1 ? 'あれ? なにか きこえる…' : 'ヒビが はいった! もういっかい!');
       case CreatureTapOutcome.hatched:
         _creatureKey.currentState?.play(CreatureAnim.wiggle);
+        // 進化リビールと同じ路線の効果音(BGMを一時停止して主役にする)
         showCelebrate(context,
             sfx: c.sfx,
+            sound: Sfx.megaFanfare,
+            duckBgm: true,
             emoji: '🐣',
             title: 'うまれた!',
             desc: '「${s.currentSpecies.names[1]}」が うまれたよ! ごはんを あげて そだてよう!');
