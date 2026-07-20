@@ -1,7 +1,4 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
@@ -9,8 +6,7 @@ import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/particles.dart';
 import '../widgets/ui_kit.dart';
-
-enum _Phase { intro, countdown, running, ended }
+import 'timed_arcade_game.dart';
 
 /// ふうせんわり(docs/game-design.md §5)。上がってくる風船をタップ、💣は-2。
 class BalloonScreen extends StatefulWidget {
@@ -26,46 +22,33 @@ class BalloonScreen extends StatefulWidget {
 }
 
 class _BalloonScreenState extends State<BalloonScreen>
-    with SingleTickerProviderStateMixin {
-  var _phase = _Phase.intro;
+    with SingleTickerProviderStateMixin, TimedArcadeGameMixin<BalloonScreen> {
   var _game = BalloonGame();
-  Ticker? _ticker;
-  Duration _lastTick = Duration.zero;
   final _areaKey = GlobalKey();
   final _particleKey = GlobalKey<ParticleFieldState>();
 
   @override
-  void dispose() {
-    _ticker?.dispose();
-    super.dispose();
-  }
+  TickerProvider get vsync => this;
+  @override
+  GameController get controller => widget.controller;
+  @override
+  bool get gameFinished => _game.finished;
+  @override
+  int get gameScore => _game.score;
 
-  void _start() {
-    _game = widget.gameFactory?.call() ?? BalloonGame();
-    _lastTick = Duration.zero;
-    setState(() => _phase = _Phase.running);
-    _ticker = createTicker(_onTick)..start();
-  }
+  @override
+  void startGameInstance() =>
+      _game = widget.gameFactory?.call() ?? BalloonGame();
 
-  void _onTick(Duration elapsed) {
-    final dt = _lastTick == Duration.zero
-        ? 0.016
-        : min(0.05, (elapsed - _lastTick).inMicroseconds / 1e6);
-    _lastTick = elapsed;
+  @override
+  void tickGame(double dt) {
     final box = _areaKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
     _game.update(dt, box.size.width, box.size.height);
-    if (_game.finished) {
-      _ticker?.stop();
-      widget.controller.finishMinigame(_game.score);
-      setState(() => _phase = _Phase.ended);
-      return;
-    }
-    setState(() {});
   }
 
   void _onTapDown(TapDownDetails d) {
-    if (_phase != _Phase.running) return;
+    if (phase != ArcadePhase.running) return;
     final hit = _game.tapAt(d.localPosition.dx, d.localPosition.dy);
     if (hit == null) return;
     if (hit.bomb) {
@@ -125,18 +108,18 @@ class _BalloonScreenState extends State<BalloonScreen>
                 ),
               ),
             ),
-            if (_phase == _Phase.countdown)
+            if (phase == ArcadePhase.countdown)
               GameCountdown(
-                  onDone: _start,
+                  onDone: startGame,
                   onTick: () => widget.controller.sfx.play(Sfx.tap)),
-            if (_phase == _Phase.intro)
+            if (phase == ArcadePhase.intro)
               GameStartOverlay(
                 title: '🎈 ふうせんわり',
                 desc: 'ふわふわ あがる ふうせんを われ!\n⭐は 3コイン、💣は さわっちゃダメ!',
-                onStart: () => setState(() => _phase = _Phase.countdown),
+                onStart: () => setState(() => phase = ArcadePhase.countdown),
                 onBack: () => Navigator.of(context).pop(),
               ),
-            if (_phase == _Phase.ended)
+            if (phase == ArcadePhase.ended)
               GameEndOverlay(
                 emoji: '🎉',
                 result: '+${_game.score} コイン げっと!',

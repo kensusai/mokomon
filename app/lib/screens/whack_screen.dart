@@ -1,7 +1,4 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
@@ -10,8 +7,7 @@ import '../widgets/creature_painter.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/particles.dart';
 import '../widgets/ui_kit.dart';
-
-enum _Phase { intro, countdown, running, ended }
+import 'timed_arcade_game.dart';
 
 /// もぐらたたき(docs/game-design.md §5)。穴から出るいきものをタップ!
 class WhackScreen extends StatefulWidget {
@@ -27,43 +23,27 @@ class WhackScreen extends StatefulWidget {
 }
 
 class _WhackScreenState extends State<WhackScreen>
-    with SingleTickerProviderStateMixin {
-  var _phase = _Phase.intro;
+    with SingleTickerProviderStateMixin, TimedArcadeGameMixin<WhackScreen> {
   var _game = WhackGame();
-  Ticker? _ticker;
-  Duration _lastTick = Duration.zero;
   final _particleKey = GlobalKey<ParticleFieldState>();
 
   @override
-  void dispose() {
-    _ticker?.dispose();
-    super.dispose();
-  }
+  TickerProvider get vsync => this;
+  @override
+  GameController get controller => widget.controller;
+  @override
+  bool get gameFinished => _game.finished;
+  @override
+  int get gameScore => _game.score;
 
-  void _start() {
-    _game = widget.gameFactory?.call() ?? WhackGame();
-    _lastTick = Duration.zero;
-    setState(() => _phase = _Phase.running);
-    _ticker = createTicker(_onTick)..start();
-  }
+  @override
+  void startGameInstance() => _game = widget.gameFactory?.call() ?? WhackGame();
 
-  void _onTick(Duration elapsed) {
-    final dt = _lastTick == Duration.zero
-        ? 0.016
-        : min(0.05, (elapsed - _lastTick).inMicroseconds / 1e6);
-    _lastTick = elapsed;
-    _game.update(dt);
-    if (_game.finished) {
-      _ticker?.stop();
-      widget.controller.finishMinigame(_game.score);
-      setState(() => _phase = _Phase.ended);
-      return;
-    }
-    setState(() {});
-  }
+  @override
+  void tickGame(double dt) => _game.update(dt);
 
   void _onHoleTap(int hole, Offset globalPos) {
-    if (_phase != _Phase.running) return;
+    if (phase != ArcadePhase.running) return;
     final mole = _game.tapHole(hole);
     if (mole == null) return;
     final field = _particleKey.currentContext?.findRenderObject() as RenderBox?;
@@ -126,18 +106,18 @@ class _WhackScreenState extends State<WhackScreen>
               ),
             ),
             Positioned.fill(child: ParticleField(key: _particleKey)),
-            if (_phase == _Phase.countdown)
+            if (phase == ArcadePhase.countdown)
               GameCountdown(
-                  onDone: _start,
+                  onDone: startGame,
                   onTick: () => widget.controller.sfx.play(Sfx.tap)),
-            if (_phase == _Phase.intro)
+            if (phase == ArcadePhase.intro)
               GameStartOverlay(
                 title: '🔨 もぐらたたき',
                 desc: 'あなから でてくる いきものを\nタッチしよう!\nきんいろは 3コイン!',
-                onStart: () => setState(() => _phase = _Phase.countdown),
+                onStart: () => setState(() => phase = ArcadePhase.countdown),
                 onBack: () => Navigator.of(context).pop(),
               ),
-            if (_phase == _Phase.ended)
+            if (phase == ArcadePhase.ended)
               GameEndOverlay(
                 emoji: '🎉',
                 result: '+${_game.score} コイン げっと!',
