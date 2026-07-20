@@ -102,10 +102,11 @@ void main() {
           ['onigiri', 'ramen', 'parfait', 'tamago', 'pizza', 'burger', 'ice']);
     });
 
-    test('24 shop items, appended after the original 6', () {
-      expect(shopItems, hasLength(24));
+    test('40 shop items, appended after the original 6', () {
+      expect(shopItems, hasLength(40));
       expect(shopItems[5].key, 'sunglass'); // 既存の並びは不変
-      expect(shopItems.last.key, 'starcheeks');
+      expect(shopItems[23].key, 'starcheeks'); // 前回追加分の末尾も不変
+      expect(shopItems.last.key, 'rainbowglass');
     });
 
     test('high-index item equips survive あいことば roundtrip', () {
@@ -120,22 +121,53 @@ void main() {
     });
 
     test('background defaults per species and per-creature override', () {
-      expect(bgThemes, hasLength(11));
+      expect(bgThemes, hasLength(19));
       expect(speciesDefaultBg, hasLength(speciesList.length));
       final c = fresh(GameState()..species = 14); // obake
       expect(c.state.effectiveBg, 2); // よぞら
-      c.setBackground(4);
+      expect(c.tapBackground(4), BgTapOutcome.selected); // もり(無料)
       expect(c.state.effectiveBg, 4);
       final viaJson = GameState()..loadJson(c.state.toJson());
       expect(viaJson.bg, 4);
-      c.setBackground(null);
+      expect(c.tapBackground(null), BgTapOutcome.selected);
       expect(c.state.effectiveBg, 2); // おまかせ=デフォルトへ
 
       // あいことばには含めない
-      c.setBackground(5);
+      c.tapBackground(5);
       final viaCode = GameState();
       expect(viaCode.loadCode(c.state.makeCode()), isTrue);
       expect(viaCode.bg, isNull);
+    });
+
+    test('paid background themes must be bought with coins', () {
+      final oshiro = bgThemes.indexWhere((t) => t.key == 'oshiro');
+      expect(bgThemes[oshiro].cost, greaterThan(0));
+
+      final poor = fresh(GameState()..coins = 5);
+      expect(poor.tapBackground(oshiro), BgTapOutcome.notEnoughCoins);
+      expect(poor.state.coins, 5);
+      expect(poor.state.effectiveBg, isNot(oshiro));
+
+      final rich = fresh(GameState()..coins = 100);
+      expect(rich.tapBackground(oshiro), BgTapOutcome.bought);
+      expect(rich.state.coins, 100 - bgThemes[oshiro].cost);
+      expect(rich.state.ownedBg, contains('oshiro'));
+      expect(rich.state.effectiveBg, oshiro);
+
+      // 一度買えば、以後は無料で選び直せる
+      rich.tapBackground(0);
+      expect(rich.tapBackground(oshiro), BgTapOutcome.selected);
+      expect(rich.state.coins, 100 - bgThemes[oshiro].cost);
+    });
+
+    test('ownedBg persists in local save but not in あいことば', () {
+      final s = GameState()..ownedBg = {'oshiro', 'aurora'};
+      final viaJson = GameState()..loadJson(s.toJson());
+      expect(viaJson.ownedBg, {'oshiro', 'aurora'});
+
+      final viaCode = GameState();
+      expect(viaCode.loadCode(s.makeCode()), isTrue);
+      expect(viaCode.ownedBg, isEmpty);
     });
   });
 

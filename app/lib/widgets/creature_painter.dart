@@ -664,6 +664,269 @@ class CreaturePainter extends CustomPainter {
         _star(canvas, const Offset(205, 180), 26, const Color(0xFFFFB300));
         _star(canvas, const Offset(108, 202), 14, const Color(0xFFFFD23E));
         _star(canvas, const Offset(192, 202), 14, const Color(0xFFFFD23E));
+      case 'pumpkinhat': // かぼちゃぼうし
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(150, 42), width: 92, height: 60),
+            Paint()..color = const Color(0xFFFF8F1F));
+        final rib = Paint()
+          ..color = const Color(0xFFE0701A)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3;
+        for (final dx in const [-24.0, 0.0, 24.0]) {
+          canvas.drawArc(
+              Rect.fromCenter(
+                  center: Offset(150 + dx, 42), width: 20, height: 58),
+              1.57,
+              3.14,
+              false,
+              rib);
+        }
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                const Rect.fromLTWH(144, 6, 12, 16), const Radius.circular(4)),
+            Paint()..color = const Color(0xFF5FA857));
+      case 'snowhat': // ゆきのぼうし
+        final dome = Path()
+          ..moveTo(106, 56)
+          ..cubicTo(106, 10, 194, 10, 194, 56)
+          ..close();
+        canvas.drawPath(dome, Paint()..color = Colors.white);
+        canvas.drawPath(
+            dome,
+            Paint()
+              ..color = const Color(0xFFBBDFFB)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3);
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(const Rect.fromLTWH(100, 46, 100, 16),
+                const Radius.circular(8)),
+            Paint()..color = const Color(0xFFBBDFFB));
+        canvas.drawCircle(
+            const Offset(150, 10), 11, Paint()..color = Colors.white);
+      case 'gradcap': // がくしぼう
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                const Rect.fromLTWH(118, 38, 64, 14), const Radius.circular(4)),
+            inkFill);
+        canvas.drawPath(
+            Path()
+              ..moveTo(150, 4)
+              ..lineTo(206, 30)
+              ..lineTo(150, 56)
+              ..lineTo(94, 30)
+              ..close(),
+            inkFill);
+        canvas.drawCircle(
+            const Offset(150, 30), 6, Paint()..color = const Color(0xFFFFD23E));
+        canvas.drawLine(
+            const Offset(150, 30),
+            const Offset(168, 54),
+            Paint()
+              ..color = const Color(0xFFFFD23E)
+              ..strokeWidth = 3);
+        canvas.drawCircle(
+            const Offset(168, 56), 5, Paint()..color = const Color(0xFFFFD23E));
+      case 'rabbitears': // うさみみカチューシャ
+        final earOuter = Paint()..color = Colors.white;
+        final earInner = Paint()..color = const Color(0xFFFF9CC2);
+        for (final dx in const [-26.0, 26.0]) {
+          canvas.save();
+          canvas.translate(150 + dx, 20);
+          canvas.rotate(dx > 0 ? 0.15 : -0.15);
+          canvas.drawOval(
+              Rect.fromCenter(center: Offset.zero, width: 22, height: 62),
+              earOuter);
+          canvas.drawOval(
+              Rect.fromCenter(center: Offset.zero, width: 10, height: 44),
+              earInner);
+          canvas.restore();
+        }
+        canvas.drawArc(
+            Rect.fromCircle(center: const Offset(150, 58), radius: 40),
+            3.4,
+            2.0,
+            false,
+            Paint()
+              ..color = const Color(0xFFF2C9DE)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 6);
+      case 'beeantenna': // みつばちカチューシャ
+        canvas.drawArc(
+            Rect.fromCircle(center: const Offset(150, 70), radius: 46),
+            3.4,
+            2.0,
+            false,
+            Paint()
+              ..color = inkColor
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 6);
+        for (final dx in const [-20.0, 20.0]) {
+          canvas.drawLine(
+              Offset(150 + dx, 40),
+              Offset(150 + dx * 1.3, 8),
+              Paint()
+                ..color = inkColor
+                ..strokeWidth = 4);
+          canvas.drawCircle(Offset(150 + dx * 1.3, 8), 8,
+              Paint()..color = const Color(0xFFFFD23E));
+        }
+      case 'sunflowerhat': // ひまわりぼうし
+        canvas.save();
+        canvas.translate(150, 36);
+        final petal = Paint()..color = const Color(0xFFFFD23E);
+        for (var i = 0; i < 8; i++) {
+          final a = i * 3.14159 / 4;
+          canvas.drawCircle(Offset(20 * cos(a), 20 * sin(a)), 13, petal);
+        }
+        canvas.drawCircle(
+            Offset.zero, 15, Paint()..color = const Color(0xFF8B5E34));
+        canvas.restore();
+      case 'xmashat': // クリスマスぼうし
+        final cone = Path()
+          ..moveTo(112, 50)
+          ..quadraticBezierTo(150, -20, 196, 30)
+          ..lineTo(112, 50)
+          ..close();
+        canvas.drawPath(cone, Paint()..color = const Color(0xFFE84C4C));
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                const Rect.fromLTWH(104, 42, 96, 16), const Radius.circular(8)),
+            Paint()..color = Colors.white);
+        canvas.drawCircle(
+            const Offset(196, 30), 11, Paint()..color = Colors.white);
+      case 'donuthat': // ドーナツぼうし
+        canvas.drawCircle(
+            const Offset(150, 30),
+            24,
+            Paint()
+              ..color = const Color(0xFFF5A9C8)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 18);
+        const sprinkles = [
+          Color(0xFFFFD23E),
+          Color(0xFF54B9FF),
+          Color(0xFF34C98E),
+          Color(0xFFFF6EA6),
+          Color(0xFFFFFFFF),
+        ];
+        for (var i = 0; i < 7; i++) {
+          final a = i * 2 * 3.14159 / 7;
+          canvas.drawCircle(Offset(150 + 24 * cos(a), 30 + 24 * sin(a)), 3,
+              Paint()..color = sprinkles[i % sprinkles.length]);
+        }
+      case 'goggles': // ゴーグル
+        final rim = Paint()..color = const Color(0xFF3BA4EC);
+        canvas.drawCircle(const Offset(112, 150), 28, rim);
+        canvas.drawCircle(const Offset(188, 150), 28, rim);
+        canvas.drawCircle(const Offset(112, 150), 21,
+            Paint()..color = const Color(0xFFBEE6FF));
+        canvas.drawCircle(const Offset(188, 150), 21,
+            Paint()..color = const Color(0xFFBEE6FF));
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(const Rect.fromLTWH(130, 142, 40, 16),
+                const Radius.circular(8)),
+            rim);
+      case 'pignose': // ぶたばな
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(150, 188), width: 52, height: 38),
+            Paint()..color = const Color(0xFFFFAFC0));
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(150, 188), width: 52, height: 38),
+            Paint()
+              ..color = const Color(0xFFE8869C)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3);
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(139, 188), width: 8, height: 12),
+            Paint()..color = const Color(0xFFC96C82));
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: const Offset(161, 188), width: 8, height: 12),
+            Paint()..color = const Color(0xFFC96C82));
+      case 'bandaid': // ばんそうこう
+        canvas.save();
+        canvas.translate(96, 196);
+        canvas.rotate(-0.4);
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                const Rect.fromLTWH(-18, -8, 36, 16), const Radius.circular(6)),
+            Paint()..color = const Color(0xFFF3D2B3));
+        canvas.drawCircle(
+            const Offset(-8, 0), 1.6, Paint()..color = const Color(0xFFCBA37C));
+        canvas.drawCircle(
+            const Offset(8, 0), 1.6, Paint()..color = const Color(0xFFCBA37C));
+        canvas.restore();
+      case 'teardrop': // なみだステッカー
+        final drop = Path()
+          ..moveTo(112, 158)
+          ..quadraticBezierTo(122, 176, 112, 188)
+          ..quadraticBezierTo(102, 176, 112, 158)
+          ..close();
+        canvas.drawPath(drop, Paint()..color = const Color(0xFF6CC4FF));
+        canvas.drawPath(
+            drop,
+            Paint()
+              ..color = const Color(0xFF3BA4EC)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2);
+      case 'kissmark': // キスマーク
+        final lip = Paint()..color = const Color(0xFFE8497B);
+        canvas.save();
+        canvas.translate(112, 178);
+        canvas.rotate(-0.3);
+        canvas.drawOval(
+            Rect.fromCenter(center: const Offset(-6, 0), width: 20, height: 14),
+            lip);
+        canvas.drawOval(
+            Rect.fromCenter(center: const Offset(6, 0), width: 20, height: 14),
+            lip);
+        canvas.restore();
+      case 'mooncheek': // つきのほっぺ(三日月シール)
+        canvas.saveLayer(
+            Rect.fromCircle(center: const Offset(205, 182), radius: 16),
+            Paint());
+        canvas.drawCircle(const Offset(205, 182), 14,
+            Paint()..color = const Color(0xFFFFD9A0));
+        canvas.drawCircle(
+            const Offset(211, 178), 13, Paint()..blendMode = BlendMode.clear);
+        canvas.restore();
+      case 'flowercheek': // おはなシール
+        canvas.save();
+        canvas.translate(95, 190);
+        final cheekPetal = Paint()..color = const Color(0xFFFFC2E0);
+        for (final a in const [0.0, 1.26, 2.51, 3.77, 5.03]) {
+          canvas.drawCircle(Offset(6 * cos(a), 6 * sin(a)), 5, cheekPetal);
+        }
+        canvas.drawCircle(
+            Offset.zero, 4, Paint()..color = const Color(0xFFFFD23E));
+        canvas.restore();
+      case 'rainbowglass': // にじめがね
+        final frame = inkStroke(5);
+        canvas.drawCircle(const Offset(112, 150), 25, frame);
+        canvas.drawCircle(const Offset(188, 150), 25, frame);
+        canvas.drawLine(const Offset(137, 150), const Offset(163, 150), frame);
+        const rainbow = [
+          Color(0xFFFF6EA6),
+          Color(0xFFFFAB49),
+          Color(0xFFFFD23E),
+          Color(0xFF34C98E),
+          Color(0xFF54B9FF),
+          Color(0xFF9B8CFF),
+        ];
+        for (final cx in const [112.0, 188.0]) {
+          canvas.save();
+          canvas.clipPath(Path()
+            ..addOval(Rect.fromCircle(center: Offset(cx, 150), radius: 23)));
+          for (var i = 0; i < rainbow.length; i++) {
+            canvas.drawRect(Rect.fromLTWH(cx - 23, 127.0 + i * 7.6, 46, 8),
+                Paint()..color = rainbow[i]);
+          }
+          canvas.restore();
+        }
     }
   }
 

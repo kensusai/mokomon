@@ -85,7 +85,7 @@ Widget _itemGrid(GameController controller, ItemSlot slot) => GridView.count(
       ],
     );
 
-/// 背景テーマの切替(無料・個体ごと保存)。docs/game-design.md §13。
+/// 背景テーマの切替(コインで購入・端末ローカルで所持管理)。docs/game-design.md §13。
 Widget _bgGrid(GameController controller) => GridView.count(
       crossAxisCount: 4,
       shrinkWrap: true,
@@ -110,6 +110,8 @@ class _BgCell extends StatelessWidget {
     final s = controller.state;
     final theme = bgThemes[index ?? speciesDefaultBg[s.species]];
     final selected = index == null ? s.bg == null : s.bg == index;
+    final owned = index == null || s.ownsBg(index!);
+    final poor = !owned && s.coins < theme.cost;
     return Material(
       color: Colors.transparent,
       shape: RoundedRectangleBorder(
@@ -120,7 +122,16 @@ class _BgCell extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => controller.setBackground(index),
+        onTap: () {
+          switch (controller.tapBackground(index)) {
+            case BgTapOutcome.bought:
+              showToast(context, '${theme.name}を かった! すてきだね✨');
+            case BgTapOutcome.notEnoughCoins:
+              showToast(context, 'コインが たりないよ! 「あそぶ」で あつめよう🎮');
+            case BgTapOutcome.selected:
+              break;
+          }
+        },
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -129,25 +140,34 @@ class _BgCell extends StatelessWidget {
                 colors: [theme.top, theme.bottom]),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(index == null ? '🎲' : theme.emoji,
-                  style: const TextStyle(fontSize: 24)),
-              const SizedBox(height: 3),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(999),
+          child: Opacity(
+            opacity: poor ? 0.55 : 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(index == null ? '🎲' : theme.emoji,
+                    style: const TextStyle(fontSize: 24)),
+                const SizedBox(height: 3),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                      index == null
+                          ? 'おまかせ'
+                          : (owned
+                              ? theme.name
+                              : '${theme.name} 🪙${theme.cost}'),
+                      style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: inkColor)),
                 ),
-                child: Text(index == null ? 'おまかせ' : theme.name,
-                    style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: inkColor)),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

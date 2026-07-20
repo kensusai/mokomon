@@ -98,6 +98,10 @@ class GameState {
   /// 背景テーマ(bgThemes index)。null は種族デフォルト。端末ローカルのみ。
   int? bg;
 
+  /// 購入ずみの背景テーマ(bgThemes の key、無料テーマは含めない)。
+  /// 端末ローカル・全個体共通(あいことばには含めない)。
+  Set<String> ownedBg = {};
+
   /// キングのきらきらゲージ(0-100)。満タンでおみやげ。docs §14。
   double kingSparkle = 0;
 
@@ -106,6 +110,10 @@ class GameState {
 
   /// 実際に表示する背景(選択がなければ種族デフォルト)。
   int get effectiveBg => bg ?? speciesDefaultBg[species];
+
+  /// その背景テーマを選べる状態か(無料、または購入ずみ)。
+  bool ownsBg(int index) =>
+      bgThemes[index].free || ownedBg.contains(bgThemes[index].key);
 
   /// 過去に育てた子の名簿(species index → スナップショット)。端末ローカルのみ。
   Map<int, CreatureSnapshot> roster = {};
@@ -179,6 +187,7 @@ class GameState {
         'pattern': pattern,
         'nickname': nickname,
         'bg': bg,
+        'ownedBg': ownedBg.toList(),
         'kingSparkle': kingSparkle,
         'unlockedStamps': unlockedStamps.toList(),
         'roster': {
@@ -207,6 +216,7 @@ class GameState {
     pattern = j['pattern'];
     nickname = j['nickname'];
     bg = j['bg'];
+    ownedBg = ((j['ownedBg'] as List?)?.cast<String>() ?? []).toSet();
     kingSparkle = (j['kingSparkle'] ?? 0).toDouble();
     unlockedStamps =
         ((j['unlockedStamps'] as List?)?.cast<String>() ?? []).toSet();

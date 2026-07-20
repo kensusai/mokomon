@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../audio/sfx_player.dart';
 import '../audio/sound_synth.dart';
+import '../data/backgrounds.dart';
 import '../data/foods.dart';
 import '../data/items.dart';
 import '../data/save_store.dart';
@@ -19,6 +20,9 @@ enum CreatureTapOutcome { crack, hatched, petted, puffed }
 
 /// ショップのセルをタップした結果(docs/game-design.md §7)。
 enum ShopTapOutcome { bought, equipped, unequipped, notEnoughCoins }
+
+/// 背景セルをタップした結果(docs/game-design.md §13)。
+enum BgTapOutcome { selected, bought, notEnoughCoins }
 
 /// キングのおみやげ(docs/game-design.md §14)。
 /// [stamp] があれば限定スタンプ解放、なければ [coins] をもらう。
@@ -186,11 +190,33 @@ class GameController extends ChangeNotifier {
     return next;
   }
 
-  /// 背景テーマを変更する(null で種族デフォルトに戻す)。無料・個体ごと保存。
-  void setBackground(int? index) {
+  /// 背景セルをタップ: 未購入(有料)なら購入して選択、
+  /// 所持ずみ(無料テーマ含む)なら選択のみ。null で種族デフォルトに戻す(常に無料)。
+  BgTapOutcome tapBackground(int? index) {
+    if (index == null) {
+      state.bg = null;
+      sfx.play(Sfx.happy);
+      _commit();
+      return BgTapOutcome.selected;
+    }
+    final theme = bgThemes[index];
+    if (!state.ownsBg(index)) {
+      if (state.coins < theme.cost) {
+        sfx.play(Sfx.wrong);
+        return BgTapOutcome.notEnoughCoins;
+      }
+      state.coins -= theme.cost;
+      state.ownedBg.add(theme.key);
+      state.bg = index;
+      sfx.play(Sfx.coin);
+      sfx.playJingle(Sfx.dressUp); // きせかえと同じく派手に
+      _commit();
+      return BgTapOutcome.bought;
+    }
     state.bg = index;
     sfx.play(Sfx.happy);
     _commit();
+    return BgTapOutcome.selected;
   }
 
   CreatureSnapshot _snapshotCurrent() => CreatureSnapshot(
