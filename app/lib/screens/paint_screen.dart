@@ -110,9 +110,26 @@ class _PaintScreenState extends State<PaintScreen> {
     final pattern = widget.controller.state.pattern;
     if (pattern != null) {
       decodeImageFromList(base64Decode(pattern)).then((img) {
-        if (mounted) setState(() => _baseImage = img);
+        if (mounted) {
+          setState(() => _setBaseImage(img));
+        } else {
+          img.dispose();
+        }
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _baseImage?.dispose();
+    super.dispose();
+  }
+
+  /// [_baseImage] を差し替える。ネイティブ側のメモリを持つ `ui.Image` は、
+  /// 差し替え前に必ず古い方を dispose する(docs/review-findings.md #5)。
+  void _setBaseImage(ui.Image? next) {
+    if (!identical(_baseImage, next)) _baseImage?.dispose();
+    _baseImage = next;
   }
 
   Offset _toBodyCoords(Offset local, double canvasSize) =>
@@ -216,7 +233,7 @@ class _PaintScreenState extends State<PaintScreen> {
       if (!mounted) return;
       widget.controller.sfx.play(Sfx.pop);
       setState(() {
-        _baseImage = newLayer;
+        _setBaseImage(newLayer);
         _ops.clear();
       });
     } finally {
@@ -235,7 +252,7 @@ class _PaintScreenState extends State<PaintScreen> {
   void _clear() {
     setState(() {
       _ops.clear();
-      _baseImage = null;
+      _setBaseImage(null);
     });
     widget.controller.clearPattern();
   }

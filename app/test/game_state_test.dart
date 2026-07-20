@@ -230,6 +230,70 @@ void main() {
       expect(restored.equipHead, 'tophat');
       expect(restored.sound, isFalse);
     });
+
+    test('a single malformed roster entry does not wipe the rest of the save',
+        () {
+      // docs/review-findings.md #1: 名簿の壊れたキー1つで全データを失わない
+      final s = GameState()
+        ..coins = 77
+        ..collection[3] = true;
+      final json = s.toJson();
+      (json['roster'] as Map)['not-a-number'] = {'stage': 3};
+      final restored = GameState()..loadJson(json);
+      expect(restored.coins, 77);
+      expect(restored.collection[3], isTrue);
+      expect(restored.roster, isEmpty); // 壊れたエントリだけスキップされる
+    });
+
+    test('a valid roster entry survives alongside a malformed one', () {
+      final s = GameState()..coins = 20;
+      final json = s.toJson();
+      (json['roster'] as Map)
+        ..['not-a-number'] = {'stage': 3}
+        ..['2'] = {'stage': 3, 'xp': 0, 'color': 0};
+      final restored = GameState()..loadJson(json);
+      expect(restored.roster.keys, [2]);
+    });
+  });
+
+  group('offline decay / loadJson clamping (docs/review-findings.md #3, #4)',
+      () {
+    test('applyOfflineDecay never raises stats when the clock moves backward',
+        () {
+      final s = GameState()
+        ..hunger = 50
+        ..happy = 50
+        ..lastSavedMs = DateTime.now().millisecondsSinceEpoch + 60000; // 未来
+      s.applyOfflineDecay();
+      expect(s.hunger, 50); // 増えない
+      expect(s.happy, 50);
+    });
+
+    test('applyOfflineDecay clamps to the documented upper bound', () {
+      final s = GameState()
+        ..hunger = 200 // 何らかの理由で範囲外になっていた場合
+        ..happy = 200
+        ..lastSavedMs = DateTime.now().millisecondsSinceEpoch;
+      s.applyOfflineDecay();
+      expect(s.hunger, lessThanOrEqualTo(100));
+      expect(s.happy, lessThanOrEqualTo(100));
+    });
+
+    test('loadJson clamps out-of-range hunger/happy/xp/coins/stage', () {
+      final restored = GameState()
+        ..loadJson({
+          'stage': 9,
+          'xp': -5,
+          'coins': -3,
+          'hunger': 500,
+          'happy': -20,
+        });
+      expect(restored.stage, inInclusiveRange(0, 3));
+      expect(restored.xp, greaterThanOrEqualTo(0));
+      expect(restored.coins, greaterThanOrEqualTo(0));
+      expect(restored.hunger, inInclusiveRange(0, 100));
+      expect(restored.happy, inInclusiveRange(0, 100));
+    });
   });
 
   group('isSad', () {

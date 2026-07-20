@@ -193,6 +193,31 @@ void main() {
     expect(c.state.pattern, isNotNull);
   });
 
+  testWidgets(
+      'paint: repeated bucket fills and leaving the screen do not double-dispose images',
+      (tester) async {
+    // docs/review-findings.md #5: _baseImage の差し替え・画面終了時に
+    // 正しく dispose されること(二重 dispose なら debug モードで例外になる)。
+    final c = GameController(GameState()..stage = 1, SaveStore());
+    await tester.pumpWidget(MaterialApp(home: PaintScreen(controller: c)));
+
+    await tester.tap(find.text('ぬりつぶし'));
+    await tester.pump();
+    final canvas = find.byType(CustomPaint).first;
+
+    for (var i = 0; i < 2; i++) {
+      await tester.runAsync(() async {
+        await tester.tap(canvas);
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+      });
+      await tester.pump();
+    }
+
+    // 画面を閉じる(dispose() が最後の _baseImage を解放する)。
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('paint on egg stage is blocked with a hint', (tester) async {
     await boot(tester, GameState());
     await tester.tap(find.text('おえかき'));

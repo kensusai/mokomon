@@ -161,10 +161,11 @@ class GameState {
   /// オフライン減衰。復帰時に一度だけ呼ぶ。
   void applyOfflineDecay() {
     if (lastSavedMs == 0) return;
-    final mins =
-        (DateTime.now().millisecondsSinceEpoch - lastSavedMs) / 60000.0;
-    hunger = max(15, hunger - min(50, mins / 3));
-    happy = max(20, happy - min(40, mins / 4));
+    // 端末の時計が巻き戻っていても増加側には振れないようにする
+    final mins = max(
+        0.0, (DateTime.now().millisecondsSinceEpoch - lastSavedMs) / 60000.0);
+    hunger = max(15, hunger - min(50, mins / 3)).clamp(0, 100).toDouble();
+    happy = max(20, happy - min(40, mins / 4)).clamp(0, 100).toDouble();
   }
 
   // ---------- 直列化(保存自体は data/save_store.dart) ----------
@@ -197,11 +198,11 @@ class GameState {
       };
 
   void loadJson(Map<String, dynamic> j) {
-    stage = j['stage'] ?? 0;
-    xp = (j['xp'] ?? 0).toDouble();
-    coins = j['coins'] ?? 10;
-    hunger = (j['hunger'] ?? 80).toDouble();
-    happy = (j['happy'] ?? 80).toDouble();
+    stage = ((j['stage'] ?? 0) as int).clamp(0, 3);
+    xp = max(0, ((j['xp'] ?? 0) as num).toDouble());
+    coins = max(0, (j['coins'] ?? 10) as int);
+    hunger = ((j['hunger'] ?? 80) as num).toDouble().clamp(0, 100).toDouble();
+    happy = ((j['happy'] ?? 80) as num).toDouble().clamp(0, 100).toDouble();
     eggTaps = j['eggTaps'] ?? 0;
     species = j['species'] ?? 0;
     final col = (j['collection'] as List?)?.cast<bool>() ?? [];
@@ -220,11 +221,17 @@ class GameState {
     kingSparkle = (j['kingSparkle'] ?? 0).toDouble();
     unlockedStamps =
         ((j['unlockedStamps'] as List?)?.cast<String>() ?? []).toSet();
-    roster = {
-      for (final e in ((j['roster'] as Map?) ?? {}).entries)
-        int.parse(e.key as String):
-            CreatureSnapshot.fromJson((e.value as Map).cast<String, dynamic>()),
-    };
+    // 壊れたエントリが1つあっても、他のセーブデータは失わない
+    // (docs/review-findings.md #1)。
+    roster = {};
+    for (final e in ((j['roster'] as Map?) ?? {}).entries) {
+      try {
+        roster[int.parse(e.key as String)] =
+            CreatureSnapshot.fromJson((e.value as Map).cast<String, dynamic>());
+      } catch (_) {
+        // このエントリだけスキップする
+      }
+    }
     lastSavedMs = j['last'] ?? 0;
   }
 
