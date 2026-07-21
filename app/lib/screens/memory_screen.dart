@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
+import 'timer_bag.dart';
 
 /// ペアさがし(docs/game-design.md §5)。3×4=6ペア。
 class MemoryScreen extends StatefulWidget {
@@ -21,18 +21,10 @@ class MemoryScreen extends StatefulWidget {
   State<MemoryScreen> createState() => _MemoryScreenState();
 }
 
-class _MemoryScreenState extends State<MemoryScreen> {
+class _MemoryScreenState extends State<MemoryScreen>
+    with TimerBagMixin<MemoryScreen> {
   late final _game = widget.game ?? MemoryGame();
   var _ended = false;
-  final _timers = <Timer>[];
-
-  @override
-  void dispose() {
-    for (final t in _timers) {
-      t.cancel();
-    }
-    super.dispose();
-  }
 
   void _flip(int index) {
     if (_ended) return;
@@ -47,19 +39,17 @@ class _MemoryScreenState extends State<MemoryScreen> {
         widget.controller.sfx.play(Sfx.pop);
         setState(() {});
         if (_game.finished) {
-          _timers.add(Timer(const Duration(milliseconds: 600), () {
-            if (!mounted) return;
+          later(const Duration(milliseconds: 600), () {
             widget.controller.finishMinigame(memoryReward);
             setState(() => _ended = true);
-          }));
+          });
         }
       case MemoryFlipResult.mismatched:
         widget.controller.sfx.play(Sfx.wrong);
         setState(() {});
-        _timers.add(Timer(const Duration(milliseconds: 750), () {
-          if (!mounted) return;
+        later(const Duration(milliseconds: 750), () {
           setState(_game.hideMismatch);
-        }));
+        });
     }
   }
 

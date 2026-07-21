@@ -34,6 +34,7 @@ import 'odd_one_screen.dart';
 import 'order_screen.dart';
 import 'paint_screen.dart';
 import 'puzzle_screen.dart';
+import 'timer_bag.dart';
 import 'trace_screen.dart';
 import 'whack_screen.dart';
 
@@ -101,7 +102,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with TimerBagMixin<HomeScreen> {
   GameController get c => widget.controller;
   GameState get s => c.state;
 
@@ -120,7 +122,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _hintTimer;
   Timer? _sparkleTimer;
   Timer? _idleTimer;
-  final _oneShotTimers = <Timer>[];
   bool _glowHinted = false;
   bool _evoBusy = false;
 
@@ -137,11 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _sparkleTimer = Timer.periodic(
         const Duration(milliseconds: 2200), (_) => _spawnSparkle());
     if (s.stage == 0) {
-      _later(
-          const Duration(milliseconds: 800), () => _hint('たまごを タッチしてみて! 👆'));
+      later(const Duration(milliseconds: 800), () => _hint('たまごを タッチしてみて! 👆'));
     }
     // 既にしきい値を超えていた場合の追いつき進化
-    _later(const Duration(milliseconds: 1200), _checkEvolve);
+    later(const Duration(milliseconds: 1200), _checkEvolve);
     _scheduleIdleChatter();
   }
 
@@ -169,14 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _hintTimer?.cancel();
     _sparkleTimer?.cancel();
     _idleTimer?.cancel();
-    for (final t in _oneShotTimers) {
-      t.cancel();
-    }
     super.dispose();
-  }
-
-  void _later(Duration d, VoidCallback fn) {
-    _oneShotTimers.add(Timer(d, fn));
   }
 
   double _lastSparkle = 0;
@@ -215,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final near = s.nearEvolve;
     if (near && !_glowHinted) {
       _glowHinted = true;
-      _later(
+      later(
           const Duration(milliseconds: 600), () => _hint('なんだか からだが ひかってる…!'));
     }
     if (!near) _glowHinted = false;
@@ -459,7 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _spawnParticleAtGlobal(
           food.emoji, box.localToGlobal(box.size.center(Offset.zero)));
     }
-    _later(const Duration(milliseconds: 900), _checkEvolve);
+    later(const Duration(milliseconds: 900), _checkEvolve);
   }
 
   Future<void> _checkEvolve() async {

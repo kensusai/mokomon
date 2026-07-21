@@ -1,15 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart' show minigameContinueCost;
 import '../widgets/game_overlays.dart';
+import 'timer_bag.dart';
 
 /// 正誤判定つきミニゲーム(パズル/ちがうのどっち/じゅんばん/かぞえて)共通:
 /// ミス上限でのゲームオーバー→コインで続行、の配線をまとめる(docs/game-design.md §5)。
-mixin MistakeGameOverMixin<T extends StatefulWidget> on State<T> {
+mixin MistakeGameOverMixin<T extends StatefulWidget>
+    on State<T>, TimerBagMixin<T> {
   var gameOver = false;
 
   GameController get controller;
@@ -42,18 +42,16 @@ mixin MistakeGameOverMixin<T extends StatefulWidget> on State<T> {
     required bool failed,
     required bool finished,
     required int reward,
-    required List<Timer> timers,
     required VoidCallback onFinished,
     Duration finishDelay = const Duration(milliseconds: 400),
   }) {
     if (correct) {
       controller.sfx.play(Sfx.happy);
       if (finished) {
-        timers.add(Timer(finishDelay, () {
-          if (!mounted) return;
+        later(finishDelay, () {
           controller.finishMinigame(reward);
           onFinished();
-        }));
+        });
       }
       setState(() {});
     } else {

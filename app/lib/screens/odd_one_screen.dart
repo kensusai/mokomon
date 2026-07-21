@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../logic/game_controller.dart';
@@ -7,6 +5,7 @@ import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
 import 'mistake_game_over.dart';
+import 'timer_bag.dart';
 
 /// ちがうのどっち?(docs/game-design.md §5)。1つだけ違う絵文字を探す。
 class OddOneScreen extends StatefulWidget {
@@ -22,24 +21,15 @@ class OddOneScreen extends StatefulWidget {
 }
 
 class _OddOneScreenState extends State<OddOneScreen>
-    with MistakeGameOverMixin<OddOneScreen> {
+    with TimerBagMixin<OddOneScreen>, MistakeGameOverMixin<OddOneScreen> {
   late final _game = widget.game ?? OddOneGame();
   var _ended = false;
-  final _timers = <Timer>[];
 
   @override
   GameController get controller => widget.controller;
 
   @override
   void resetMistakes() => _game.continueAfterFail();
-
-  @override
-  void dispose() {
-    for (final t in _timers) {
-      t.cancel();
-    }
-    super.dispose();
-  }
 
   void _choose(int index) {
     if (_ended || gameOver) return;
@@ -48,7 +38,6 @@ class _OddOneScreenState extends State<OddOneScreen>
       failed: _game.failed,
       finished: _game.finished,
       reward: _game.reward,
-      timers: _timers,
       onFinished: () => setState(() => _ended = true),
     );
   }

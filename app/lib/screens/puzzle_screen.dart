@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -10,6 +9,7 @@ import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
 import '../widgets/shape_painter.dart';
 import 'mistake_game_over.dart';
+import 'timer_bag.dart';
 
 /// おなじのどれ?(docs/game-design.md §5)。8ラウンド、不正解ペナルティなし。
 class PuzzleScreen extends StatefulWidget {
@@ -25,13 +25,15 @@ class PuzzleScreen extends StatefulWidget {
 }
 
 class _PuzzleScreenState extends State<PuzzleScreen>
-    with SingleTickerProviderStateMixin, MistakeGameOverMixin<PuzzleScreen> {
+    with
+        SingleTickerProviderStateMixin,
+        TimerBagMixin<PuzzleScreen>,
+        MistakeGameOverMixin<PuzzleScreen> {
   late final _game = widget.game ?? PuzzleGame();
   var _ended = false;
   var _locked = false;
   int? _shakingIndex;
   late final AnimationController _shake;
-  final _timers = <Timer>[];
 
   @override
   GameController get controller => widget.controller;
@@ -48,9 +50,6 @@ class _PuzzleScreenState extends State<PuzzleScreen>
 
   @override
   void dispose() {
-    for (final t in _timers) {
-      t.cancel();
-    }
     _shake.dispose();
     super.dispose();
   }
@@ -61,8 +60,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
       widget.controller.sfx.play(Sfx.happy);
       _locked = true;
       setState(() {});
-      _timers.add(Timer(const Duration(milliseconds: 500), () {
-        if (!mounted) return;
+      later(const Duration(milliseconds: 500), () {
         _locked = false;
         if (_game.finished) {
           widget.controller.finishMinigame(_game.reward);
@@ -70,7 +68,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
         } else {
           setState(() {});
         }
-      }));
+      });
     } else {
       widget.controller.sfx.play(Sfx.wrong);
       if (_game.failed) {

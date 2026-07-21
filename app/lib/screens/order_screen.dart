@@ -6,6 +6,7 @@ import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
 import 'mistake_game_over.dart';
+import 'timer_bag.dart';
 
 /// じゅんばんタッチ(docs/game-design.md §5)。1〜9を順に、はやくタッチ!
 class OrderScreen extends StatefulWidget {
@@ -21,7 +22,7 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen>
-    with MistakeGameOverMixin<OrderScreen> {
+    with TimerBagMixin<OrderScreen>, MistakeGameOverMixin<OrderScreen> {
   late final _game = widget.game ?? OrderGame();
   final _watch = Stopwatch();
   var _ended = false;

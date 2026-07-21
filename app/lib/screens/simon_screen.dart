@@ -7,6 +7,7 @@ import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
+import 'timer_bag.dart';
 
 enum _Phase { showing, input, waiting, ended }
 
@@ -30,11 +31,11 @@ class SimonScreen extends StatefulWidget {
   State<SimonScreen> createState() => _SimonScreenState();
 }
 
-class _SimonScreenState extends State<SimonScreen> {
+class _SimonScreenState extends State<SimonScreen>
+    with TimerBagMixin<SimonScreen> {
   late final _game = widget.game ?? SimonGame();
   var _phase = _Phase.waiting;
   int? _lit; // お手本/タップで光っているパッド
-  final _timers = <Timer>[];
   Timer? _stepper;
 
   @override
@@ -46,17 +47,11 @@ class _SimonScreenState extends State<SimonScreen> {
   @override
   void dispose() {
     _stepper?.cancel();
-    for (final t in _timers) {
-      t.cancel();
-    }
     super.dispose();
   }
 
-  void _after(int ms, void Function() fn) {
-    _timers.add(Timer(Duration(milliseconds: ms), () {
-      if (mounted) fn();
-    }));
-  }
+  void _after(int ms, void Function() fn) =>
+      later(Duration(milliseconds: ms), fn);
 
   /// お手本再生: 650msごとに1つずつ光らせ、終わったら入力フェーズへ。
   void _startShow() {

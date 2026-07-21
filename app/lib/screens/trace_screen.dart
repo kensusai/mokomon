@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import '../logic/game_controller.dart';
 import '../logic/trace_game.dart';
 import '../widgets/game_overlays.dart';
 import '../widgets/ui_kit.dart';
+import 'timer_bag.dart';
 
 /// なぞってかこう(docs/game-design.md §5)。点線の形をなぞって星をもらう。
 /// お絵描き好きのこども向けのゲーム。
@@ -23,7 +23,8 @@ class TraceScreen extends StatefulWidget {
   State<TraceScreen> createState() => _TraceScreenState();
 }
 
-class _TraceScreenState extends State<TraceScreen> {
+class _TraceScreenState extends State<TraceScreen>
+    with TimerBagMixin<TraceScreen> {
   late final List<String> _shapes = widget.shapes ??
       ([...traceShapeKeys]..shuffle(Random()))
           .take(traceShapesPerSession)
@@ -34,17 +35,8 @@ class _TraceScreenState extends State<TraceScreen> {
   var _coins = 0;
   var _ended = false;
   int? _lastStars; // 直前の判定結果(★表示用)
-  final _timers = <Timer>[];
 
   String get _currentShape => _shapes[_shapeIndex];
-
-  @override
-  void dispose() {
-    for (final t in _timers) {
-      t.cancel();
-    }
-    super.dispose();
-  }
 
   void _judge() {
     final coverage = traceCoverage(traceTargets(_currentShape), _strokePoints);
@@ -56,8 +48,7 @@ class _TraceScreenState extends State<TraceScreen> {
       _coins += coins;
       _lastStars = stars;
     });
-    _timers.add(Timer(const Duration(milliseconds: 900), () {
-      if (!mounted) return;
+    later(const Duration(milliseconds: 900), () {
       setState(() {
         _lastStars = null;
         _strokePoints.clear();
@@ -68,7 +59,7 @@ class _TraceScreenState extends State<TraceScreen> {
           _shapeIndex++;
         }
       });
-    }));
+    });
   }
 
   @override
