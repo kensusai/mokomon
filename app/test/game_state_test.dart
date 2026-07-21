@@ -300,7 +300,8 @@ void main() {
 
       test('applyOfflineDecay clamps to the documented upper bound', () {
         final s = GameState()
-          ..hunger = 200 // 何らかの理由で範囲外になっていた場合
+          ..hunger =
+              200 // 何らかの理由で範囲外になっていた場合
           ..happy = 200
           ..lastSavedMs = DateTime.now().millisecondsSinceEpoch;
         s.applyOfflineDecay();

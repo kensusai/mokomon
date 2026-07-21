@@ -44,11 +44,11 @@ class Cloud extends StatelessWidget {
   }
 
   Widget _bump(double d) => Container(
-        width: d,
-        height: d,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-      );
+    width: d,
+    height: d,
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      shape: BoxShape.circle,
+    ),
+  );
 }

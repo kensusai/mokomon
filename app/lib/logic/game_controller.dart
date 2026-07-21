@@ -48,8 +48,8 @@ class GameController extends ChangeNotifier {
   /// [sfx] はテスト専用: 偽 AudioPlayer を仕込んだ [SfxPlayer] を注入して
   /// 再生内容を検証できる(docs/review-findings.md #22)。
   GameController(this.state, this._store, {Random? rng, SfxPlayer? sfx})
-      : _rng = rng ?? Random(),
-        _sfxOverride = sfx;
+    : _rng = rng ?? Random(),
+      _sfxOverride = sfx;
 
   final GameState state;
   final SaveStore _store;
@@ -58,7 +58,8 @@ class GameController extends ChangeNotifier {
   Timer? _decayTimer;
 
   /// 効果音(ミュート・BGM選択は state を参照)。
-  late final SfxPlayer sfx = _sfxOverride ??
+  late final SfxPlayer sfx =
+      _sfxOverride ??
       SfxPlayer(enabled: () => state.sound, bgmTrack: () => state.bgmTrack);
 
   /// アプリ起動中の減衰(10秒ごと)。docs/game-design.md §3。
@@ -243,19 +244,19 @@ class GameController extends ChangeNotifier {
   }
 
   CreatureSnapshot _snapshotCurrent() => CreatureSnapshot(
-        stage: state.stage,
-        xp: state.xp,
-        eggTaps: state.eggTaps,
-        hunger: state.hunger,
-        happy: state.happy,
-        color: state.color,
-        pattern: state.pattern,
-        equipHead: state.equipHead,
-        equipFace: state.equipFace,
-        nickname: state.nickname,
-        bg: state.bg,
-        kingSparkle: state.kingSparkle,
-      );
+    stage: state.stage,
+    xp: state.xp,
+    eggTaps: state.eggTaps,
+    hunger: state.hunger,
+    happy: state.happy,
+    color: state.color,
+    pattern: state.pattern,
+    equipHead: state.equipHead,
+    equipFace: state.equipFace,
+    nickname: state.nickname,
+    bg: state.bg,
+    kingSparkle: state.kingSparkle,
+  );
 
   /// 図鑑から過去に育てた子と交代する(docs/game-design.md §12)。
   /// いまの子は名簿へ退避。未入手種・現在の種族へは交代できない。
@@ -339,8 +340,9 @@ class GameController extends ChangeNotifier {
       _setSlot(item.slot, item.key);
       return ShopTapOutcome.bought;
     }
-    final current =
-        item.slot == ItemSlot.head ? state.equipHead : state.equipFace;
+    final current = item.slot == ItemSlot.head
+        ? state.equipHead
+        : state.equipFace;
     if (current == item.key) {
       _setSlot(item.slot, null);
       return ShopTapOutcome.unequipped;

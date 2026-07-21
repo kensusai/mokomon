@@ -226,9 +226,9 @@ class PuzzleGame with MistakeTracker, RoundGuessGame {
   int get rewardPerRound => puzzleRewardPerRound;
 
   PuzzlePiece _randomPiece() => PuzzlePiece(
-        PuzzleShape.values[_rng.nextInt(PuzzleShape.values.length)],
-        puzzleColors[_rng.nextInt(puzzleColors.length)],
-      );
+    PuzzleShape.values[_rng.nextInt(PuzzleShape.values.length)],
+    puzzleColors[_rng.nextInt(puzzleColors.length)],
+  );
 
   @override
   void _newRound() {
@@ -323,8 +323,8 @@ class WhackMole {
 /// もぐらたたきの状態機械。widget 側の Ticker から [update] を呼ぶ。
 class WhackGame with CountdownGame {
   WhackGame({Random? rng, int? speciesCount})
-      : _rng = rng ?? Random(),
-        _speciesCount = speciesCount ?? speciesList.length;
+    : _rng = rng ?? Random(),
+      _speciesCount = speciesCount ?? speciesList.length;
 
   final Random _rng;
 
@@ -421,11 +421,11 @@ class OddOneGame with MistakeTracker, RoundGuessGame {
 
   // こどもFBでさらに難化: 12 → 16 → 20 → 25枚
   int get _gridSize => switch (round) {
-        < 2 => 12,
-        < 4 => 16,
-        < 6 => 20,
-        _ => 25,
-      };
+    < 2 => 12,
+    < 4 => 16,
+    < 6 => 20,
+    _ => 25,
+  };
 
   @override
   void _newRound() {

@@ -80,8 +80,8 @@ class _OddOneScreenState extends State<OddOneScreen>
                     crossAxisCount: _game.cells.length >= 25
                         ? 5
                         : _game.cells.length >= 16
-                            ? 4
-                            : 3,
+                        ? 4
+                        : 3,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     mainAxisSpacing: 10,

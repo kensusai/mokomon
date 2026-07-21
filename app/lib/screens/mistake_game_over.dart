@@ -32,11 +32,11 @@ mixin MistakeGameOverMixin<T extends StatefulWidget>
   }
 
   Widget buildGameOverOverlay(BuildContext context) => GameOverOverlay(
-        cost: minigameContinueCost,
-        canAfford: controller.state.coins >= minigameContinueCost,
-        onContinue: continueGame,
-        onGiveUp: () => Navigator.of(context).pop(),
-      );
+    cost: minigameContinueCost,
+    canAfford: controller.state.coins >= minigameContinueCost,
+    onContinue: continueGame,
+    onGiveUp: () => Navigator.of(context).pop(),
+  );
 
   /// 「正解ならすぐ確定・不正解ならミス判定」という即時採点ゲーム
   /// (ちがうのどっち/かぞえて)共通の後処理(docs/review-findings.md #9)。

@@ -58,7 +58,8 @@ class _ConfettiBurstState extends State<ConfettiBurst>
                   if (nowMs >= p.delayMs && nowMs < p.delayMs + p.durationMs)
                     Positioned(
                       left: p.x * box.maxWidth,
-                      top: -20 +
+                      top:
+                          -20 +
                           (box.maxHeight + 40) *
                               ((nowMs - p.delayMs) / p.durationMs),
                       child: Transform.rotate(

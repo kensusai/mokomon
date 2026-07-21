@@ -119,48 +119,48 @@ class _PuzzleScreenState extends State<PuzzleScreen>
   }
 
   Widget _targetCard() => Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1F3A3F52),
-              blurRadius: 24,
-              offset: Offset(0, 10),
-            ),
-          ],
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x1F3A3F52),
+          blurRadius: 24,
+          offset: Offset(0, 10),
         ),
-        child: Column(
-          children: [
-            const Text(
-              'これと おなじのは どれ?',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: ink2Color,
-              ),
-            ),
-            const SizedBox(height: 8),
-            CustomPaint(
-              size: const Size(96, 96),
-              painter: ShapePainter(
-                shape: _game.target.shape,
-                color: Color(_game.target.color),
-              ),
-            ),
-          ],
+      ],
+    ),
+    child: Column(
+      children: [
+        const Text(
+          'これと おなじのは どれ?',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: ink2Color,
+          ),
         ),
-      );
+        const SizedBox(height: 8),
+        CustomPaint(
+          size: const Size(96, 96),
+          painter: ShapePainter(
+            shape: _game.target.shape,
+            color: Color(_game.target.color),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _choices() => Row(
-        children: [
-          for (var i = 0; i < _game.choices.length; i++) ...[
-            if (i > 0) const SizedBox(width: 12),
-            Expanded(child: _choice(i)),
-          ],
-        ],
-      );
+    children: [
+      for (var i = 0; i < _game.choices.length; i++) ...[
+        if (i > 0) const SizedBox(width: 12),
+        Expanded(child: _choice(i)),
+      ],
+    ],
+  );
 
   Widget _choice(int i) {
     final piece = _game.choices[i];

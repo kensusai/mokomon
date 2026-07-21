@@ -99,34 +99,34 @@ class _CountScreenState extends State<CountScreen>
   }
 
   Widget _choiceButton(int i) => Material(
-        key: ValueKey('count-choice-$i'),
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        elevation: 3,
-        shadowColor: const Color(0x1F3A3F52),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => _choose(i),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Center(
-              child: Text(
-                '${_game.choices[i]}',
-                style: const TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: inkColor,
-                ),
-              ),
+    key: ValueKey('count-choice-$i'),
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(20),
+    elevation: 3,
+    shadowColor: const Color(0x1F3A3F52),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => _choose(i),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Center(
+          child: Text(
+            '${_game.choices[i]}',
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: inkColor,
             ),
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _dots() => RoundProgressDots(
-        total: countRounds,
-        current: _game.round,
-        size: 10,
-        trackColor: const Color(0xFFD9DEEA),
-      );
+    total: countRounds,
+    current: _game.round,
+    size: 10,
+    trackColor: const Color(0xFFD9DEEA),
+  );
 }

@@ -14,12 +14,12 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   GameController king({double sparkle = 0}) => GameController(
-        GameState()
-          ..stage = 3
-          ..kingSparkle = sparkle,
-        SaveStore(),
-        rng: NoPuffRandom(),
-      );
+    GameState()
+      ..stage = 3
+      ..kingSparkle = sparkle,
+    SaveStore(),
+    rng: NoPuffRandom(),
+  );
 
   group('きらきらゲージ (docs/game-design.md §14)', () {
     test('accrues only for kings', () {

@@ -26,12 +26,11 @@ class TraceScreen extends StatefulWidget {
 
 class _TraceScreenState extends State<TraceScreen>
     with TimerBagMixin<TraceScreen> {
-  late final List<String> _shapes = widget.shapes ??
+  late final List<String> _shapes =
+      widget.shapes ??
       ([
         ...traceShapeKeys,
-      ]..shuffle(Random()))
-          .take(traceShapesPerSession)
-          .toList();
+      ]..shuffle(Random())).take(traceShapesPerSession).toList();
   var _shapeIndex = 0;
   final _strokePoints = <Offset>[];
   final _starsEarned = <int>[];

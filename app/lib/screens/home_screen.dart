@@ -235,16 +235,18 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() => _setPatternImage(null));
       return;
     }
-    decodeImageFromList(base64Decode(p)).then((img) {
-      if (mounted && _patternSource == p) {
-        setState(() => _setPatternImage(img));
-      } else {
-        // 画面破棄後・デコード中に模様が変わった場合は表示されないまま捨てる
-        img.dispose();
-      }
-    }).catchError((Object _) {
-      // 画像として壊れたデータは模様なしとして無視(docs/review-findings.md #43)
-    });
+    decodeImageFromList(base64Decode(p))
+        .then((img) {
+          if (mounted && _patternSource == p) {
+            setState(() => _setPatternImage(img));
+          } else {
+            // 画面破棄後・デコード中に模様が変わった場合は表示されないまま捨てる
+            img.dispose();
+          }
+        })
+        .catchError((Object _) {
+          // 画像として壊れたデータは模様なしとして無視(docs/review-findings.md #43)
+        });
   }
 
   /// `_patternImage` の差し替え。`ui.Image` はネイティブ側メモリを持つため、
@@ -281,8 +283,9 @@ class _HomeScreenState extends State<HomeScreen>
     final box =
         _creatureBoxKey.currentContext?.findRenderObject() as RenderBox?;
     final lowerBody = box != null && d.localPosition.dy / box.size.height > 0.7;
-    final zone =
-        box == null ? _PetZone.belly : _zoneOf(d.localPosition, box.size);
+    final zone = box == null
+        ? _PetZone.belly
+        : _zoneOf(d.localPosition, box.size);
 
     switch (c.tapCreature(lowerBody: lowerBody)) {
       case CreatureTapOutcome.crack:
@@ -556,29 +559,29 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _topBar() => Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            StatPill('🪙 ${s.coins}'),
-            const Spacer(),
-            _iconButton('📖', _onBookPressed),
-            const SizedBox(width: 8),
-            _iconButton('💾', () => showCodeDialog(context, c)),
-            const SizedBox(width: 8),
-            _iconButton('🎵', () {
-              final track = c.cycleBgm();
-              _hint('♪ ${_bgmNames[track]}');
-            }),
-            const SizedBox(width: 8),
-            _iconButton(s.sound ? '🔊' : '🔇', c.toggleSound),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.all(12),
+    child: Row(
+      children: [
+        StatPill('🪙 ${s.coins}'),
+        const Spacer(),
+        _iconButton('📖', _onBookPressed),
+        const SizedBox(width: 8),
+        _iconButton('💾', () => showCodeDialog(context, c)),
+        const SizedBox(width: 8),
+        _iconButton('🎵', () {
+          final track = c.cycleBgm();
+          _hint('♪ ${_bgmNames[track]}');
+        }),
+        const SizedBox(width: 8),
+        _iconButton(s.sound ? '🔊' : '🔇', c.toggleSound),
+      ],
+    ),
+  );
 
   Widget _iconButton(String emoji, VoidCallback onTap) => CircleIconButton(
-        onTap: onTap,
-        child: Text(emoji, style: const TextStyle(fontSize: 24)),
-      );
+    onTap: onTap,
+    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+  );
 
   Widget _stage() {
     final creatureSize = min(MediaQuery.sizeOf(context).width * 0.64, 300.0);
@@ -636,91 +639,91 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _bottomCard() => Container(
-        margin: const EdgeInsets.all(12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+    margin: const EdgeInsets.all(12),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+    ),
+    child: Column(
+      children: [
+        // なまえ(タップで改名)
+        GestureDetector(
+          onTap: _onRenamePressed,
+          child: StatPill(s.displayName),
         ),
-        child: Column(
+        const SizedBox(height: 10),
+        if (s.stage == 3) ...[
+          // キング専用: きらきらゲージ(満タンでおみやげ)
+          StatMeter(
+            icon: '✨',
+            value: s.kingSparkle,
+            colors: const [Color(0xFFFFE28A), Color(0xFFF0A92D)],
+          ),
+          const SizedBox(height: 10),
+        ],
+        StatMeter(
+          icon: '🍖',
+          value: s.hunger,
+          colors: const [Color(0xFFFFC46B), Color(0xFFFF9A3D)],
+        ),
+        const SizedBox(height: 10),
+        StatMeter(
+          icon: '💖',
+          value: s.happy,
+          colors: const [Color(0xFFFF9CC2), Color(0xFFFF6EA6)],
+        ),
+        const SizedBox(height: 12),
+        Row(
           children: [
-            // なまえ(タップで改名)
-            GestureDetector(
-              onTap: _onRenamePressed,
-              child: StatPill(s.displayName),
-            ),
-            const SizedBox(height: 10),
-            if (s.stage == 3) ...[
-              // キング専用: きらきらゲージ(満タンでおみやげ)
-              StatMeter(
-                icon: '✨',
-                value: s.kingSparkle,
-                colors: const [Color(0xFFFFE28A), Color(0xFFF0A92D)],
+            Expanded(
+              child: BigActionButton(
+                icon: '🍎',
+                label: 'ごはん',
+                sub: '3しゅるい',
+                colors: orangeGradient,
+                onTap: _onFeedPressed,
               ),
-              const SizedBox(height: 10),
-            ],
-            StatMeter(
-              icon: '🍖',
-              value: s.hunger,
-              colors: const [Color(0xFFFFC46B), Color(0xFFFF9A3D)],
             ),
-            const SizedBox(height: 10),
-            StatMeter(
-              icon: '💖',
-              value: s.happy,
-              colors: const [Color(0xFFFF9CC2), Color(0xFFFF6EA6)],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: BigActionButton(
-                    icon: '🍎',
-                    label: 'ごはん',
-                    sub: '3しゅるい',
-                    colors: orangeGradient,
-                    onTap: _onFeedPressed,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: BigActionButton(
-                    icon: '🎮',
-                    label: 'あそぶ',
-                    sub: 'コインげっと',
-                    colors: greenGradient,
-                    onTap: _onPlayPressed,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: BigActionButton(
-                    icon: '🎨',
-                    label: 'おえかき',
-                    sub: 'もようがえ',
-                    colors: purpleGradient,
-                    onTap: _onPaintPressed,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: BigActionButton(
-                    icon: '🛍️',
-                    label: 'おみせ',
-                    sub: 'きせかえ',
-                    colors: blueGradient,
-                    onTap: () => showShopModal(context, c),
-                  ),
-                ),
-              ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: BigActionButton(
+                icon: '🎮',
+                label: 'あそぶ',
+                sub: 'コインげっと',
+                colors: greenGradient,
+                onTap: _onPlayPressed,
+              ),
             ),
           ],
         ),
-      );
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: BigActionButton(
+                icon: '🎨',
+                label: 'おえかき',
+                sub: 'もようがえ',
+                colors: purpleGradient,
+                onTap: _onPaintPressed,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: BigActionButton(
+                icon: '🛍️',
+                label: 'おみせ',
+                sub: 'きせかえ',
+                colors: blueGradient,
+                onTap: () => showShopModal(context, c),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
 
 /// 枠なしのカラフルなセリフ表示。seed ごとに色(6色)と

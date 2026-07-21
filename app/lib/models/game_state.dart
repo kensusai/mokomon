@@ -59,40 +59,39 @@ class CreatureSnapshot {
   });
 
   Map<String, dynamic> toJson() => {
-        'stage': stage,
-        'xp': xp,
-        'eggTaps': eggTaps,
-        'hunger': hunger,
-        'happy': happy,
-        'color': color,
-        'pattern': pattern,
-        'equipHead': equipHead,
-        'equipFace': equipFace,
-        'nickname': nickname,
-        'bg': bg,
-        'kingSparkle': kingSparkle,
-      };
+    'stage': stage,
+    'xp': xp,
+    'eggTaps': eggTaps,
+    'hunger': hunger,
+    'happy': happy,
+    'color': color,
+    'pattern': pattern,
+    'equipHead': equipHead,
+    'equipFace': equipFace,
+    'nickname': nickname,
+    'bg': bg,
+    'kingSparkle': kingSparkle,
+  };
 
   /// 壊れた値は範囲内へ正規化する。`switchCreature` がスナップショットを
   /// そのまま state に流すため、ここが最後の防波堤(docs/review-findings.md #17)。
   factory CreatureSnapshot.fromJson(Map<String, dynamic> j) => CreatureSnapshot(
-        stage: ((j['stage'] ?? 3) as int).clamp(0, 3),
-        xp: max(0, ((j['xp'] ?? 0) as num).toDouble()),
-        eggTaps: max(0, (j['eggTaps'] ?? 0) as int),
-        hunger:
-            ((j['hunger'] ?? 80) as num).toDouble().clamp(0, 100).toDouble(),
-        happy: ((j['happy'] ?? 80) as num).toDouble().clamp(0, 100).toDouble(),
-        color: (j['color'] ?? 0) as int,
-        pattern: _validPattern(j['pattern']),
-        equipHead: j['equipHead'] as String?,
-        equipFace: j['equipFace'] as String?,
-        nickname: j['nickname'] as String?,
-        bg: _validBg(j['bg']),
-        kingSparkle: ((j['kingSparkle'] ?? 0) as num)
-            .toDouble()
-            .clamp(0, 100)
-            .toDouble(),
-      );
+    stage: ((j['stage'] ?? 3) as int).clamp(0, 3),
+    xp: max(0, ((j['xp'] ?? 0) as num).toDouble()),
+    eggTaps: max(0, (j['eggTaps'] ?? 0) as int),
+    hunger: ((j['hunger'] ?? 80) as num).toDouble().clamp(0, 100).toDouble(),
+    happy: ((j['happy'] ?? 80) as num).toDouble().clamp(0, 100).toDouble(),
+    color: (j['color'] ?? 0) as int,
+    pattern: _validPattern(j['pattern']),
+    equipHead: j['equipHead'] as String?,
+    equipFace: j['equipFace'] as String?,
+    nickname: j['nickname'] as String?,
+    bg: _validBg(j['bg']),
+    kingSparkle: ((j['kingSparkle'] ?? 0) as num)
+        .toDouble()
+        .clamp(0, 100)
+        .toDouble(),
+  );
 }
 
 /// ゲーム状態。プロトタイプの `S` オブジェクトに対応。
@@ -198,31 +197,29 @@ class GameState {
   // ---------- 直列化(保存自体は data/save_store.dart) ----------
 
   Map<String, dynamic> toJson() => {
-        'stage': stage,
-        'xp': xp,
-        'coins': coins,
-        'hunger': hunger,
-        'happy': happy,
-        'eggTaps': eggTaps,
-        'species': species,
-        'collection': collection,
-        'owned': owned.toList(),
-        'equipHead': equipHead,
-        'equipFace': equipFace,
-        'sound': sound,
-        'bgmTrack': bgmTrack,
-        'color': color,
-        'pattern': pattern,
-        'nickname': nickname,
-        'bg': bg,
-        'ownedBg': ownedBg.toList(),
-        'kingSparkle': kingSparkle,
-        'unlockedStamps': unlockedStamps.toList(),
-        'roster': {
-          for (final e in roster.entries) '${e.key}': e.value.toJson()
-        },
-        'last': DateTime.now().millisecondsSinceEpoch,
-      };
+    'stage': stage,
+    'xp': xp,
+    'coins': coins,
+    'hunger': hunger,
+    'happy': happy,
+    'eggTaps': eggTaps,
+    'species': species,
+    'collection': collection,
+    'owned': owned.toList(),
+    'equipHead': equipHead,
+    'equipFace': equipFace,
+    'sound': sound,
+    'bgmTrack': bgmTrack,
+    'color': color,
+    'pattern': pattern,
+    'nickname': nickname,
+    'bg': bg,
+    'ownedBg': ownedBg.toList(),
+    'kingSparkle': kingSparkle,
+    'unlockedStamps': unlockedStamps.toList(),
+    'roster': {for (final e in roster.entries) '${e.key}': e.value.toJson()},
+    'last': DateTime.now().millisecondsSinceEpoch,
+  };
 
   void loadJson(Map<String, dynamic> j) {
     stage = ((j['stage'] ?? 0) as int).clamp(0, 3);
@@ -249,10 +246,12 @@ class GameState {
     nickname = j['nickname'] as String?;
     bg = _validBg(j['bg']);
     ownedBg = ((j['ownedBg'] as List?)?.cast<String>() ?? []).toSet();
-    kingSparkle =
-        ((j['kingSparkle'] ?? 0) as num).toDouble().clamp(0, 100).toDouble();
-    unlockedStamps =
-        ((j['unlockedStamps'] as List?)?.cast<String>() ?? []).toSet();
+    kingSparkle = ((j['kingSparkle'] ?? 0) as num)
+        .toDouble()
+        .clamp(0, 100)
+        .toDouble();
+    unlockedStamps = ((j['unlockedStamps'] as List?)?.cast<String>() ?? [])
+        .toSet();
     // 壊れたエントリが1つあっても、他のセーブデータは失わない
     // (docs/review-findings.md #1)。
     roster = {};
@@ -345,12 +344,14 @@ class GameState {
       };
       final eqH = int.parse(f[9]);
       final eqF = int.parse(f[10]);
-      equipHead = (eqH >= 0 &&
+      equipHead =
+          (eqH >= 0 &&
               eqH < shopItems.length &&
               owned.contains(shopItems[eqH].key))
           ? shopItems[eqH].key
           : null;
-      equipFace = (eqF >= 0 &&
+      equipFace =
+          (eqF >= 0 &&
               eqF < shopItems.length &&
               owned.contains(shopItems[eqF].key))
           ? shopItems[eqF].key

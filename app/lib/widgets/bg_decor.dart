@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'cloud.dart';
 
 Widget _dot(double left, double top, double d, Color color) => Positioned(
-      left: left,
-      top: top,
-      child: Container(
-        width: d,
-        height: d,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-      ),
-    );
+  left: left,
+  top: top,
+  child: Container(
+    width: d,
+    height: d,
+    decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+  ),
+);
 
 /// 背景テーマごとの飾り(雲・月・あわ・木など)。docs/game-design.md §13。
 ///

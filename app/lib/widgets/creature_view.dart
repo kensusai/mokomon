@@ -89,15 +89,16 @@ class CreatureViewState extends State<CreatureView>
     final painter = s.stage == 0
         ? EggPainter(cracks: min(s.eggTaps, 2), golden: s.species == 3)
         : CreaturePainter(
-            speciesIndex: s.species,
-            stage: s.stage,
-            sad: s.isSad,
-            mood: _mood,
-            bodyColor: Color(s.color),
-            equipHead: s.equipHead,
-            equipFace: s.equipFace,
-            pattern: widget.pattern,
-          ) as CustomPainter;
+                speciesIndex: s.species,
+                stage: s.stage,
+                sad: s.isSad,
+                mood: _mood,
+                bodyColor: Color(s.color),
+                equipHead: s.equipHead,
+                equipFace: s.equipFace,
+                pattern: widget.pattern,
+              )
+              as CustomPainter;
 
     return AnimatedBuilder(
       animation: Listenable.merge([_floaty, _glow, _tap]),
@@ -197,8 +198,8 @@ class CreatureViewState extends State<CreatureView>
         final deg = t < 0.25
             ? _lerp(0, -7, t / 0.25)
             : t < 0.75
-                ? _lerp(-7, 7, (t - 0.25) / 0.5)
-                : _lerp(7, 0, (t - 0.75) / 0.25);
+            ? _lerp(-7, 7, (t - 0.25) / 0.5)
+            : _lerp(7, 0, (t - 0.75) / 0.25);
         return Matrix4.rotationZ(deg * pi / 180);
       case CreatureAnim.spin:
         // うれしい! の1回転(減速)+軽い伸び

@@ -218,8 +218,9 @@ void paintEquipItem(Canvas canvas, String key) {
         final cx = 106.0 + i * 22;
         final cy = i.isEven ? 46.0 : 38.0;
         final petal = Paint()
-          ..color =
-              i.isEven ? const Color(0xFFFF9CC2) : const Color(0xFFFFD23E);
+          ..color = i.isEven
+              ? const Color(0xFFFF9CC2)
+              : const Color(0xFFFFD23E);
         for (final a in const [0.0, 1.26, 2.51, 3.77, 5.03]) {
           canvas.drawCircle(Offset(cx + 7 * cos(a), cy + 7 * sin(a)), 5, petal);
         }

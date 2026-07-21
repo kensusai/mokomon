@@ -54,9 +54,9 @@ void main() {
     }
 
     final image = await recorder.endRecording().toImage(
-          (cell * cols).toInt(),
-          (cell * rows).toInt(),
-        );
+      (cell * cols).toInt(),
+      (cell * rows).toInt(),
+    );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     File(
       '$dir/species_sheet.png',
@@ -95,9 +95,9 @@ void main() {
       }
     }
     final image = await recorder.endRecording().toImage(
-          (cell * moods.length).toInt(),
-          (cell * species.length).toInt(),
-        );
+      (cell * moods.length).toInt(),
+      (cell * species.length).toInt(),
+    );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     File(
       '$dir/expressions_sheet.png',
@@ -136,9 +136,9 @@ void main() {
       canvas.restore();
     }
     final image = await recorder.endRecording().toImage(
-          (cell * cols).toInt(),
-          (cell * rows).toInt(),
-        );
+      (cell * cols).toInt(),
+      (cell * rows).toInt(),
+    );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     File('$dir/items_sheet.png').writeAsBytesSync(bytes!.buffer.asUint8List());
   });

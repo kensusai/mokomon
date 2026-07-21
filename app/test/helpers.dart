@@ -33,8 +33,8 @@ GameController stage1Controller({int coins = 10, SfxPlayer? sfx}) =>
 /// タイマーを、最長の曲(victoryTune)の実長+余裕の仮想時間で流す。
 /// 報酬バランスが bigScoreCoins を跨いでも壊れない(docs/review-findings.md #64)。
 Future<void> drainRewardJingle(WidgetTester tester) => tester.pump(
-      SoundSynth().durationFor(Sfx.victoryTune) + const Duration(seconds: 1),
-    );
+  SoundSynth().durationFor(Sfx.victoryTune) + const Duration(seconds: 1),
+);
 
 /// 記録用 SfxPlayer の組み立て(FakeAudioPlayer 注入。#62)。
 /// 生成された全プレイヤーは [players] に溜まる。

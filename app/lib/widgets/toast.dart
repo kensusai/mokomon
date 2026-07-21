@@ -25,14 +25,15 @@ class _Toast extends StatefulWidget {
 }
 
 class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2200),
-  )
-    ..addStatusListener((s) {
-      if (s == AnimationStatus.completed) widget.onDone();
-    })
-    ..forward();
+  late final AnimationController _c =
+      AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 2200),
+        )
+        ..addStatusListener((s) {
+          if (s == AnimationStatus.completed) widget.onDone();
+        })
+        ..forward();
 
   @override
   void dispose() {

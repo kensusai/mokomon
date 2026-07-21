@@ -104,10 +104,10 @@ class _SimonScreenState extends State<SimonScreen>
   }
 
   String get _hint => switch (_phase) {
-        _Phase.showing => 'よーく みてて!',
-        _Phase.input => 'おなじ じゅんばんで タッチ!',
-        _ => 'じゅんび…',
-      };
+    _Phase.showing => 'よーく みてて!',
+    _Phase.input => 'おなじ じゅんばんで タッチ!',
+    _ => 'じゅんび…',
+  };
 
   @override
   Widget build(BuildContext context) {

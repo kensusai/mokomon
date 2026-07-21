@@ -48,12 +48,9 @@ mixin TimedArcadeGameMixin<T extends StatefulWidget> on State<T> {
   /// 「⏰ 残り時間 / スコア」のヘッダ行。3画面で同一だったためここに集約
   /// (docs/review-findings.md #55)。
   Widget buildScoreHeader(String scoreEmoji) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          StatPill('⏰ $gameTimeLeft'),
-          StatPill('$scoreEmoji $gameScore')
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [StatPill('⏰ $gameTimeLeft'), StatPill('$scoreEmoji $gameScore')],
+  );
 
   /// カウントダウン→開始説明→終了の3オーバーレイ。3画面で同一だったため
   /// ここに集約(docs/review-findings.md #28)。build の Stack 末尾に

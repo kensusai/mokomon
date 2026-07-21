@@ -169,7 +169,8 @@ class SfxPlayer {
         if (_bgmStarted) {
           await player.resume();
         } else {
-          final track = _overrideTrack ??
+          final track =
+              _overrideTrack ??
               bgmTracks[(bgmTrack?.call() ?? 0).clamp(0, bgmTracks.length - 1)];
           await player.play(
             BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'),

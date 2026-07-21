@@ -160,12 +160,13 @@ class _DriftingEmoji extends StatefulWidget {
 
 class _DriftingEmojiState extends State<_DriftingEmoji>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..addStatusListener((s) {
-      if (s == AnimationStatus.completed) widget.onDone();
-    });
+  late final AnimationController _c =
+      AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1200),
+      )..addStatusListener((s) {
+        if (s == AnimationStatus.completed) widget.onDone();
+      });
   Timer? _delayTimer;
 
   @override

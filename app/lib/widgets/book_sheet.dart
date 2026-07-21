@@ -54,7 +54,8 @@ Future<BookResult?> showBookModal(
                   current: i == s.species,
                   snapshot: i == s.species ? null : s.roster[i],
                   liveState: i == s.species ? s : null,
-                  onTap: (s.collection[i] || s.roster.containsKey(i)) &&
+                  onTap:
+                      (s.collection[i] || s.roster.containsKey(i)) &&
                           i != s.species
                       ? () => Navigator.of(dialogContext).pop(BookSwitch(i))
                       : null,

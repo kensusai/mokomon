@@ -111,15 +111,17 @@ class _PaintScreenState extends State<PaintScreen> {
     super.initState();
     final pattern = widget.controller.state.pattern;
     if (pattern != null) {
-      decodeImageFromList(base64Decode(pattern)).then((img) {
-        if (mounted) {
-          setState(() => _setBaseImage(img));
-        } else {
-          img.dispose();
-        }
-      }).catchError((Object _) {
-        // 画像として壊れたデータは白紙から描き直し(docs/review-findings.md #43)
-      });
+      decodeImageFromList(base64Decode(pattern))
+          .then((img) {
+            if (mounted) {
+              setState(() => _setBaseImage(img));
+            } else {
+              img.dispose();
+            }
+          })
+          .catchError((Object _) {
+            // 画像として壊れたデータは白紙から描き直し(docs/review-findings.md #43)
+          });
     }
   }
 
@@ -194,9 +196,9 @@ class _PaintScreenState extends State<PaintScreen> {
     }
     _paintOps(canvas, _baseImage, _ops);
     return recorder.endRecording().toImage(
-          _paintSize.toInt(),
-          _paintSize.toInt(),
-        );
+      _paintSize.toInt(),
+      _paintSize.toInt(),
+    );
   }
 
   static Future<Uint8List> _maskBytes() async {
@@ -208,9 +210,9 @@ class _PaintScreenState extends State<PaintScreen> {
     );
     canvas.drawPath(CreaturePainter.bodyPath(), Paint()..color = Colors.white);
     final img = await recorder.endRecording().toImage(
-          _paintSize.toInt(),
-          _paintSize.toInt(),
-        );
+      _paintSize.toInt(),
+      _paintSize.toInt(),
+    );
     final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
     img.dispose();
     _bodyMask = data!.buffer.asUint8List();
@@ -225,14 +227,10 @@ class _PaintScreenState extends State<PaintScreen> {
       final layer = await _renderImage(withBody: false);
       final probeBytes = (await probe.toByteData(
         format: ui.ImageByteFormat.rawRgba,
-      ))!
-          .buffer
-          .asUint8List();
+      ))!.buffer.asUint8List();
       final layerBytes = (await layer.toByteData(
         format: ui.ImageByteFormat.rawRgba,
-      ))!
-          .buffer
-          .asUint8List();
+      ))!.buffer.asUint8List();
       // バイト列を取り出したらネイティブ側は不要(docs/review-findings.md #24)
       probe.dispose();
       layer.dispose();
@@ -482,7 +480,8 @@ class _PaintScreenState extends State<PaintScreen> {
     }
 
     Widget widthDot(int index) {
-      final selected = _widthIndex == index &&
+      final selected =
+          _widthIndex == index &&
           (_tool == _Tool.brush || _tool == _Tool.eraser);
       final d = 10.0 + index * 7;
       return GestureDetector(
@@ -541,50 +540,50 @@ class _PaintScreenState extends State<PaintScreen> {
   }
 
   Widget _stampRows() => Wrap(
-        spacing: 5,
-        runSpacing: 5,
-        alignment: WrapAlignment.center,
-        children: [
-          for (final e in _allStamps)
-            GestureDetector(
-              onTap: () => setState(() => _stamp = e),
-              child: Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    if (_stamp == e)
-                      const BoxShadow(color: inkColor, spreadRadius: 3)
-                    else
-                      const BoxShadow(
-                        color: Color(0x1F3A3F52),
-                        blurRadius: 8,
-                        offset: Offset(0, 3),
-                      ),
-                  ],
-                ),
-                child: Text(e, style: const TextStyle(fontSize: 19)),
-              ),
+    spacing: 5,
+    runSpacing: 5,
+    alignment: WrapAlignment.center,
+    children: [
+      for (final e in _allStamps)
+        GestureDetector(
+          onTap: () => setState(() => _stamp = e),
+          child: Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                if (_stamp == e)
+                  const BoxShadow(color: inkColor, spreadRadius: 3)
+                else
+                  const BoxShadow(
+                    color: Color(0x1F3A3F52),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+              ],
             ),
-        ],
-      );
+            child: Text(e, style: const TextStyle(fontSize: 19)),
+          ),
+        ),
+    ],
+  );
 
   Widget _paletteRows() => _swatchRow(
-        _palette,
-        34,
-        selected: _brush,
-        onTap: (c) {
-          setState(() {
-            _brush = c;
-            if (_tool == _Tool.stamp || _tool == _Tool.eraser) {
-              _tool = _Tool.brush;
-            }
-          });
-        },
-      );
+    _palette,
+    34,
+    selected: _brush,
+    onTap: (c) {
+      setState(() {
+        _brush = c;
+        if (_tool == _Tool.stamp || _tool == _Tool.eraser) {
+          _tool = _Tool.brush;
+        }
+      });
+    },
+  );
 
   Widget _swatchRow(
     List<int> colors,

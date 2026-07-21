@@ -150,28 +150,27 @@ class _MemoryCard extends StatelessWidget {
   }
 
   Widget _face({required bool front}) => Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: front
-              ? null
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFAB9DFF), Color(0xFF7C6CF0)],
-                ),
-          color: front ? Colors.white : null,
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1F3A3F52),
-              blurRadius: 12,
-              offset: Offset(0, 4),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(18),
+      gradient: front
+          ? null
+          : const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFAB9DFF), Color(0xFF7C6CF0)],
             ),
-          ],
+      color: front ? Colors.white : null,
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x1F3A3F52),
+          blurRadius: 12,
+          offset: Offset(0, 4),
         ),
-        alignment: Alignment.center,
-        child: front
-            ? Text(emoji, style: const TextStyle(fontSize: 44))
-            : const Text('❓',
-                style: TextStyle(fontSize: 30, color: Colors.white)),
-      );
+      ],
+    ),
+    alignment: Alignment.center,
+    child: front
+        ? Text(emoji, style: const TextStyle(fontSize: 44))
+        : const Text('❓', style: TextStyle(fontSize: 30, color: Colors.white)),
+  );
 }

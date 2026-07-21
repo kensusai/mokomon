@@ -129,8 +129,9 @@ class _WhackScreenState extends State<WhackScreen>
                 height: 78,
                 child: CustomPaint(
                   painter: CreaturePainter(
-                    speciesIndex:
-                        mole.golden ? secretSpeciesIndex : mole.speciesIndex,
+                    speciesIndex: mole.golden
+                        ? secretSpeciesIndex
+                        : mole.speciesIndex,
                     stage: 1,
                     sad: false,
                   ),

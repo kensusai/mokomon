@@ -113,32 +113,32 @@ double _tallestTabHeight(double width) {
 }
 
 Widget _itemGrid(GameController controller, ItemSlot slot) => GridView.count(
-      crossAxisCount: _cols,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: _gap,
-      crossAxisSpacing: _gap,
-      childAspectRatio: _itemAspect,
-      children: [
-        for (final item in shopItems)
-          if (item.slot == slot) _ShopCell(item: item, controller: controller),
-      ],
-    );
+  crossAxisCount: _cols,
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  mainAxisSpacing: _gap,
+  crossAxisSpacing: _gap,
+  childAspectRatio: _itemAspect,
+  children: [
+    for (final item in shopItems)
+      if (item.slot == slot) _ShopCell(item: item, controller: controller),
+  ],
+);
 
 /// 背景テーマの切替(コインで購入・端末ローカルで所持管理)。docs/game-design.md §13。
 Widget _bgGrid(GameController controller) => GridView.count(
-      crossAxisCount: _cols,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: _gap,
-      crossAxisSpacing: _gap,
-      childAspectRatio: _bgAspect,
-      children: [
-        for (var i = 0; i < bgThemes.length; i++)
-          _BgCell(index: i, controller: controller),
-        _BgCell(index: null, controller: controller), // おまかせ(デフォルト)
-      ],
-    );
+  crossAxisCount: _cols,
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  mainAxisSpacing: _gap,
+  crossAxisSpacing: _gap,
+  childAspectRatio: _bgAspect,
+  children: [
+    for (var i = 0; i < bgThemes.length; i++)
+      _BgCell(index: i, controller: controller),
+    _BgCell(index: null, controller: controller), // おまかせ(デフォルト)
+  ],
+);
 
 class _BgCell extends StatelessWidget {
   final int? index; // null = 種族デフォルトに戻す
@@ -204,8 +204,8 @@ class _BgCell extends StatelessWidget {
                     index == null
                         ? 'おまかせ'
                         : (owned
-                            ? theme.name
-                            : '${theme.name} 🪙${theme.cost}'),
+                              ? theme.name
+                              : '${theme.name} 🪙${theme.cost}'),
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
