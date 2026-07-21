@@ -14,17 +14,26 @@ final bool _isFlutterTest =
 
 /// 効果音プレイヤー(インフラ層)。合成WAVを audioplayers で再生する。
 /// [enabled] はミュート設定、[bgmTrack] は選択中のBGM(GameState参照)。
+///
+/// [playerFactory] はテスト専用のフック: 偽 AudioPlayer を注入すると
+/// flutter test 下でも BGM 状態機械を実際に動かして検証できる
+/// (docs/review-findings.md #22)。未指定ならテスト環境では全メソッドが
+/// no-op になる(widget test がプラグイン無しで動くための既定挙動)。
 class SfxPlayer {
-  SfxPlayer({required this.enabled, this.bgmTrack});
+  SfxPlayer({required this.enabled, this.bgmTrack, this.playerFactory});
 
   /// 選択できるBGMトラック(GameState.bgmTrack の index に対応)。
   static const bgmTracks = [Sfx.bgm, Sfx.bgm2, Sfx.bgm3];
 
   final bool Function() enabled;
   final int Function()? bgmTrack;
+  final AudioPlayer Function()? playerFactory;
   final _synth = SoundSynth();
   final _players = <Sfx, AudioPlayer>{};
   final _rng = Random();
+
+  AudioPlayer _createPlayer() => (playerFactory ?? AudioPlayer.new)();
+  bool get _disabled => playerFactory == null && _isFlutterTest;
 
   AudioPlayer? _bgm;
   AudioPlayer? _voice;
@@ -34,10 +43,12 @@ class SfxPlayer {
   Timer? _overrideTimer;
 
   Future<void> play(Sfx sfx) async {
-    if (_isFlutterTest || !enabled()) return;
+    if (_disabled || !enabled()) return;
     try {
       final player = _players.putIfAbsent(
-          sfx, () => AudioPlayer()..setPlayerMode(PlayerMode.lowLatency));
+        sfx,
+        () => _createPlayer()..setPlayerMode(PlayerMode.lowLatency),
+      );
       await player.stop();
       await player.play(BytesSource(_synth.wavFor(sfx), mimeType: 'audio/wav'));
     } catch (e) {
@@ -48,13 +59,16 @@ class SfxPlayer {
 
   /// いきもののバブル音声(種族ごとの声・3バリエーションからランダム)。
   Future<void> playBabble(int species) async {
-    if (_isFlutterTest || !enabled()) return;
+    if (_disabled || !enabled()) return;
     try {
-      _voice ??= AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
+      _voice ??= _createPlayer()..setPlayerMode(PlayerMode.lowLatency);
       await _voice!.stop();
-      await _voice!.play(BytesSource(
+      await _voice!.play(
+        BytesSource(
           _synth.wavForBabble(species, _rng.nextInt(3)),
-          mimeType: 'audio/wav'));
+          mimeType: 'audio/wav',
+        ),
+      );
     } catch (e) {
       debugPrint('sfx failed: $e');
     }
@@ -62,44 +76,46 @@ class SfxPlayer {
 
   /// 派手ジングル: 鳴っている間はBGMを止めて主役にする。
   Future<void> playJingle(Sfx sfx) async {
-    if (_isFlutterTest) return;
-    final wav = _synth.wavFor(sfx);
-    final seconds = (wav.length - 44) / 2 / 22050;
+    if (_disabled) return;
     play(sfx);
     try {
       await _bgm?.pause();
     } catch (_) {}
     _duckTimer?.cancel();
-    _duckTimer =
-        Timer(Duration(milliseconds: (seconds * 1000).round() + 250), syncBgm);
+    _duckTimer = Timer(
+      _synth.durationFor(sfx) + const Duration(milliseconds: 250),
+      syncBgm,
+    );
   }
 
   /// BGMを一時的に差し替える(ゲームBGM・勝利曲)。
   /// [loop] が false のときは曲が終わると自動で元のBGMへ戻る。
   Future<void> playOverrideBgm(Sfx track, {bool loop = true}) async {
-    if (_isFlutterTest) return;
+    if (_disabled) return;
     _overrideTimer?.cancel();
     _overrideTrack = track;
     try {
-      _bgm ??= AudioPlayer();
+      _bgm ??= _createPlayer();
       await _bgm!.stop();
       await _bgm!.setReleaseMode(loop ? ReleaseMode.loop : ReleaseMode.release);
       // stop() で音源が外れるので、いったん「再生中でない」扱いにする。
-      // ここを立てたままにすると、ミュート中に呼ばれた場合や再生に
-      // 失敗した場合、後で syncBgm() が音源未設定のまま resume() して
-      // しまい無音になる(docs/review-findings.md #2)。
+      // フラグは再生に**成功してから**立てる。先に立てると、ミュート中や
+      // play() 失敗時に syncBgm() が音源未設定のまま resume() してしまい
+      // 無音が固定化する(docs/review-findings.md #2, #49)。
       _bgmStarted = false;
       if (enabled()) {
+        await _bgm!.play(
+          BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'),
+        );
         _bgmStarted = true;
-        await _bgm!
-            .play(BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'));
       }
       if (!loop) {
-        final seconds = (_synth.wavFor(track).length - 44) / 2 / 22050;
-        _overrideTimer =
-            Timer(Duration(milliseconds: (seconds * 1000).round() + 300), () {
-          if (_overrideTrack == track) clearOverrideBgm();
-        });
+        _overrideTimer = Timer(
+          _synth.durationFor(track) + const Duration(milliseconds: 300),
+          () {
+            if (_overrideTrack == track) clearOverrideBgm();
+          },
+        );
       }
     } catch (e) {
       debugPrint('bgm failed: $e');
@@ -107,8 +123,11 @@ class SfxPlayer {
   }
 
   /// 差し替えを解除して通常のBGM(選択中トラック)に戻す。
+  /// 非ループの一時曲(勝利曲)が再生中の場合は途中で切らず、曲側の
+  /// タイマーによる自動復帰に任せる(docs/review-findings.md #50)。
   Future<void> clearOverrideBgm() async {
-    if (_isFlutterTest) return;
+    if (_disabled) return;
+    if (_overrideTimer?.isActive ?? false) return;
     _overrideTimer?.cancel();
     _overrideTrack = null;
     try {
@@ -119,7 +138,7 @@ class SfxPlayer {
 
   /// BGMトラック変更を反映する(再生し直す)。
   Future<void> restartBgm() async {
-    if (_isFlutterTest) return;
+    if (_disabled) return;
     try {
       await _bgm?.stop();
       _bgmStarted = false;
@@ -131,9 +150,9 @@ class SfxPlayer {
 
   /// BGMのループ再生を開始する(ミュート中は待機)。
   Future<void> startBgm() async {
-    if (_isFlutterTest) return;
+    if (_disabled) return;
     try {
-      _bgm ??= AudioPlayer()..setReleaseMode(ReleaseMode.loop);
+      _bgm ??= _createPlayer()..setReleaseMode(ReleaseMode.loop);
       await syncBgm();
     } catch (e) {
       debugPrint('bgm failed: $e');
@@ -144,17 +163,19 @@ class SfxPlayer {
   /// [suspend] はアプリのバックグラウンド時に true。
   Future<void> syncBgm({bool suspend = false}) async {
     final player = _bgm;
-    if (_isFlutterTest || player == null) return;
+    if (_disabled || player == null) return;
     try {
       if (!suspend && enabled()) {
         if (_bgmStarted) {
           await player.resume();
         } else {
-          _bgmStarted = true;
           final track = _overrideTrack ??
               bgmTracks[(bgmTrack?.call() ?? 0).clamp(0, bgmTracks.length - 1)];
-          await player
-              .play(BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'));
+          await player.play(
+            BytesSource(_synth.wavFor(track), mimeType: 'audio/wav'),
+          );
+          // 成功してから立てる(play() 失敗時に無音が固定化しないように。#49)
+          _bgmStarted = true;
         }
       } else {
         await player.pause();

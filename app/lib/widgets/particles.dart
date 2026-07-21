@@ -21,10 +21,17 @@ class ParticleFieldState extends State<ParticleField> {
   }
 
   /// 💨用: 横に流れて消えるパーティクル(CSS puffout 相当)。
-  void spawnPuff(String emoji, Offset position,
-      {required double driftX, Duration delay = Duration.zero}) {
-    setState(() => _items
-        .add(_Particle(_seq++, emoji, position, driftX: driftX, delay: delay)));
+  void spawnPuff(
+    String emoji,
+    Offset position, {
+    required double driftX,
+    Duration delay = Duration.zero,
+  }) {
+    setState(
+      () => _items.add(
+        _Particle(_seq++, emoji, position, driftX: driftX, delay: delay),
+      ),
+    );
   }
 
   void _remove(int id) {
@@ -67,8 +74,13 @@ class _Particle {
   final Offset position;
   final double? driftX;
   final Duration delay;
-  _Particle(this.id, this.emoji, this.position,
-      {this.driftX, this.delay = Duration.zero});
+  _Particle(
+    this.id,
+    this.emoji,
+    this.position, {
+    this.driftX,
+    this.delay = Duration.zero,
+  });
 }
 
 /// 1秒で 70px 上昇しつつフェードアウト+拡大(CSS rise 相当)。
@@ -90,14 +102,12 @@ class _RisingEmoji extends StatefulWidget {
 
 class _RisingEmojiState extends State<_RisingEmoji>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 1),
-  )
-    ..addStatusListener((s) {
-      if (s == AnimationStatus.completed) widget.onDone();
-    })
-    ..forward();
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(seconds: 1))
+        ..addStatusListener((s) {
+          if (s == AnimationStatus.completed) widget.onDone();
+        })
+        ..forward();
 
   @override
   void dispose() {

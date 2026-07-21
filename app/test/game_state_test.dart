@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mokomon/data/backgrounds.dart';
 import 'package:mokomon/data/items.dart';
 import 'package:mokomon/data/species.dart';
 import 'package:mokomon/models/game_state.dart';
@@ -28,11 +29,12 @@ void main() {
     test('egg and king never evolve', () {
       expect((GameState()..xp = 999).evolveCheck(), isNull);
       expect(
-          (GameState()
-                ..stage = 3
-                ..xp = 999)
-              .evolveCheck(),
-          isNull);
+        (GameState()
+              ..stage = 3
+              ..xp = 999)
+            .evolveCheck(),
+        isNull,
+      );
     });
 
     test('near-evolve glow starts 8 before stage2 and 12 before stage3', () {
@@ -152,8 +154,10 @@ void main() {
       expect(restored.hunger, 66);
       expect(restored.happy, 77);
       expect(restored.species, 4);
-      expect(restored.collection,
-          List.generate(speciesList.length, (i) => i == 0 || i == 2));
+      expect(
+        restored.collection,
+        List.generate(speciesList.length, (i) => i == 0 || i == 2),
+      );
       expect(restored.owned, {'ribbon', 'glasses'});
       expect(restored.equipHead, 'ribbon');
       expect(restored.equipFace, 'glasses');
@@ -201,6 +205,26 @@ void main() {
       expect(restored.happy, 0);
       expect(restored.species, speciesList.length - 1);
     });
+
+    test('roundtrips items beyond bit 31 (web-safe encoding)', () {
+      // docs/review-findings.md #21: dart2js はビット演算を32bitに切り詰める
+      // ため、int のシフトで組むと index 32 以降の所持品が Web で壊れる。
+      // このテストは `flutter test --platform chrome` でも通ること。
+      expect(
+        shopItems.length,
+        greaterThan(32),
+        reason: 'the regression needs an item beyond bit 31',
+      );
+      final s = GameState()
+        ..owned = {shopItems.first.key, shopItems[31].key, shopItems.last.key};
+      final restored = GameState();
+      expect(restored.loadCode(s.makeCode()), isTrue);
+      expect(restored.owned, {
+        shopItems.first.key,
+        shopItems[31].key,
+        shopItems.last.key,
+      });
+    });
   });
 
   group('json persistence roundtrip', () {
@@ -231,19 +255,21 @@ void main() {
       expect(restored.sound, isFalse);
     });
 
-    test('a single malformed roster entry does not wipe the rest of the save',
-        () {
-      // docs/review-findings.md #1: 名簿の壊れたキー1つで全データを失わない
-      final s = GameState()
-        ..coins = 77
-        ..collection[3] = true;
-      final json = s.toJson();
-      (json['roster'] as Map)['not-a-number'] = {'stage': 3};
-      final restored = GameState()..loadJson(json);
-      expect(restored.coins, 77);
-      expect(restored.collection[3], isTrue);
-      expect(restored.roster, isEmpty); // 壊れたエントリだけスキップされる
-    });
+    test(
+      'a single malformed roster entry does not wipe the rest of the save',
+      () {
+        // docs/review-findings.md #1: 名簿の壊れたキー1つで全データを失わない
+        final s = GameState()
+          ..coins = 77
+          ..collection[3] = true;
+        final json = s.toJson();
+        (json['roster'] as Map)['not-a-number'] = {'stage': 3};
+        final restored = GameState()..loadJson(json);
+        expect(restored.coins, 77);
+        expect(restored.collection[3], isTrue);
+        expect(restored.roster, isEmpty); // 壊れたエントリだけスキップされる
+      },
+    );
 
     test('a valid roster entry survives alongside a malformed one', () {
       final s = GameState()..coins = 20;
@@ -256,44 +282,124 @@ void main() {
     });
   });
 
-  group('offline decay / loadJson clamping (docs/review-findings.md #3, #4)',
-      () {
-    test('applyOfflineDecay never raises stats when the clock moves backward',
+  group(
+    'offline decay / loadJson clamping (docs/review-findings.md #3, #4)',
+    () {
+      test(
+        'applyOfflineDecay never raises stats when the clock moves backward',
         () {
-      final s = GameState()
-        ..hunger = 50
-        ..happy = 50
-        ..lastSavedMs = DateTime.now().millisecondsSinceEpoch + 60000; // 未来
-      s.applyOfflineDecay();
-      expect(s.hunger, 50); // 増えない
-      expect(s.happy, 50);
+          final s = GameState()
+            ..hunger = 50
+            ..happy = 50
+            ..lastSavedMs = DateTime.now().millisecondsSinceEpoch + 60000; // 未来
+          s.applyOfflineDecay();
+          expect(s.hunger, 50); // 増えない
+          expect(s.happy, 50);
+        },
+      );
+
+      test('applyOfflineDecay clamps to the documented upper bound', () {
+        final s = GameState()
+          ..hunger = 200 // 何らかの理由で範囲外になっていた場合
+          ..happy = 200
+          ..lastSavedMs = DateTime.now().millisecondsSinceEpoch;
+        s.applyOfflineDecay();
+        expect(s.hunger, lessThanOrEqualTo(100));
+        expect(s.happy, lessThanOrEqualTo(100));
+      });
+
+      test('loadJson clamps out-of-range hunger/happy/xp/coins/stage', () {
+        final restored = GameState()
+          ..loadJson({
+            'stage': 9,
+            'xp': -5,
+            'coins': -3,
+            'hunger': 500,
+            'happy': -20,
+          });
+        expect(restored.stage, inInclusiveRange(0, 3));
+        expect(restored.xp, greaterThanOrEqualTo(0));
+        expect(restored.coins, greaterThanOrEqualTo(0));
+        expect(restored.hunger, inInclusiveRange(0, 100));
+        expect(restored.happy, inInclusiveRange(0, 100));
+      });
+    },
+  );
+
+  group('corrupt save restore (docs/review-findings.md #17)', () {
+    test('loadJson clamps out-of-range species even when color is missing', () {
+      // species 範囲外 + color 欠落: 修正前は speciesList[species] が投げ、
+      // SaveStore.load() の catch でセーブ全体が初期化される全損経路だった。
+      final restored = GameState()..loadJson({'species': 99});
+      expect(restored.species, inInclusiveRange(0, speciesList.length - 1));
+      expect(restored.currentSpecies, isNotNull); // RangeError を投げない
+      restored.loadJson({'species': -1});
+      expect(restored.species, inInclusiveRange(0, speciesList.length - 1));
     });
 
-    test('applyOfflineDecay clamps to the documented upper bound', () {
-      final s = GameState()
-        ..hunger = 200 // 何らかの理由で範囲外になっていた場合
-        ..happy = 200
-        ..lastSavedMs = DateTime.now().millisecondsSinceEpoch;
-      s.applyOfflineDecay();
-      expect(s.hunger, lessThanOrEqualTo(100));
-      expect(s.happy, lessThanOrEqualTo(100));
+    test('loadJson drops an out-of-range bg back to the species default', () {
+      final restored = GameState()..loadJson({'bg': 99});
+      expect(restored.bg, isNull);
+      expect(restored.effectiveBg, inInclusiveRange(0, bgThemes.length - 1));
+      restored.loadJson({'bg': -1});
+      expect(restored.bg, isNull);
     });
 
-    test('loadJson clamps out-of-range hunger/happy/xp/coins/stage', () {
+    test('loadJson clamps kingSparkle and eggTaps', () {
+      // docs/review-findings.md #48: クランプ方針から漏れていた2フィールド。
       final restored = GameState()
-        ..loadJson({
+        ..loadJson({'kingSparkle': 999, 'eggTaps': -5});
+      expect(restored.kingSparkle, inInclusiveRange(0, 100));
+      expect(restored.eggTaps, greaterThanOrEqualTo(0));
+      final low = GameState()..loadJson({'kingSparkle': -50});
+      expect(low.kingSparkle, inInclusiveRange(0, 100));
+    });
+
+    test('CreatureSnapshot.fromJson clamps kingSparkle and eggTaps', () {
+      final snap = CreatureSnapshot.fromJson({
+        'color': 0,
+        'kingSparkle': 999,
+        'eggTaps': -3,
+      });
+      expect(snap.kingSparkle, inInclusiveRange(0, 100));
+      expect(snap.eggTaps, greaterThanOrEqualTo(0));
+    });
+
+    test('loadJson drops a pattern that is not valid base64', () {
+      // docs/review-findings.md #43: 不正な base64 はホーム/おえかきの
+      // base64Decode で同期例外になり起動クラッシュループを起こす。
+      final restored = GameState()..loadJson({'pattern': '!!!ではない!!!'});
+      expect(restored.pattern, isNull);
+      // 正しい base64 は保持される
+      final ok = GameState()..loadJson({'pattern': 'aGVsbG8='});
+      expect(ok.pattern, 'aGVsbG8=');
+    });
+
+    test(
+      'CreatureSnapshot.fromJson drops a pattern that is not valid base64',
+      () {
+        final snap = CreatureSnapshot.fromJson({'pattern': '***', 'color': 0});
+        expect(snap.pattern, isNull);
+      },
+    );
+
+    test(
+      'CreatureSnapshot.fromJson clamps stage/hunger/happy and drops bad bg',
+      () {
+        final snap = CreatureSnapshot.fromJson({
           'stage': 9,
-          'xp': -5,
-          'coins': -3,
           'hunger': 500,
           'happy': -20,
+          'color': 0,
+          'bg': 99,
         });
-      expect(restored.stage, inInclusiveRange(0, 3));
-      expect(restored.xp, greaterThanOrEqualTo(0));
-      expect(restored.coins, greaterThanOrEqualTo(0));
-      expect(restored.hunger, inInclusiveRange(0, 100));
-      expect(restored.happy, inInclusiveRange(0, 100));
-    });
+        // switchCreature が snap をそのまま state に流すため、ここで正規化する。
+        expect(snap.stage, inInclusiveRange(0, 3));
+        expect(snap.hunger, inInclusiveRange(0, 100));
+        expect(snap.happy, inInclusiveRange(0, 100));
+        expect(snap.bg, isNull);
+      },
+    );
   });
 
   group('isSad', () {
@@ -301,11 +407,12 @@ void main() {
       expect((GameState()..hunger = 29).isSad, isTrue);
       expect((GameState()..happy = 29).isSad, isTrue);
       expect(
-          (GameState()
-                ..hunger = 30
-                ..happy = 30)
-              .isSad,
-          isFalse);
+        (GameState()
+              ..hunger = 30
+              ..happy = 30)
+            .isSad,
+        isFalse,
+      );
     });
   });
 }

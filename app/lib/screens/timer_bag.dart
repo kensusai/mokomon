@@ -14,12 +14,21 @@ import 'package:flutter/material.dart';
 mixin TimerBagMixin<T extends StatefulWidget> on State<T> {
   final _timers = <Timer>[];
 
+  /// 未発火の Timer 数(テスト用)。
+  @visibleForTesting
+  int get pendingTimers => _timers.length;
+
   /// [d] 後に [fn] を呼ぶ。画面が破棄されていれば発火しない。
+  /// 発火した Timer はリストから取り除く。取り除かないと、HomeScreen の
+  /// ように長生きする State で参照が無制限に溜まる(docs/review-findings.md #29)。
   void later(Duration d, VoidCallback fn) {
-    _timers.add(Timer(d, () {
+    late final Timer t;
+    t = Timer(d, () {
+      _timers.remove(t);
       if (!mounted) return;
       fn();
-    }));
+    });
+    _timers.add(t);
   }
 
   @override

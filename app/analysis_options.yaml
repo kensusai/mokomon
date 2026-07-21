@@ -1,5 +1,13 @@
 include: package:flutter_lints/flutter.yaml
 
+# 型安全重視原則(CLAUDE.md)に合わせて analyzer を最厳格にする
+# (docs/review-findings.md #39)。
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
 linter:
   rules:
     prefer_single_quotes: true

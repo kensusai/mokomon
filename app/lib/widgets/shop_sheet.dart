@@ -29,15 +29,17 @@ Future<void> showShopModal(BuildContext context, GameController controller) {
               ),
               child: TabBar(
                 indicator: BoxDecoration(
-                  color: const Color(0xFF34C98E),
+                  color: accentGreen,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerHeight: 0,
                 labelColor: Colors.white,
                 unselectedLabelColor: ink2Color,
-                labelStyle:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                labelStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
                 tabs: const [
                   Tab(height: 40, text: '👒 あたま'),
                   Tab(height: 40, text: '🕶️ かお'),
@@ -60,16 +62,21 @@ Future<void> showShopModal(BuildContext context, GameController controller) {
               ),
             ),
             const SizedBox(height: 6),
-            const Text('かったものは タップで きたり ぬいだり できるよ',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: ink2Color)),
+            const Text(
+              'かったものは タップで きたり ぬいだり できるよ',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: ink2Color,
+              ),
+            ),
           ],
           footer: [
             ModalCloseButton(
-                label: 'とじる', onTap: () => Navigator.of(dialogContext).pop()),
+              label: 'とじる',
+              onTap: () => Navigator.of(dialogContext).pop(),
+            ),
           ],
         ),
       ),
@@ -150,7 +157,7 @@ class _BgCell extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: selected
-            ? const BorderSide(color: Color(0xFF34C98E), width: 3)
+            ? const BorderSide(color: accentGreen, width: 3)
             : BorderSide.none,
       ),
       child: InkWell(
@@ -160,7 +167,7 @@ class _BgCell extends StatelessWidget {
             case BgTapOutcome.bought:
               showToast(context, '${theme.name}を かった! すてきだね✨');
             case BgTapOutcome.notEnoughCoins:
-              showToast(context, 'コインが たりないよ! 「あそぶ」で あつめよう🎮');
+              showNotEnoughCoinsToast(context);
             case BgTapOutcome.selected:
               break;
           }
@@ -168,9 +175,10 @@ class _BgCell extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [theme.top, theme.bottom]),
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [theme.top, theme.bottom],
+            ),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Opacity(
@@ -178,26 +186,32 @@ class _BgCell extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(index == null ? '🎲' : theme.emoji,
-                    style: const TextStyle(fontSize: 24)),
+                Text(
+                  index == null ? '🎲' : theme.emoji,
+                  style: const TextStyle(fontSize: 24),
+                ),
                 const SizedBox(height: 3),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                      index == null
-                          ? 'おまかせ'
-                          : (owned
-                              ? theme.name
-                              : '${theme.name} 🪙${theme.cost}'),
-                      style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: inkColor)),
+                    index == null
+                        ? 'おまかせ'
+                        : (owned
+                            ? theme.name
+                            : '${theme.name} 🪙${theme.cost}'),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: inkColor,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -226,7 +240,7 @@ class _ShopCell extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: equipped
-            ? const BorderSide(color: Color(0xFF34C98E), width: 3)
+            ? const BorderSide(color: accentGreen, width: 3)
             : BorderSide.none,
       ),
       child: InkWell(
@@ -236,7 +250,7 @@ class _ShopCell extends StatelessWidget {
             case ShopTapOutcome.bought:
               showToast(context, '${item.name}を かった! にあうね✨');
             case ShopTapOutcome.notEnoughCoins:
-              showToast(context, 'コインが たりないよ! 「あそぶ」で あつめよう🎮');
+              showNotEnoughCoinsToast(context);
             case ShopTapOutcome.equipped:
             case ShopTapOutcome.unequipped:
               break;
@@ -251,12 +265,15 @@ class _ShopCell extends StatelessWidget {
               const SizedBox(height: 2),
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(item.name,
-                    maxLines: 1,
-                    style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: inkColor)),
+                child: Text(
+                  item.name,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: inkColor,
+                  ),
+                ),
               ),
               const SizedBox(height: 4),
               Container(
@@ -266,17 +283,19 @@ class _ShopCell extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: const [
                     BoxShadow(
-                        color: Color(0x143A3F52),
-                        blurRadius: 6,
-                        offset: Offset(0, 2)),
+                      color: Color(0x143A3F52),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
                   ],
                 ),
                 child: Text(
                   owned ? (equipped ? 'きてる✓' : 'きる') : '🪙${item.cost}',
                   style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: poor ? const Color(0xFFD05555) : inkColor),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: poor ? const Color(0xFFD05555) : inkColor,
+                  ),
                 ),
               ),
             ],

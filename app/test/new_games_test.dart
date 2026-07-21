@@ -8,17 +8,18 @@ import 'package:mokomon/logic/trace_game.dart';
 void main() {
   group('WhackGame (もぐらたたき)', () {
     test(
-        'spawned speciesIndex defaults to speciesList.length, not a hardcoded number',
-        () {
-      // docs/review-findings.md #6: 種族数はハードコードせず speciesList から取る。
-      final g = WhackGame(rng: Random(7));
-      for (var i = 0; i < 400; i++) {
-        g.update(0.05);
-      }
-      for (final m in g.moles) {
-        expect(m.speciesIndex, inInclusiveRange(0, speciesList.length - 1));
-      }
-    });
+      'spawned speciesIndex defaults to speciesList.length, not a hardcoded number',
+      () {
+        // docs/review-findings.md #6: 種族数はハードコードせず speciesList から取る。
+        final g = WhackGame(rng: Random(7));
+        for (var i = 0; i < 400; i++) {
+          g.update(0.05);
+        }
+        for (final m in g.moles) {
+          expect(m.speciesIndex, inInclusiveRange(0, speciesList.length - 1));
+        }
+      },
+    );
 
     test('accepts an explicit speciesCount override for testing', () {
       final g = WhackGame(rng: Random(3), speciesCount: 2);
@@ -44,11 +45,26 @@ void main() {
       final g = WhackGame(rng: Random(1));
       g.moles.addAll([
         WhackMole(
-            hole: 0, speciesIndex: 0, golden: false, stinky: false, ttl: 5),
+          hole: 0,
+          speciesIndex: 0,
+          golden: false,
+          stinky: false,
+          ttl: 5,
+        ),
         WhackMole(
-            hole: 1, speciesIndex: 3, golden: true, stinky: false, ttl: 5),
+          hole: 1,
+          speciesIndex: 3,
+          golden: true,
+          stinky: false,
+          ttl: 5,
+        ),
         WhackMole(
-            hole: 2, speciesIndex: 5, golden: false, stinky: true, ttl: 5),
+          hole: 2,
+          speciesIndex: 5,
+          golden: false,
+          stinky: true,
+          ttl: 5,
+        ),
       ]);
       expect(g.tapHole(0)!.golden, isFalse);
       expect(g.score, 1);
@@ -111,7 +127,7 @@ void main() {
       expect(traceCoverage(targets, targets), 1.0);
       // 中央にぐちゃぐちゃ描いただけ
       final scribble = [
-        for (var i = 0; i < 50; i++) Offset(140 + i % 10.0, 145 + i % 7.0)
+        for (var i = 0; i < 50; i++) Offset(140 + i % 10.0, 145 + i % 7.0),
       ];
       expect(traceCoverage(targets, scribble), lessThan(0.3));
     });
@@ -126,24 +142,30 @@ void main() {
   group('BalloonGame (ふうせんわり)', () {
     test('balloons rise, bombs subtract but never below zero', () {
       final g = BalloonGame(rng: Random(2));
-      g.items.add(BalloonItem(
+      g.items.add(
+        BalloonItem(
           x: 100,
           y: 300,
           vy: 0,
           emoji: '💣',
           golden: false,
           bomb: true,
-          wobble: 0));
+          wobble: 0,
+        ),
+      );
       expect(g.tapAt(100, 300)!.bomb, isTrue);
       expect(g.score, 0); // 0未満にならない
-      g.items.add(BalloonItem(
+      g.items.add(
+        BalloonItem(
           x: 100,
           y: 300,
           vy: 0,
           emoji: '⭐',
           golden: true,
           bomb: false,
-          wobble: 0));
+          wobble: 0,
+        ),
+      );
       g.tapAt(100, 300);
       expect(g.score, 3);
     });

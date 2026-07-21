@@ -27,7 +27,9 @@ class TraceScreen extends StatefulWidget {
 class _TraceScreenState extends State<TraceScreen>
     with TimerBagMixin<TraceScreen> {
   late final List<String> _shapes = widget.shapes ??
-      ([...traceShapeKeys]..shuffle(Random()))
+      ([
+        ...traceShapeKeys,
+      ]..shuffle(Random()))
           .take(traceShapesPerSession)
           .toList();
   var _shapeIndex = 0;
@@ -42,8 +44,9 @@ class _TraceScreenState extends State<TraceScreen>
   void _judge() {
     final coverage = traceCoverage(traceTargets(_currentShape), _strokePoints);
     final (stars, coins) = traceScore(coverage);
-    widget.controller.sfx
-        .play(stars >= 3 ? Sfx.happy : (stars == 2 ? Sfx.pop : Sfx.tap));
+    widget.controller.sfx.play(
+      stars >= 3 ? Sfx.happy : (stars == 2 ? Sfx.pop : Sfx.tap),
+    );
     setState(() {
       _starsEarned.add(stars);
       _coins += coins;
@@ -80,36 +83,45 @@ class _TraceScreenState extends State<TraceScreen>
       ],
       children: [
         const SizedBox(height: 6),
-        Text('${_shapeIndex + 1} / ${_shapes.length}  てんせんを なぞってね',
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700, color: ink2Color)),
+        Text(
+          '${_shapeIndex + 1} / ${_shapes.length}  てんせんを なぞってね',
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: ink2Color,
+          ),
+        ),
         const SizedBox(height: 8),
         Expanded(
           child: Center(
-            child: LayoutBuilder(builder: (context, box) {
-              final size = min(min(box.maxWidth, box.maxHeight), 340.0);
-              return Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: const [cardShadow],
-                ),
-                child: GestureDetector(
-                  onPanStart: (d) => setState(
-                      () => _strokePoints.add(d.localPosition * (300 / size))),
-                  onPanUpdate: (d) => setState(
-                      () => _strokePoints.add(d.localPosition * (300 / size))),
-                  child: CustomPaint(
-                    painter: _TracePainter(
-                      shapeKey: _currentShape,
-                      strokePoints: _strokePoints,
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final size = min(min(box.maxWidth, box.maxHeight), 340.0);
+                return Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: const [cardShadow],
+                  ),
+                  child: GestureDetector(
+                    onPanStart: (d) => setState(
+                      () => _strokePoints.add(d.localPosition * (300 / size)),
+                    ),
+                    onPanUpdate: (d) => setState(
+                      () => _strokePoints.add(d.localPosition * (300 / size)),
+                    ),
+                    child: CustomPaint(
+                      painter: _TracePainter(
+                        shapeKey: _currentShape,
+                        strokePoints: _strokePoints,
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              },
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -167,13 +179,14 @@ class _TracePainter extends CustomPainter {
         path.lineTo(p.dx, p.dy);
       }
       canvas.drawPath(
-          path,
-          Paint()
-            ..color = const Color(0xFFFF6EA6)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 12
-            ..strokeCap = StrokeCap.round
-            ..strokeJoin = StrokeJoin.round);
+        path,
+        Paint()
+          ..color = const Color(0xFFFF6EA6)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 12
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
     }
   }
 

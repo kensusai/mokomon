@@ -21,6 +21,10 @@ enum CreatureTapOutcome { crack, hatched, petted, puffed }
 /// ショップのセルをタップした結果(docs/game-design.md §7)。
 enum ShopTapOutcome { bought, equipped, unequipped, notEnoughCoins }
 
+/// ごはんの結果。失敗理由を UI 側で区別できるよう enum で返す
+/// (docs/review-findings.md #52)。
+enum FeedOutcome { fed, full, notEnoughCoins }
+
 /// 背景セルをタップした結果(docs/game-design.md §13)。
 enum BgTapOutcome { selected, bought, notEnoughCoins }
 
@@ -41,22 +45,28 @@ const bigScoreCoins = 20;
 /// ユースケース層: ゲーム操作とその副作用(通知・保存)をまとめる。
 /// UI は本クラス経由でのみ状態を変更する。
 class GameController extends ChangeNotifier {
-  GameController(this.state, this._store, {Random? rng})
-      : _rng = rng ?? Random();
+  /// [sfx] はテスト専用: 偽 AudioPlayer を仕込んだ [SfxPlayer] を注入して
+  /// 再生内容を検証できる(docs/review-findings.md #22)。
+  GameController(this.state, this._store, {Random? rng, SfxPlayer? sfx})
+      : _rng = rng ?? Random(),
+        _sfxOverride = sfx;
 
   final GameState state;
   final SaveStore _store;
   final Random _rng;
+  final SfxPlayer? _sfxOverride;
   Timer? _decayTimer;
 
   /// 効果音(ミュート・BGM選択は state を参照)。
-  late final SfxPlayer sfx =
+  late final SfxPlayer sfx = _sfxOverride ??
       SfxPlayer(enabled: () => state.sound, bgmTrack: () => state.bgmTrack);
 
   /// アプリ起動中の減衰(10秒ごと)。docs/game-design.md §3。
   void startDecayTimer() {
-    _decayTimer ??=
-        Timer.periodic(const Duration(seconds: 10), (_) => decayTick());
+    _decayTimer ??= Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => decayTick(),
+    );
   }
 
   void decayTick() {
@@ -132,9 +142,12 @@ class GameController extends ChangeNotifier {
   /// hunger≧98 は給餌不可(「おなかいっぱい」)。
   bool get isFull => state.hunger >= 98;
 
-  /// ごはん。コイン不足なら false を返し何も変更しない。
-  bool feed(Food food) {
-    if (state.coins < food.cost) return false;
+  /// ごはん。コイン不足・満腹なら何も変更せず理由を返す。
+  /// 満腹ルールは UI(home_screen のヒント表示)に頼らずここでも強制する
+  /// (docs/review-findings.md #38, #52)。
+  FeedOutcome feed(Food food) {
+    if (isFull) return FeedOutcome.full;
+    if (state.coins < food.cost) return FeedOutcome.notEnoughCoins;
     state.coins -= food.cost;
     state.hunger = min(100, state.hunger + food.hunger);
     state.happy = min(100, state.happy + food.happy);
@@ -142,7 +155,7 @@ class GameController extends ChangeNotifier {
     _addSparkle(16);
     sfx.play(Sfx.munch);
     _commit();
-    return true;
+    return FeedOutcome.fed;
   }
 
   /// ミニゲームクリアの共通報酬: コイン+獲得分、happy+12、xp+10。
@@ -392,8 +405,9 @@ class GameController extends ChangeNotifier {
     state.kingSparkle = min(100, state.kingSparkle + amount);
     if (state.kingSparkle < 100) return;
     state.kingSparkle = 0;
-    final locked =
-        kingGiftStamps.where((e) => !state.unlockedStamps.contains(e));
+    final locked = kingGiftStamps.where(
+      (e) => !state.unlockedStamps.contains(e),
+    );
     if (locked.isNotEmpty) {
       final stamp = locked.first;
       state.unlockedStamps.add(stamp);

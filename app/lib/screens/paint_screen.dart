@@ -93,14 +93,16 @@ class _PaintScreenState extends State<PaintScreen> {
   /// 基本スタンプ+おみやげで解放された限定スタンプ(docs §14)。
   late final List<String> _allStamps = [
     ..._stamps,
-    ...kingGiftStamps
-        .where((e) => widget.controller.state.unlockedStamps.contains(e)),
+    ...kingGiftStamps.where(
+      (e) => widget.controller.state.unlockedStamps.contains(e),
+    ),
   ];
   var _widthIndex = 1;
   final _ops = <_PaintOp>[];
   ui.Image? _baseImage; // 確定済みレイヤー(保存済み模様+ぬりつぶし結果)
   Offset? _lastStampPos;
   var _filling = false;
+  var _saving = false;
 
   static Uint8List? _bodyMask; // 300x300 体マスク(全インスタンス共有)
 
@@ -115,6 +117,8 @@ class _PaintScreenState extends State<PaintScreen> {
         } else {
           img.dispose();
         }
+      }).catchError((Object _) {
+        // 画像として壊れたデータは白紙から描き直し(docs/review-findings.md #43)
       });
     }
   }
@@ -136,6 +140,8 @@ class _PaintScreenState extends State<PaintScreen> {
       local * (_paintSize / canvasSize);
 
   void _onPanStart(Offset p) {
+    // fill 完了時の _ops.clear() に巻き戻されるため、fill 中の入力は無視(#47)
+    if (_filling) return;
     switch (_tool) {
       case _Tool.bucket:
         _bucketFill(p);
@@ -146,9 +152,10 @@ class _PaintScreenState extends State<PaintScreen> {
         });
       case _Tool.brush || _Tool.eraser:
         setState(() {
-          _ops.add(_Stroke(_brush, _widths[_widthIndex],
-              erase: _tool == _Tool.eraser)
-            ..points.add(p));
+          _ops.add(
+            _Stroke(_brush, _widths[_widthIndex], erase: _tool == _Tool.eraser)
+              ..points.add(p),
+          );
         });
     }
   }
@@ -175,28 +182,37 @@ class _PaintScreenState extends State<PaintScreen> {
 
   Future<ui.Image> _renderImage({required bool withBody}) async {
     final recorder = ui.PictureRecorder();
-    final canvas =
-        Canvas(recorder, const Rect.fromLTWH(0, 0, _paintSize, _paintSize));
+    final canvas = Canvas(
+      recorder,
+      const Rect.fromLTWH(0, 0, _paintSize, _paintSize),
+    );
     if (withBody) {
-      canvas.drawPath(CreaturePainter.bodyPath(),
-          Paint()..color = Color(widget.controller.state.color));
+      canvas.drawPath(
+        CreaturePainter.bodyPath(),
+        Paint()..color = Color(widget.controller.state.color),
+      );
     }
     _paintOps(canvas, _baseImage, _ops);
-    return recorder
-        .endRecording()
-        .toImage(_paintSize.toInt(), _paintSize.toInt());
+    return recorder.endRecording().toImage(
+          _paintSize.toInt(),
+          _paintSize.toInt(),
+        );
   }
 
   static Future<Uint8List> _maskBytes() async {
     if (_bodyMask != null) return _bodyMask!;
     final recorder = ui.PictureRecorder();
-    final canvas =
-        Canvas(recorder, const Rect.fromLTWH(0, 0, _paintSize, _paintSize));
+    final canvas = Canvas(
+      recorder,
+      const Rect.fromLTWH(0, 0, _paintSize, _paintSize),
+    );
     canvas.drawPath(CreaturePainter.bodyPath(), Paint()..color = Colors.white);
-    final img = await recorder
-        .endRecording()
-        .toImage(_paintSize.toInt(), _paintSize.toInt());
+    final img = await recorder.endRecording().toImage(
+          _paintSize.toInt(),
+          _paintSize.toInt(),
+        );
     final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+    img.dispose();
     _bodyMask = data!.buffer.asUint8List();
     return _bodyMask!;
   }
@@ -207,14 +223,19 @@ class _PaintScreenState extends State<PaintScreen> {
     try {
       final probe = await _renderImage(withBody: true);
       final layer = await _renderImage(withBody: false);
-      final probeBytes =
-          (await probe.toByteData(format: ui.ImageByteFormat.rawRgba))!
-              .buffer
-              .asUint8List();
-      final layerBytes =
-          (await layer.toByteData(format: ui.ImageByteFormat.rawRgba))!
-              .buffer
-              .asUint8List();
+      final probeBytes = (await probe.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      ))!
+          .buffer
+          .asUint8List();
+      final layerBytes = (await layer.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      ))!
+          .buffer
+          .asUint8List();
+      // バイト列を取り出したらネイティブ側は不要(docs/review-findings.md #24)
+      probe.dispose();
+      layer.dispose();
       final region = findFillRegion(
         probeBytes,
         _paintSize.toInt(),
@@ -227,10 +248,19 @@ class _PaintScreenState extends State<PaintScreen> {
       if (region.isEmpty) return;
       final filled = applyFill(layerBytes, region, _brush);
       final completer = Completer<ui.Image>();
-      ui.decodeImageFromPixels(filled, _paintSize.toInt(), _paintSize.toInt(),
-          ui.PixelFormat.rgba8888, completer.complete);
+      ui.decodeImageFromPixels(
+        filled,
+        _paintSize.toInt(),
+        _paintSize.toInt(),
+        ui.PixelFormat.rgba8888,
+        completer.complete,
+      );
       final newLayer = await completer.future;
-      if (!mounted) return;
+      if (!mounted) {
+        // 画面破棄後に完成したレイヤーは誰も所有しない(#46)
+        newLayer.dispose();
+        return;
+      }
       widget.controller.sfx.play(Sfx.pop);
       setState(() {
         _setBaseImage(newLayer);
@@ -242,14 +272,29 @@ class _PaintScreenState extends State<PaintScreen> {
   }
 
   Future<void> _save() async {
-    final image = await _renderImage(withBody: false);
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    if (bytes == null || !mounted) return;
-    widget.controller.savePaint(base64Encode(bytes.buffer.asUint8List()));
-    Navigator.of(context).pop(true);
+    // 連打ガード。await 中の再タップで pop が二重に走るのを防ぐ
+    // (docs/review-findings.md #19)。pop に成功したときだけ立てたままにし、
+    // 失敗・例外時は戻して再試行できるようにする(#45)。
+    if (_saving || _filling) return;
+    _saving = true;
+    var popped = false;
+    try {
+      final image = await _renderImage(withBody: false);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      if (bytes == null || !mounted) return;
+      widget.controller.savePaint(base64Encode(bytes.buffer.asUint8List()));
+      Navigator.of(context).pop(true);
+      popped = true;
+    } finally {
+      if (!popped) _saving = false;
+    }
   }
 
   void _clear() {
+    // fill 完了時の _ops.clear()/_setBaseImage() に巻き戻されて
+    // 「消したはずの絵が復活」するのを防ぐ(docs/review-findings.md #47)
+    if (_filling) return;
     setState(() {
       _ops.clear();
       _setBaseImage(null);
@@ -279,40 +324,49 @@ class _PaintScreenState extends State<PaintScreen> {
                   children: [
                     BackIconButton(onTap: () => Navigator.of(context).pop()),
                     const Expanded(
-                      child: Text('🎨 もようを かこう!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: inkColor)),
+                      child: Text(
+                        '🎨 もようを かこう!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: inkColor,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 48),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: LayoutBuilder(builder: (context, box) {
-                    // 余白を作らずキャンバスを最大化(下の道具との間は16だけ空ける)
-                    final canvasSize =
-                        min(min(box.maxWidth - 40, 400.0), box.maxHeight - 216)
-                            .clamp(120.0, 400.0);
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _canvas(canvasSize),
-                        const SizedBox(height: 16),
-                        _toolRow(),
-                        const SizedBox(height: 6),
-                        if (_tool == _Tool.stamp)
-                          _stampRows()
-                        else
-                          _paletteRows(),
-                        const SizedBox(height: 6),
-                        _swatchRow(_bodyColors, 30,
-                            onTap: widget.controller.setBodyColor),
-                      ],
-                    );
-                  }),
+                  child: LayoutBuilder(
+                    builder: (context, box) {
+                      // 余白を作らずキャンバスを最大化(下の道具との間は16だけ空ける)
+                      final canvasSize = min(
+                        min(box.maxWidth - 40, 400.0),
+                        box.maxHeight - 216,
+                      ).clamp(120.0, 400.0);
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          _canvas(canvasSize),
+                          const SizedBox(height: 16),
+                          _toolRow(),
+                          const SizedBox(height: 6),
+                          if (_tool == _Tool.stamp)
+                            _stampRows()
+                          else
+                            _paletteRows(),
+                          const SizedBox(height: 6),
+                          _swatchRow(
+                            _bodyColors,
+                            30,
+                            onTap: widget.controller.setBodyColor,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -353,7 +407,10 @@ class _PaintScreenState extends State<PaintScreen> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x1F3A3F52), blurRadius: 24, offset: Offset(0, 10)),
+            color: Color(0x1F3A3F52),
+            blurRadius: 24,
+            offset: Offset(0, 10),
+          ),
         ],
       ),
       child: SizedBox(
@@ -396,23 +453,28 @@ class _PaintScreenState extends State<PaintScreen> {
             color: selected ? const Color(0xFFEAFAF1) : Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-                color: selected ? const Color(0xFF34C98E) : Colors.white,
-                width: 3),
+              color: selected ? accentGreen : Colors.white,
+              width: 3,
+            ),
             boxShadow: const [
               BoxShadow(
-                  color: Color(0x143A3F52),
-                  blurRadius: 8,
-                  offset: Offset(0, 3)),
+                color: Color(0x143A3F52),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Column(
             children: [
               Text(emoji, style: const TextStyle(fontSize: 20)),
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: inkColor)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: inkColor,
+                ),
+              ),
             ],
           ),
         ),
@@ -438,20 +500,24 @@ class _PaintScreenState extends State<PaintScreen> {
             color: Colors.white,
             shape: BoxShape.circle,
             border: Border.all(
-                color: selected ? const Color(0xFF34C98E) : Colors.white,
-                width: 3),
+              color: selected ? accentGreen : Colors.white,
+              width: 3,
+            ),
             boxShadow: const [
               BoxShadow(
-                  color: Color(0x143A3F52),
-                  blurRadius: 8,
-                  offset: Offset(0, 3)),
+                color: Color(0x143A3F52),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Container(
             width: d,
             height: d,
-            decoration:
-                const BoxDecoration(color: inkColor, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: inkColor,
+              shape: BoxShape.circle,
+            ),
           ),
         ),
       );
@@ -494,9 +560,10 @@ class _PaintScreenState extends State<PaintScreen> {
                       const BoxShadow(color: inkColor, spreadRadius: 3)
                     else
                       const BoxShadow(
-                          color: Color(0x1F3A3F52),
-                          blurRadius: 8,
-                          offset: Offset(0, 3)),
+                        color: Color(0x1F3A3F52),
+                        blurRadius: 8,
+                        offset: Offset(0, 3),
+                      ),
                   ],
                 ),
                 child: Text(e, style: const TextStyle(fontSize: 19)),
@@ -505,18 +572,26 @@ class _PaintScreenState extends State<PaintScreen> {
         ],
       );
 
-  Widget _paletteRows() =>
-      _swatchRow(_palette, 34, selected: _brush, onTap: (c) {
-        setState(() {
-          _brush = c;
-          if (_tool == _Tool.stamp || _tool == _Tool.eraser) {
-            _tool = _Tool.brush;
-          }
-        });
-      });
+  Widget _paletteRows() => _swatchRow(
+        _palette,
+        34,
+        selected: _brush,
+        onTap: (c) {
+          setState(() {
+            _brush = c;
+            if (_tool == _Tool.stamp || _tool == _Tool.eraser) {
+              _tool = _Tool.brush;
+            }
+          });
+        },
+      );
 
-  Widget _swatchRow(List<int> colors, double size,
-      {int? selected, required void Function(int) onTap}) {
+  Widget _swatchRow(
+    List<int> colors,
+    double size, {
+    int? selected,
+    required void Function(int) onTap,
+  }) {
     return Wrap(
       spacing: 6,
       runSpacing: 6,
@@ -537,9 +612,10 @@ class _PaintScreenState extends State<PaintScreen> {
                     const BoxShadow(color: inkColor, spreadRadius: 3)
                   else
                     const BoxShadow(
-                        color: Color(0x1F3A3F52),
-                        blurRadius: 10,
-                        offset: Offset(0, 3)),
+                      color: Color(0x1F3A3F52),
+                      blurRadius: 10,
+                      offset: Offset(0, 3),
+                    ),
                 ],
               ),
             ),
@@ -559,7 +635,11 @@ void _paintOps(Canvas canvas, ui.Image? baseImage, List<_PaintOp> ops) {
     canvas.drawImageRect(
       baseImage,
       Rect.fromLTWH(
-          0, 0, baseImage.width.toDouble(), baseImage.height.toDouble()),
+        0,
+        0,
+        baseImage.width.toDouble(),
+        baseImage.height.toDouble(),
+      ),
       const Rect.fromLTWH(0, 0, _paintSize, _paintSize),
       Paint(),
     );
@@ -589,7 +669,9 @@ void _paintOps(Canvas canvas, ui.Image? baseImage, List<_PaintOp> ops) {
       case _Stamp():
         final tp = TextPainter(
           text: TextSpan(
-              text: op.emoji, style: const TextStyle(fontSize: _stampFontSize)),
+            text: op.emoji,
+            style: const TextStyle(fontSize: _stampFontSize),
+          ),
           textDirection: TextDirection.ltr,
         )..layout();
         tp.paint(canvas, op.pos - Offset(tp.width / 2, tp.height / 2));

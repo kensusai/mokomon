@@ -91,10 +91,11 @@ void main() {
 
   group('GameController.payToContinue', () {
     GameController fresh(int coins) => GameController(
-        GameState()
-          ..stage = 1
-          ..coins = coins,
-        SaveStore());
+          GameState()
+            ..stage = 1
+            ..coins = coins,
+          SaveStore(),
+        );
 
     test('deducts coins when affordable', () {
       final c = fresh(10);

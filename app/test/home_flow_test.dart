@@ -12,8 +12,9 @@ void main() {
   Future<GameController> boot(WidgetTester tester, [GameState? state]) =>
       bootApp(tester, state: state, rng: NoPuffRandom());
 
-  testWidgets('egg hatches on the third tap with a birth celebration',
-      (tester) async {
+  testWidgets('egg hatches on the third tap with a birth celebration', (
+    tester,
+  ) async {
     final c = await boot(tester);
     final egg = find.byType(CreatureView);
 
@@ -41,13 +42,15 @@ void main() {
 
   // 2匹目以降(図鑑から新しいたまごを迎えたあと)も、孵化の演出と
   // ファンファーレが1匹目と同じように出ること。
-  testWidgets('a second egg hatches with the same birth celebration',
-      (tester) async {
+  testWidgets('a second egg hatches with the same birth celebration', (
+    tester,
+  ) async {
     final c = await boot(
-        tester,
-        GameState()
-          ..stage = 3
-          ..xp = 400);
+      tester,
+      GameState()
+        ..stage = 3
+        ..xp = 400,
+    );
     c.newEgg();
     await tester.pump();
     expect(c.state.stage, 0);
@@ -69,8 +72,9 @@ void main() {
     await drainTimers(tester);
   });
 
-  testWidgets('feeding an apple from the food modal costs 3 coins',
-      (tester) async {
+  testWidgets('feeding an apple from the food modal costs 3 coins', (
+    tester,
+  ) async {
     final c = await boot(tester, GameState()..stage = 1);
 
     await tester.tap(find.text('ごはん'));
@@ -90,13 +94,15 @@ void main() {
     await drainTimers(tester);
   });
 
-  testWidgets('feeding is blocked with a hint when hunger >= 98',
-      (tester) async {
+  testWidgets('feeding is blocked with a hint when hunger >= 98', (
+    tester,
+  ) async {
     await boot(
-        tester,
-        GameState()
-          ..stage = 1
-          ..hunger = 98);
+      tester,
+      GameState()
+        ..stage = 1
+        ..hunger = 98,
+    );
 
     await tester.tap(find.text('ごはん'));
     await tester.pump();
@@ -106,8 +112,9 @@ void main() {
     await drainTimers(tester);
   });
 
-  testWidgets('feed button on egg stage nudges to tap the egg first',
-      (tester) async {
+  testWidgets('feed button on egg stage nudges to tap the egg first', (
+    tester,
+  ) async {
     await boot(tester);
     await tester.tap(find.text('ごはん'));
     await tester.pump();
@@ -115,13 +122,15 @@ void main() {
     await drainTimers(tester);
   });
 
-  testWidgets('petting past the threshold triggers the evolution cutscene',
-      (tester) async {
+  testWidgets('petting past the threshold triggers the evolution cutscene', (
+    tester,
+  ) async {
     final c = await boot(
-        tester,
-        GameState()
-          ..stage = 1
-          ..xp = 29);
+      tester,
+      GameState()
+        ..stage = 1
+        ..xp = 29,
+    );
 
     await tester.tap(find.byType(CreatureView));
     await tester.pump();
@@ -145,14 +154,16 @@ void main() {
     await drainTimers(tester);
   });
 
-  testWidgets('king evolution registers the collection and shows a toast',
-      (tester) async {
+  testWidgets('king evolution registers the collection and shows a toast', (
+    tester,
+  ) async {
     final c = await boot(
-        tester,
-        GameState()
-          ..stage = 2
-          ..xp = 79
-          ..species = 1);
+      tester,
+      GameState()
+        ..stage = 2
+        ..xp = 79
+        ..species = 1,
+    );
 
     await tester.tap(find.byType(CreatureView));
     await tester.pump();

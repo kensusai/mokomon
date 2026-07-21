@@ -8,6 +8,25 @@ import '../data/species.dart';
 /// 進化しきい値(隠しパラメータ)。docs/game-design.md §3。
 const evolveXp = [0, 30, 80];
 
+/// 保存データ由来の背景 index。範囲外は null(=種族デフォルト)に落とす。
+/// 素通しすると `bgThemes[effectiveBg]` が毎フレーム RangeError になる
+/// (docs/review-findings.md #17)。
+int? _validBg(Object? v) =>
+    v is int && v >= 0 && v < bgThemes.length ? v : null;
+
+/// 保存データ由来の模様(base64 PNG)。base64 として不正なら null(=模様なし)
+/// に落とす。素通しするとホーム/おえかきの `base64Decode` が起動のたびに
+/// 同期例外を投げる(docs/review-findings.md #43)。
+String? _validPattern(Object? v) {
+  if (v is! String) return null;
+  try {
+    base64Decode(v);
+    return v;
+  } catch (_) {
+    return null;
+  }
+}
+
 /// ずかんの「名簿」に保存する個体スナップショット(docs/game-design.md §12)。
 /// 交代・新しいたまごの際に、見た目ときせかえ・なまえを保持する。
 class CreatureSnapshot {
@@ -54,19 +73,25 @@ class CreatureSnapshot {
         'kingSparkle': kingSparkle,
       };
 
+  /// 壊れた値は範囲内へ正規化する。`switchCreature` がスナップショットを
+  /// そのまま state に流すため、ここが最後の防波堤(docs/review-findings.md #17)。
   factory CreatureSnapshot.fromJson(Map<String, dynamic> j) => CreatureSnapshot(
-        stage: j['stage'] ?? 3,
-        xp: (j['xp'] ?? 0).toDouble(),
-        eggTaps: j['eggTaps'] ?? 0,
-        hunger: (j['hunger'] ?? 80).toDouble(),
-        happy: (j['happy'] ?? 80).toDouble(),
-        color: j['color'] ?? 0,
-        pattern: j['pattern'],
-        equipHead: j['equipHead'],
-        equipFace: j['equipFace'],
-        nickname: j['nickname'],
-        bg: j['bg'],
-        kingSparkle: (j['kingSparkle'] ?? 0).toDouble(),
+        stage: ((j['stage'] ?? 3) as int).clamp(0, 3),
+        xp: max(0, ((j['xp'] ?? 0) as num).toDouble()),
+        eggTaps: max(0, (j['eggTaps'] ?? 0) as int),
+        hunger:
+            ((j['hunger'] ?? 80) as num).toDouble().clamp(0, 100).toDouble(),
+        happy: ((j['happy'] ?? 80) as num).toDouble().clamp(0, 100).toDouble(),
+        color: (j['color'] ?? 0) as int,
+        pattern: _validPattern(j['pattern']),
+        equipHead: j['equipHead'] as String?,
+        equipFace: j['equipFace'] as String?,
+        nickname: j['nickname'] as String?,
+        bg: _validBg(j['bg']),
+        kingSparkle: ((j['kingSparkle'] ?? 0) as num)
+            .toDouble()
+            .clamp(0, 100)
+            .toDouble(),
       );
 }
 
@@ -143,7 +168,7 @@ class GameState {
   int nextEggSpecies(Random rng) {
     final normals = [
       for (var i = 0; i < speciesList.length; i++)
-        if (i != secretSpeciesIndex) i
+        if (i != secretSpeciesIndex) i,
     ];
     final kinged = normals.where((i) => collection[i]).length;
     if (!collection[secretSpeciesIndex] && kinged >= 3) {
@@ -153,7 +178,7 @@ class GameState {
     if (unowned.isNotEmpty) return unowned[rng.nextInt(unowned.length)];
     final pool = [
       for (var i = 0; i < speciesList.length; i++)
-        if (i != species) i
+        if (i != species) i,
     ];
     return pool[rng.nextInt(pool.length)];
   }
@@ -163,7 +188,9 @@ class GameState {
     if (lastSavedMs == 0) return;
     // 端末の時計が巻き戻っていても増加側には振れないようにする
     final mins = max(
-        0.0, (DateTime.now().millisecondsSinceEpoch - lastSavedMs) / 60000.0);
+      0.0,
+      (DateTime.now().millisecondsSinceEpoch - lastSavedMs) / 60000.0,
+    );
     hunger = max(15, hunger - min(50, mins / 3)).clamp(0, 100).toDouble();
     happy = max(20, happy - min(40, mins / 4)).clamp(0, 100).toDouble();
   }
@@ -192,7 +219,7 @@ class GameState {
         'kingSparkle': kingSparkle,
         'unlockedStamps': unlockedStamps.toList(),
         'roster': {
-          for (final e in roster.entries) '${e.key}': e.value.toJson(),
+          for (final e in roster.entries) '${e.key}': e.value.toJson()
         },
         'last': DateTime.now().millisecondsSinceEpoch,
       };
@@ -203,22 +230,27 @@ class GameState {
     coins = max(0, (j['coins'] ?? 10) as int);
     hunger = ((j['hunger'] ?? 80) as num).toDouble().clamp(0, 100).toDouble();
     happy = ((j['happy'] ?? 80) as num).toDouble().clamp(0, 100).toDouble();
-    eggTaps = j['eggTaps'] ?? 0;
-    species = j['species'] ?? 0;
+    eggTaps = max(0, (j['eggTaps'] ?? 0) as int);
+    // 範囲外の species は後続の speciesList[species] が投げ、SaveStore.load()
+    // の catch でセーブ全体が初期化されてしまう(docs/review-findings.md #17)
+    species = ((j['species'] ?? 0) as int).clamp(0, speciesList.length - 1);
     final col = (j['collection'] as List?)?.cast<bool>() ?? [];
     collection = List.generate(
-        speciesList.length, (i) => i < col.length ? col[i] : false);
+      speciesList.length,
+      (i) => i < col.length ? col[i] : false,
+    );
     owned = ((j['owned'] as List?)?.cast<String>() ?? []).toSet();
-    equipHead = j['equipHead'];
-    equipFace = j['equipFace'];
-    sound = j['sound'] ?? true;
-    bgmTrack = j['bgmTrack'] ?? 0;
-    color = j['color'] ?? speciesList[species].color.toARGB32();
-    pattern = j['pattern'];
-    nickname = j['nickname'];
-    bg = j['bg'];
+    equipHead = j['equipHead'] as String?;
+    equipFace = j['equipFace'] as String?;
+    sound = (j['sound'] ?? true) as bool;
+    bgmTrack = (j['bgmTrack'] ?? 0) as int;
+    color = (j['color'] ?? speciesList[species].color.toARGB32()) as int;
+    pattern = _validPattern(j['pattern']);
+    nickname = j['nickname'] as String?;
+    bg = _validBg(j['bg']);
     ownedBg = ((j['ownedBg'] as List?)?.cast<String>() ?? []).toSet();
-    kingSparkle = (j['kingSparkle'] ?? 0).toDouble();
+    kingSparkle =
+        ((j['kingSparkle'] ?? 0) as num).toDouble().clamp(0, 100).toDouble();
     unlockedStamps =
         ((j['unlockedStamps'] as List?)?.cast<String>() ?? []).toSet();
     // 壊れたエントリが1つあっても、他のセーブデータは失わない
@@ -226,25 +258,29 @@ class GameState {
     roster = {};
     for (final e in ((j['roster'] as Map?) ?? {}).entries) {
       try {
-        roster[int.parse(e.key as String)] =
-            CreatureSnapshot.fromJson((e.value as Map).cast<String, dynamic>());
+        roster[int.parse(e.key as String)] = CreatureSnapshot.fromJson(
+          (e.value as Map).cast<String, dynamic>(),
+        );
       } catch (_) {
         // このエントリだけスキップする
       }
     }
-    lastSavedMs = j['last'] ?? 0;
+    lastSavedMs = (j['last'] ?? 0) as int;
   }
 
   // ---------- あいことば(パスワード)。docs/game-design.md §8 ----------
 
   String makeCode() {
-    var colBits = 0;
+    // ビット列は BigInt で組む。dart2js は int のビット演算を32bitに切り詰める
+    // ため、int のままだと index 32 以降の図鑑/所持品が Web で壊れる
+    // (docs/review-findings.md #21)。10進文字列になるので形式は従来と同一。
+    var colBits = BigInt.zero;
     for (var i = 0; i < collection.length; i++) {
-      if (collection[i]) colBits |= 1 << i;
+      if (collection[i]) colBits |= BigInt.one << i;
     }
-    var ownBits = 0;
+    var ownBits = BigInt.zero;
     for (var i = 0; i < shopItems.length; i++) {
-      if (owned.contains(shopItems[i].key)) ownBits |= 1 << i;
+      if (owned.contains(shopItems[i].key)) ownBits |= BigInt.one << i;
     }
     final eqH = shopItems.indexWhere((it) => it.key == equipHead);
     final eqF = shopItems.indexWhere((it) => it.key == equipFace);
@@ -265,8 +301,9 @@ class GameState {
     for (final c in body.codeUnits) {
       sum = (sum + c) % 97;
     }
-    final b64 =
-        base64Encode(utf8.encode('$body;$sum')).replaceAll(RegExp(r'=+$'), '');
+    final b64 = base64Encode(
+      utf8.encode('$body;$sum'),
+    ).replaceAll(RegExp(r'=+$'), '');
     return 'MOKO-$b64';
   }
 
@@ -285,29 +322,38 @@ class GameState {
         sum = (sum + c) % 97;
       }
       if ('$sum' != parts[1]) return false;
-      final a = parts[0].split(',').map(int.parse).toList();
-      if (a.length < 11 || a[0] != 1) return false;
+      final f = parts[0].split(',');
+      if (f.length < 11 || f[0] != '1') return false;
+      final a = [for (final x in f.take(7)) int.parse(x)];
       stage = a[1].clamp(0, 3);
       xp = max(0, a[2]).toDouble();
       coins = max(0, a[3]);
       hunger = a[4].clamp(0, 100).toDouble();
       happy = a[5].clamp(0, 100).toDouble();
       species = a[6].clamp(0, speciesList.length - 1);
-      collection =
-          List.generate(speciesList.length, (i) => (a[7] & (1 << i)) != 0);
+      // ビット列は makeCode と同じ理由で BigInt として読む。int.parse だと
+      // Web では 2^53 超で精度が落ち、ビット演算は32bitに切り詰められる。
+      final colBits = BigInt.parse(f[7]);
+      final ownBits = BigInt.parse(f[8]);
+      collection = List.generate(
+        speciesList.length,
+        (i) => (colBits >> i).isOdd,
+      );
       owned = {
         for (var i = 0; i < shopItems.length; i++)
-          if ((a[8] & (1 << i)) != 0) shopItems[i].key
+          if ((ownBits >> i).isOdd) shopItems[i].key,
       };
-      equipHead = (a[9] >= 0 &&
-              a[9] < shopItems.length &&
-              owned.contains(shopItems[a[9]].key))
-          ? shopItems[a[9]].key
+      final eqH = int.parse(f[9]);
+      final eqF = int.parse(f[10]);
+      equipHead = (eqH >= 0 &&
+              eqH < shopItems.length &&
+              owned.contains(shopItems[eqH].key))
+          ? shopItems[eqH].key
           : null;
-      equipFace = (a[10] >= 0 &&
-              a[10] < shopItems.length &&
-              owned.contains(shopItems[a[10]].key))
-          ? shopItems[a[10]].key
+      equipFace = (eqF >= 0 &&
+              eqF < shopItems.length &&
+              owned.contains(shopItems[eqF].key))
+          ? shopItems[eqF].key
           : null;
       eggTaps = 0;
       // 模様・なまえ・背景・ゲージはあいことばに含まれない(仕様§8)

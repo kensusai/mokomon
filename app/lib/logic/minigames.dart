@@ -24,6 +24,84 @@ mixin MistakeTracker {
   void continueAfterFail() => mistakes = 0;
 }
 
+/// 採点式ラウンドゲーム(パズル/ちがうのどっち/かぞえて)共通のラウンド進行
+/// (docs/review-findings.md #26)。正誤判定だけを各ゲームが持つ。
+mixin RoundGuessGame on MistakeTracker {
+  var round = 0;
+  var reward = 0;
+
+  /// 総ラウンド数。
+  int get rounds;
+
+  /// 1ラウンド正解の報酬コイン。
+  int get rewardPerRound;
+
+  /// 次のラウンドを生成する(各ゲームが実装)。
+  void _newRound();
+
+  bool get finished => round >= rounds || failed;
+
+  /// 共通の採点: 正解なら報酬とラウンドを進めて true。不正解はミス+1。
+  bool _applyGuess(bool correct) {
+    if (finished) return false;
+    if (!correct) {
+      mistakes++;
+      return false;
+    }
+    reward += rewardPerRound;
+    round++;
+    if (!finished) _newRound();
+    return true;
+  }
+}
+
+/// 時間制ゲーム(フルーツキャッチ/もぐらたたき/ふうせんわり)共通の
+/// 1秒カウントダウンと終盤加速(docs/review-findings.md #27)。
+mixin CountdownGame {
+  /// 制限時間(秒)。
+  int get durationSec;
+
+  /// 終盤の速度増分([speedFactor] が 1.0 → 1.0+accel まで上がる)。
+  double get accel;
+
+  late int timeLeft = durationSec;
+  var _timerAcc = 0.0;
+
+  bool get finished => timeLeft <= 0;
+
+  /// 残り時間が減るほど速くなる。こどもFB「もっとむずかしく」。
+  double get speedFactor => 1.0 + accel * (1 - timeLeft / durationSec);
+
+  /// [dt] 秒ぶん時計を進める。時間切れになったら true を返す。
+  bool tickClock(double dt) {
+    _timerAcc += dt;
+    if (_timerAcc >= 1) {
+      _timerAcc -= 1;
+      timeLeft--;
+    }
+    return finished;
+  }
+
+  var _spawnT = 0.0;
+
+  /// スポーン期限の判定(docs/review-findings.md #56)。[dt] だけ進め、期限が
+  /// 来ていて [allowed] なら次の間隔(base + rng×jitter を [speedFactor] で
+  /// 短縮)を予約して true を返す。乱数は期限が来たときだけ消費する
+  /// (シード付きテストの再現性を保つため)。
+  bool spawnDue(
+    double dt,
+    Random rng, {
+    required double base,
+    required double jitter,
+    bool allowed = true,
+  }) {
+    _spawnT -= dt;
+    if (_spawnT > 0 || !allowed) return false;
+    _spawnT = (base + rng.nextDouble() * jitter) / speedFactor;
+    return true;
+  }
+}
+
 // ---------- フルーツキャッチ ----------
 
 const catchDurationSec = 30;
@@ -53,42 +131,35 @@ class CatchItem {
 }
 
 /// フルーツキャッチの状態機械。widget 側の Ticker から [update] を呼ぶ。
-class CatchGame {
+class CatchGame with CountdownGame {
   CatchGame({Random? rng}) : _rng = rng ?? Random();
 
   final Random _rng;
   final items = <CatchItem>[];
   var score = 0;
-  var timeLeft = catchDurationSec;
-  var _spawnT = 0.0;
-  var _timerAcc = 0.0;
 
-  bool get finished => timeLeft <= 0;
+  @override
+  int get durationSec => catchDurationSec;
 
-  /// 残り時間が減るほど速くなる(1.0 → 1.9)。こどもFB「もっとむずかしく」。
-  double get speedFactor => 1.0 + 0.9 * (1 - timeLeft / catchDurationSec);
+  /// 1.0 → 1.9 まで加速。
+  @override
+  double get accel => 0.9;
 
   /// [dt] 秒進める。範囲は画面サイズ [width]x[height]。
   void update(double dt, double width, double height) {
-    if (finished) return;
-    _timerAcc += dt;
-    if (_timerAcc >= 1) {
-      _timerAcc -= 1;
-      timeLeft--;
-      if (finished) return;
-    }
-    _spawnT -= dt;
-    if (_spawnT <= 0) {
-      _spawnT = (0.45 + _rng.nextDouble() * 0.4) / speedFactor;
+    if (finished || tickClock(dt)) return;
+    if (spawnDue(dt, _rng, base: 0.45, jitter: 0.4)) {
       final star = _rng.nextDouble() < catchStarChance;
-      items.add(CatchItem(
-        x: 30 + _rng.nextDouble() * (width - 60),
-        y: -40,
-        vy: (120 + _rng.nextDouble() * 100) * speedFactor,
-        emoji: star ? '⭐' : catchFruits[_rng.nextInt(catchFruits.length)],
-        star: star,
-        wobble: _rng.nextDouble() * 2 * pi,
-      ));
+      items.add(
+        CatchItem(
+          x: 30 + _rng.nextDouble() * (width - 60),
+          y: -40,
+          vy: (120 + _rng.nextDouble() * 100) * speedFactor,
+          emoji: star ? '⭐' : catchFruits[_rng.nextInt(catchFruits.length)],
+          star: star,
+          wobble: _rng.nextDouble() * 2 * pi,
+        ),
+      );
     }
     for (final it in items) {
       it.y += it.vy * dt;
@@ -120,7 +191,7 @@ const puzzleColors = [
   0xFFFFAB49,
   0xFF34C98E,
   0xFF54B9FF,
-  0xFF9B8CFF
+  0xFF9B8CFF,
 ];
 const puzzleRounds = 8;
 const puzzleRewardPerRound = 2;
@@ -138,25 +209,28 @@ class PuzzlePiece {
   int get hashCode => Object.hash(shape, color);
 }
 
-/// 「おなじのどれ?」8ラウンド・4択(難化)。不正解ペナルティなし(再挑戦可)。
-class PuzzleGame with MistakeTracker {
+/// 「おなじのどれ?」8ラウンド・4択(難化)。不正解はミス+1、
+/// 3ミスでゲームオーバー(コインで続行可)。docs/game-design.md §5。
+class PuzzleGame with MistakeTracker, RoundGuessGame {
   PuzzleGame({Random? rng}) : _rng = rng ?? Random() {
     _newRound();
   }
 
   final Random _rng;
-  var round = 0;
-  var reward = 0;
   late PuzzlePiece target;
   late List<PuzzlePiece> choices;
 
-  bool get finished => round >= puzzleRounds || failed;
+  @override
+  int get rounds => puzzleRounds;
+  @override
+  int get rewardPerRound => puzzleRewardPerRound;
 
   PuzzlePiece _randomPiece() => PuzzlePiece(
         PuzzleShape.values[_rng.nextInt(PuzzleShape.values.length)],
         puzzleColors[_rng.nextInt(puzzleColors.length)],
       );
 
+  @override
   void _newRound() {
     target = _randomPiece();
     final opts = <PuzzlePiece>[target];
@@ -169,17 +243,7 @@ class PuzzleGame with MistakeTracker {
   }
 
   /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
-  bool guess(int choiceIndex) {
-    if (finished) return false;
-    if (choices[choiceIndex] != target) {
-      mistakes++;
-      return false;
-    }
-    reward += puzzleRewardPerRound;
-    round++;
-    if (!finished) _newRound();
-    return true;
-  }
+  bool guess(int choiceIndex) => _applyGuess(choices[choiceIndex] == target);
 }
 
 // ---------- ペアさがし ----------
@@ -257,7 +321,7 @@ class WhackMole {
 }
 
 /// もぐらたたきの状態機械。widget 側の Ticker から [update] を呼ぶ。
-class WhackGame {
+class WhackGame with CountdownGame {
   WhackGame({Random? rng, int? speciesCount})
       : _rng = rng ?? Random(),
         _speciesCount = speciesCount ?? speciesList.length;
@@ -269,48 +333,42 @@ class WhackGame {
   final int _speciesCount;
   final moles = <WhackMole>[];
   var score = 0;
-  var timeLeft = whackDurationSec;
-  var _spawnT = 0.0;
-  var _timerAcc = 0.0;
 
-  bool get finished => timeLeft <= 0;
+  @override
+  int get durationSec => whackDurationSec;
 
-  /// 終盤ほど速く(1.0 → 1.8)。こどもFB「もっとむずかしく」。
-  double get speedFactor => 1.0 + 0.8 * (1 - timeLeft / whackDurationSec);
+  /// 1.0 → 1.8 まで加速。
+  @override
+  double get accel => 0.8;
 
   void update(double dt) {
     if (finished) return;
-    _timerAcc += dt;
-    if (_timerAcc >= 1) {
-      _timerAcc -= 1;
-      timeLeft--;
-      if (finished) {
-        moles.clear();
-        return;
-      }
+    if (tickClock(dt)) {
+      moles.clear();
+      return;
     }
     for (final m in moles) {
       m.ttl -= dt;
     }
     moles.removeWhere((m) => m.ttl <= 0);
 
-    _spawnT -= dt;
-    if (_spawnT <= 0 && moles.length < 3) {
-      _spawnT = (0.5 + _rng.nextDouble() * 0.4) / speedFactor;
+    if (spawnDue(dt, _rng, base: 0.5, jitter: 0.4, allowed: moles.length < 3)) {
       final used = moles.map((m) => m.hole).toSet();
       final free = [
         for (var i = 0; i < whackHoles; i++)
-          if (!used.contains(i)) i
+          if (!used.contains(i)) i,
       ];
       if (free.isNotEmpty) {
         final roll = _rng.nextDouble();
-        moles.add(WhackMole(
-          hole: free[_rng.nextInt(free.length)],
-          speciesIndex: _rng.nextInt(_speciesCount),
-          golden: roll < 0.12,
-          stinky: roll >= 0.12 && roll < 0.22,
-          ttl: (0.75 + _rng.nextDouble() * 0.45) / speedFactor,
-        ));
+        moles.add(
+          WhackMole(
+            hole: free[_rng.nextInt(free.length)],
+            speciesIndex: _rng.nextInt(_speciesCount),
+            golden: roll < 0.12,
+            stinky: roll >= 0.12 && roll < 0.22,
+            ttl: (0.75 + _rng.nextDouble() * 0.45) / speedFactor,
+          ),
+        );
       }
     }
   }
@@ -347,23 +405,29 @@ const oddRounds = 8;
 const oddRewardPerRound = 2;
 
 /// 「ちがうのどっち?」1つだけ違う絵文字を探す。ラウンドが進むと枚数が増える。
-class OddOneGame with MistakeTracker {
+class OddOneGame with MistakeTracker, RoundGuessGame {
   OddOneGame({Random? rng}) : _rng = rng ?? Random() {
     _newRound();
   }
 
   final Random _rng;
-  var round = 0;
-  var reward = 0;
   late List<String> cells;
   late int oddIndex;
 
-  bool get finished => round >= oddRounds || failed;
+  @override
+  int get rounds => oddRounds;
+  @override
+  int get rewardPerRound => oddRewardPerRound;
 
   // こどもFBでさらに難化: 12 → 16 → 20 → 25枚
-  int get _gridSize =>
-      switch (round) { < 2 => 12, < 4 => 16, < 6 => 20, _ => 25 };
+  int get _gridSize => switch (round) {
+        < 2 => 12,
+        < 4 => 16,
+        < 6 => 20,
+        _ => 25,
+      };
 
+  @override
   void _newRound() {
     final pair = oddPairs[_rng.nextInt(oddPairs.length)];
     final flip = _rng.nextBool();
@@ -374,17 +438,8 @@ class OddOneGame with MistakeTracker {
     cells[oddIndex] = odd;
   }
 
-  bool guess(int index) {
-    if (finished) return false;
-    if (index != oddIndex) {
-      mistakes++;
-      return false;
-    }
-    reward += oddRewardPerRound;
-    round++;
-    if (!finished) _newRound();
-    return true;
-  }
+  /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  bool guess(int index) => _applyGuess(index == oddIndex);
 }
 
 // ---------- ふうせんわり ----------
@@ -414,44 +469,37 @@ class BalloonItem {
 }
 
 /// ふうせんわり: 下からふわふわ上がる風船をタップ。💣は-2(0未満なし)。
-class BalloonGame {
+class BalloonGame with CountdownGame {
   BalloonGame({Random? rng}) : _rng = rng ?? Random();
 
   final Random _rng;
   final items = <BalloonItem>[];
   var score = 0;
-  var timeLeft = balloonDurationSec;
-  var _spawnT = 0.0;
-  var _timerAcc = 0.0;
 
-  bool get finished => timeLeft <= 0;
+  @override
+  int get durationSec => balloonDurationSec;
 
-  /// 終盤ほど速く(1.0 → 1.8)。こどもFB「もっとむずかしく」。
-  double get speedFactor => 1.0 + 0.8 * (1 - timeLeft / balloonDurationSec);
+  /// 1.0 → 1.8 まで加速。
+  @override
+  double get accel => 0.8;
 
   void update(double dt, double width, double height) {
-    if (finished) return;
-    _timerAcc += dt;
-    if (_timerAcc >= 1) {
-      _timerAcc -= 1;
-      timeLeft--;
-      if (finished) return;
-    }
-    _spawnT -= dt;
-    if (_spawnT <= 0) {
-      _spawnT = (0.5 + _rng.nextDouble() * 0.45) / speedFactor;
+    if (finished || tickClock(dt)) return;
+    if (spawnDue(dt, _rng, base: 0.5, jitter: 0.45)) {
       final roll = _rng.nextDouble();
       final bomb = roll < 0.14; // 難化: 💣ちょっと増量
       final golden = !bomb && roll < 0.28;
-      items.add(BalloonItem(
-        x: 34 + _rng.nextDouble() * (width - 68),
-        y: height + 40,
-        vy: (95 + _rng.nextDouble() * 85) * speedFactor,
-        emoji: bomb ? '💣' : (golden ? '⭐' : '🎈'),
-        golden: golden,
-        bomb: bomb,
-        wobble: _rng.nextDouble() * 2 * pi,
-      ));
+      items.add(
+        BalloonItem(
+          x: 34 + _rng.nextDouble() * (width - 68),
+          y: height + 40,
+          vy: (95 + _rng.nextDouble() * 85) * speedFactor,
+          emoji: bomb ? '💣' : (golden ? '⭐' : '🎈'),
+          golden: golden,
+          bomb: bomb,
+          wobble: _rng.nextDouble() * 2 * pi,
+        ),
+      );
     }
     for (final it in items) {
       it.y -= it.vy * dt;
@@ -518,23 +566,25 @@ const countSets = [
 
 /// 「かぞえてタッチ」: ちらばった絵文字から対象をかぞえて3択で答える。
 /// ラウンドが進むほど個数が増えて難しくなる。
-class CountGame with MistakeTracker {
+class CountGame with MistakeTracker, RoundGuessGame {
   CountGame({Random? rng}) : _rng = rng ?? Random() {
     _newRound();
   }
 
   final Random _rng;
-  var round = 0;
-  var reward = 0;
   late String target;
   late List<String> items;
   late int answer;
   late List<int> choices;
 
-  bool get finished => round >= countRounds || failed;
+  @override
+  int get rounds => countRounds;
+  @override
+  int get rewardPerRound => countRewardPerRound;
 
   int get _itemCount => 9 + round * 3; // 9 → 24枚
 
+  @override
   void _newRound() {
     final set = countSets[_rng.nextInt(countSets.length)];
     target = set.$1;
@@ -548,17 +598,7 @@ class CountGame with MistakeTracker {
   }
 
   /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす(数えなおし可)。
-  bool guess(int choiceIndex) {
-    if (finished) return false;
-    if (choices[choiceIndex] != answer) {
-      mistakes++;
-      return false;
-    }
-    reward += countRewardPerRound;
-    round++;
-    if (!finished) _newRound();
-    return true;
-  }
+  bool guess(int choiceIndex) => _applyGuess(choices[choiceIndex] == answer);
 }
 
 // ---------- おぼえてタッチ ----------

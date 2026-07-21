@@ -12,6 +12,11 @@ mixin MistakeGameOverMixin<T extends StatefulWidget>
     on State<T>, TimerBagMixin<T> {
   var gameOver = false;
 
+  /// 最終ラウンド正解後、[handleGuess] の finishDelay が明けるまで true。
+  /// この間の追いタップを画面側の入力ガードで無視するために見る
+  /// (無視しないと全問正解直後に不正解音が鳴る。docs/review-findings.md #23)。
+  var finishing = false;
+
   GameController get controller;
 
   /// ゲーム側のミス数をリセットする(例: `_game.continueAfterFail()`)。
@@ -48,6 +53,7 @@ mixin MistakeGameOverMixin<T extends StatefulWidget>
     if (correct) {
       controller.sfx.play(Sfx.happy);
       if (finished) {
+        finishing = true;
         later(finishDelay, () {
           controller.finishMinigame(reward);
           onFinished();

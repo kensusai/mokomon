@@ -20,8 +20,11 @@ const _foodGradients = {
 
 /// ごはんモーダル。2列グリッドで10種を1画面に(スクロールなし)。
 /// 給餌に成功したら閉じて [onFed] を呼ぶ。コイン不足はトーストで誘導。
-Future<void> showFoodModal(BuildContext context, GameController controller,
-    {required void Function(Food) onFed}) {
+Future<void> showFoodModal(
+  BuildContext context,
+  GameController controller, {
+  required void Function(Food) onFed,
+}) {
   return showDialog(
     context: context,
     builder: (dialogContext) => MokoModalShell(
@@ -42,12 +45,15 @@ Future<void> showFoodModal(BuildContext context, GameController controller,
                   colors: _foodGradients[f.key]!,
                   radius: 18,
                   onTap: () {
-                    if (!controller.feed(f)) {
-                      showToast(context, 'コインが たりないよ! 「あそぶ」で あつめよう🎮');
-                      return;
+                    switch (controller.feed(f)) {
+                      case FeedOutcome.notEnoughCoins:
+                        showNotEnoughCoinsToast(context);
+                      case FeedOutcome.full:
+                        showToast(context, 'おなか いっぱい みたい!');
+                      case FeedOutcome.fed:
+                        Navigator.of(dialogContext).pop();
+                        onFed(f);
                     }
-                    Navigator.of(dialogContext).pop();
-                    onFed(f);
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -57,12 +63,15 @@ Future<void> showFoodModal(BuildContext context, GameController controller,
                         Text(f.emoji, style: const TextStyle(fontSize: 26)),
                         FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text('${f.name}  🪙${f.cost}',
-                              maxLines: 1,
-                              style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white)),
+                          child: Text(
+                            '${f.name}  🪙${f.cost}',
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -74,7 +83,9 @@ Future<void> showFoodModal(BuildContext context, GameController controller,
       ],
       footer: [
         ModalCloseButton(
-            label: 'やめる', onTap: () => Navigator.of(dialogContext).pop()),
+          label: 'やめる',
+          onTap: () => Navigator.of(dialogContext).pop(),
+        ),
       ],
     ),
   );

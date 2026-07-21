@@ -22,9 +22,11 @@ class SaveStore {
     final raw = prefs.getString(_prefsKey);
     if (raw != null) {
       try {
-        state.loadJson(jsonDecode(raw));
+        state.loadJson(jsonDecode(raw) as Map<String, dynamic>);
         state.applyOfflineDecay();
-      } catch (_) {/* 壊れたデータは初期状態で継続 */}
+      } catch (_) {
+        /* 壊れたデータは初期状態で継続 */
+      }
     }
     return state;
   }

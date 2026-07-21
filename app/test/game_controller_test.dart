@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mokomon/data/foods.dart';
 import 'package:mokomon/data/save_store.dart';
 import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/models/game_state.dart';
@@ -12,6 +13,24 @@ void main() {
   GameController fresh([GameState? state]) =>
       GameController(state ?? GameState(), SaveStore());
 
+  group('feed (ごはん)', () {
+    test('refuses to feed when full (hunger >= 98)', () {
+      // docs/review-findings.md #38: 満腹ルールを UI 層だけでなく
+      // ユースケース層でも強制する。
+      final c = fresh(
+        GameState()
+          ..stage = 1
+          ..hunger = 99
+          ..coins = 50,
+      );
+      // docs/review-findings.md #52: 失敗理由は enum で区別する
+      expect(c.feed(foods.first), FeedOutcome.full);
+      expect(c.state.coins, 50); // 消費されない
+      expect(c.state.hunger, 99); // 変化しない
+      expect(c.state.xp, 0);
+    });
+  });
+
   group('pet (なでなで)', () {
     test('adds happy +3 / xp +1 and notifies', () {
       final c = fresh(GameState()..stage = 1);
@@ -24,9 +43,11 @@ void main() {
     });
 
     test('happy is clamped at 100', () {
-      final c = fresh(GameState()
-        ..stage = 1
-        ..happy = 99);
+      final c = fresh(
+        GameState()
+          ..stage = 1
+          ..happy = 99,
+      );
       c.pet();
       expect(c.state.happy, 100);
     });

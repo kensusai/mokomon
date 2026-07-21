@@ -74,9 +74,14 @@ class _OrderScreenState extends State<OrderScreen>
       ],
       children: [
         const SizedBox(height: 6),
-        Text('つぎは 「${_game.finished ? '✨' : _game.next}」!  はやく タッチ!',
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w800, color: ink2Color)),
+        Text(
+          'つぎは 「${_game.finished ? '✨' : _game.next}」!  はやく タッチ!',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: ink2Color,
+          ),
+        ),
         Expanded(
           child: Center(
             child: ConstrainedBox(
@@ -113,11 +118,14 @@ class _OrderScreenState extends State<OrderScreen>
           borderRadius: BorderRadius.circular(20),
           onTap: () => _tap(i),
           child: Center(
-            child: Text('${_game.cells[i]}',
-                style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
-                    color: inkColor)),
+            child: Text(
+              '${_game.cells[i]}',
+              style: const TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.w800,
+                color: inkColor,
+              ),
+            ),
           ),
         ),
       ),

@@ -11,15 +11,21 @@ const ink2Color = Color(0xFF8A90A8); // --ink2
 const fieldGray = Color(0xFFEEF0F7);
 const goldColor = Color(0xFFFFD23E);
 
-const greenGradient = [Color(0xFF34C98E), Color(0xFF1FAE76)];
+/// 「選択中」を示すアクセント緑(選択枠・フォーカス枠・進捗ドット。#60)
+const accentGreen = Color(0xFF34C98E);
+
+const greenGradient = [accentGreen, Color(0xFF1FAE76)];
 const orangeGradient = [Color(0xFFFFAB49), Color(0xFFFF8F1F)];
 const pinkGradient = [Color(0xFFFF9CC2), Color(0xFFFF6EA6)];
 const purpleGradient = [Color(0xFFAB9DFF), Color(0xFF8A78F5)];
 const blueGradient = [Color(0xFF6CC4FF), Color(0xFF3BA4EC)];
 
 /// 白カードの浮き影(CSS --shadow 相当)
-const cardShadow =
-    BoxShadow(color: Color(0x1F3A3F52), blurRadius: 12, offset: Offset(0, 4));
+const cardShadow = BoxShadow(
+  color: Color(0x1F3A3F52),
+  blurRadius: 12,
+  offset: Offset(0, 4),
+);
 
 // ---------- 部品 ----------
 
@@ -37,9 +43,14 @@ class StatPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         boxShadow: const [cardShadow],
       ),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 15, fontWeight: FontWeight.w800, color: inkColor)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          color: inkColor,
+        ),
+      ),
     );
   }
 }
@@ -86,9 +97,10 @@ class PressableGradient extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: colors),
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: colors,
+        ),
         borderRadius: BorderRadius.circular(radius),
         boxShadow: const [
           BoxShadow(color: Color(0x24000000), offset: Offset(0, 6)),
@@ -133,18 +145,51 @@ class BigActionButton extends StatelessWidget {
         child: Column(
           children: [
             Text(icon, style: const TextStyle(fontSize: 26)),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
             if (sub != null)
-              Text(sub!,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white)),
+              Text(
+                sub!,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 緑の大きな開始ボタン(CSS .startbtn 相当)。共通利用(docs/review-findings.md #53 で celebrate_overlay から移設)。
+class StartButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+  const StartButton({super.key, required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableGradient(
+      colors: greenGradient,
+      radius: 999,
+      onTap: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
         ),
       ),
     );
@@ -167,10 +212,15 @@ class ModalCloseButton extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Text(label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w800, color: ink2Color)),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: ink2Color,
+            ),
+          ),
         ),
       ),
     );
@@ -236,9 +286,14 @@ class ModalTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-            fontSize: 19, fontWeight: FontWeight.w800, color: inkColor));
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontSize: 19,
+        fontWeight: FontWeight.w800,
+        color: inkColor,
+      ),
+    );
   }
 }

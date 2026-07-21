@@ -2,7 +2,8 @@ import 'dart:math';
 import 'dart:typed_data';
 
 /// 効果音の種類(docs/game-design.md §10)。
-/// coo/giggle は鳴き声、megaFanfare〜dressUp は派手ジングル、bgm* はループ曲。
+/// megaFanfare〜dressUp は派手ジングル、bgm* はループ曲。
+/// なでなでの鳴き声は種族別の [SoundSynth.wavForBabble] が担う。
 enum Sfx {
   tap,
   coin,
@@ -14,8 +15,6 @@ enum Sfx {
   evoRiser,
   shine,
   puff,
-  coo,
-  giggle,
   megaFanfare,
   rewardJingle,
   dressUp,
@@ -41,8 +40,14 @@ class _Tone {
 }
 
 /// 和音: 複数周波数に同じ長さ・音量の _Tone を追加する。
-void _addChord(List<_Tone> tones, List<num> freqs, double at, double dur,
-    [double vol = 0.1, _Wave wave = _Wave.triangle]) {
+void _addChord(
+  List<_Tone> tones,
+  List<num> freqs,
+  double at,
+  double dur, [
+  double vol = 0.1,
+  _Wave wave = _Wave.triangle,
+]) {
   for (final f in freqs) {
     tones.add(_Tone(f.toDouble(), dur, wave, vol, at));
   }
@@ -92,17 +97,6 @@ final Map<Sfx, List<_Tone>> _recipes = {
     _Tone(95, 0.13, _Wave.sawtooth, 0.15, 0.33),
     _Tone(78, 0.2, _Wave.sawtooth, 0.16, 0.48),
     _Tone(66, 0.16, _Wave.sawtooth, 0.12, 0.55),
-  ],
-  // なでなでの鳴き声: やわらかい2音(くぅ〜ん)
-  Sfx.coo: const [
-    _Tone(523, 0.10, _Wave.sine, 0.12),
-    _Tone(659, 0.16, _Wave.sine, 0.12, 0.09),
-  ],
-  // なでなでの鳴き声: 笑い声風の3連(きゃはっ)
-  Sfx.giggle: const [
-    _Tone(700, 0.06, _Wave.triangle, 0.11),
-    _Tone(880, 0.06, _Wave.triangle, 0.11, 0.07),
-    _Tone(1047, 0.09, _Wave.triangle, 0.11, 0.14),
   ],
   // 進化リビール用メガファンファーレ(駆け上がり+和音3連+シャンシャン)
   Sfx.megaFanfare: _megaFanfareTones(),
@@ -341,8 +335,15 @@ List<_Tone> _victoryTuneTones() {
   ];
   const bass = <double>[175, 196, 131, 175, 196, 131];
   for (var i = 0; i < melody.length; i++) {
-    tones.add(_Tone(melody[i].toDouble(), beat * 0.9, _Wave.triangle, 0.07,
-        1.3 + i * beat * 0.5));
+    tones.add(
+      _Tone(
+        melody[i].toDouble(),
+        beat * 0.9,
+        _Wave.triangle,
+        0.07,
+        1.3 + i * beat * 0.5,
+      ),
+    );
   }
   for (var i = 0; i < bass.length; i++) {
     tones.add(_Tone(bass[i], beat * 0.9, _Wave.sine, 0.06, 1.3 + i * beat));
@@ -390,12 +391,26 @@ List<_Tone> _song({
   final tones = <_Tone>[];
   for (var i = 0; i < melody.length; i++) {
     if (melody[i] == 0) continue;
-    tones.add(_Tone(melody[i].toDouble(), melodyBeat * 0.9, melodyWave,
-        melodyVol, i * melodyBeat));
+    tones.add(
+      _Tone(
+        melody[i].toDouble(),
+        melodyBeat * 0.9,
+        melodyWave,
+        melodyVol,
+        i * melodyBeat,
+      ),
+    );
   }
   for (var i = 0; i < bass.length; i++) {
-    tones.add(_Tone(
-        bass[i].toDouble(), bassBeat * 0.9, _Wave.sine, bassVol, i * bassBeat));
+    tones.add(
+      _Tone(
+        bass[i].toDouble(),
+        bassBeat * 0.9,
+        _Wave.sine,
+        bassVol,
+        i * bassBeat,
+      ),
+    );
   }
   return tones;
 }
@@ -509,19 +524,18 @@ List<_Tone> _bgmTones() {
     // 小節7-8(終止形でループ頭へ戻る)
     880, 784, 659, 587, 523, 587, 659, 0,
   ];
-  // ベースは1小節(4拍)ごとに1音
   const bass = [131.0, 175.0, 147.0, 196.0, 131.0, 175.0, 196.0, 131.0];
 
-  final tones = <_Tone>[];
-  for (var i = 0; i < melody.length; i++) {
-    if (melody[i] == 0) continue;
-    tones.add(_Tone(
-        melody[i].toDouble(), _beat * 0.9, _Wave.triangle, 0.045, i * _beat));
-  }
-  for (var bar = 0; bar < bass.length; bar++) {
-    tones.add(_Tone(bass[bar], _beat * 3.6, _Wave.sine, 0.05, bar * 4 * _beat));
-  }
-  return tones;
+  // ベースは1小節(4拍)ごとに1音 = bassBeat を4拍にすれば _song と同じ配置
+  return _song(
+    melody: melody,
+    melodyBeat: _beat,
+    melodyWave: _Wave.triangle,
+    melodyVol: 0.045,
+    bass: bass,
+    bassBeat: _beat * 4,
+    bassVol: 0.05,
+  );
 }
 
 const _sampleRate = 22050;
@@ -544,6 +558,15 @@ class SoundSynth {
 
   Uint8List wavFor(Sfx sfx) =>
       _cache.putIfAbsent(sfx, () => _render(_recipes[sfx]!));
+
+  /// [sfx] の再生時間。ヘッダ44バイトを除いた 16bit mono サンプル数から
+  /// 求める。ジングル復帰・override 解除のタイマーはこれを使うこと —
+  /// サンプルレートを変えたときに時間計算が無言でずれないように
+  /// (docs/review-findings.md #35)。
+  Duration durationFor(Sfx sfx) {
+    final samples = (wavFor(sfx).length - 44) ~/ 2;
+    return Duration(microseconds: samples * 1000000 ~/ _sampleRate);
+  }
 
   /// しゃべり風バブル音声(どうぶつの森式)。種族ごとに声の高さが変わり、
   /// variant(0-2)で毎回すこし違う「喋り」になる。決定的に生成しキャッシュ。

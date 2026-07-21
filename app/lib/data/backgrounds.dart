@@ -10,8 +10,14 @@ class BgTheme {
   final Color top;
   final Color bottom;
   final int cost;
-  const BgTheme(this.key, this.name, this.emoji, this.top, this.bottom,
-      [this.cost = 0]);
+  const BgTheme(
+    this.key,
+    this.name,
+    this.emoji,
+    this.top,
+    this.bottom, [
+    this.cost = 0,
+  ]);
 
   bool get free => cost == 0;
 }
@@ -39,7 +45,13 @@ const bgThemes = <BgTheme>[
   BgTheme('onsen', 'おんせん', '♨️', Color(0xFFFCE7EA), Color(0xFFFFF6EE), 20),
   BgTheme('yoichi', 'よいちまつり', '🏮', Color(0xFF3B1420), Color(0xFFB3402E), 25),
   BgTheme(
-      'hanabatake', 'はなばたけ', '🌷', Color(0xFF8FE0A8), Color(0xFFFFD3E8), 15),
+    'hanabatake',
+    'はなばたけ',
+    '🌷',
+    Color(0xFF8FE0A8),
+    Color(0xFFFFD3E8),
+    15,
+  ),
 ];
 
 /// 種族ごとのデフォルト背景(bgThemes の index)。

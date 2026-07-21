@@ -23,10 +23,14 @@ void main() {
     final cols = 4; // egg + stage1..3
     final rows = speciesList.length;
     final recorder = ui.PictureRecorder();
-    final canvas =
-        Canvas(recorder, Rect.fromLTWH(0, 0, cell * cols, cell * rows));
-    canvas.drawRect(Rect.fromLTWH(0, 0, cell * cols, cell * rows),
-        Paint()..color = const Color(0xFFEAF6FF));
+    final canvas = Canvas(
+      recorder,
+      Rect.fromLTWH(0, 0, cell * cols, cell * rows),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, cell * cols, cell * rows),
+      Paint()..color = const Color(0xFFEAF6FF),
+    );
 
     for (var sp = 0; sp < rows; sp++) {
       for (var stage = 0; stage <= 3; stage++) {
@@ -34,22 +38,29 @@ void main() {
         canvas.translate(stage * cell + 10, sp * cell + 10);
         canvas.scale((cell - 20) / 300);
         if (stage == 0) {
-          EggPainter(cracks: 0, golden: sp == secretSpeciesIndex)
-              .paint(canvas, const Size(300, 300));
+          EggPainter(
+            cracks: 0,
+            golden: sp == secretSpeciesIndex,
+          ).paint(canvas, const Size(300, 300));
         } else {
-          CreaturePainter(speciesIndex: sp, stage: stage, sad: false)
-              .paint(canvas, const Size(300, 300));
+          CreaturePainter(
+            speciesIndex: sp,
+            stage: stage,
+            sad: false,
+          ).paint(canvas, const Size(300, 300));
         }
         canvas.restore();
       }
     }
 
-    final image = await recorder
-        .endRecording()
-        .toImage((cell * cols).toInt(), (cell * rows).toInt());
+    final image = await recorder.endRecording().toImage(
+          (cell * cols).toInt(),
+          (cell * rows).toInt(),
+        );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    File('$dir/species_sheet.png')
-        .writeAsBytesSync(bytes!.buffer.asUint8List());
+    File(
+      '$dir/species_sheet.png',
+    ).writeAsBytesSync(bytes!.buffer.asUint8List());
   });
 
   test('render expression preview sheet', () async {
@@ -61,27 +72,36 @@ void main() {
     const species = [0, 4, 6]; // 通常顔・変顔2種で表情の重なりを確認
     final moods = CreatureMood.values;
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder,
-        Rect.fromLTWH(0, 0, cell * moods.length, cell * species.length));
+    final canvas = Canvas(
+      recorder,
+      Rect.fromLTWH(0, 0, cell * moods.length, cell * species.length),
+    );
     canvas.drawRect(
-        Rect.fromLTWH(0, 0, cell * moods.length, cell * species.length),
-        Paint()..color = const Color(0xFFEAF6FF));
+      Rect.fromLTWH(0, 0, cell * moods.length, cell * species.length),
+      Paint()..color = const Color(0xFFEAF6FF),
+    );
     for (var r = 0; r < species.length; r++) {
       for (var c = 0; c < moods.length; c++) {
         canvas.save();
         canvas.translate(c * cell + 10, r * cell + 10);
         canvas.scale((cell - 20) / 300);
         CreaturePainter(
-                speciesIndex: species[r], stage: 2, sad: false, mood: moods[c])
-            .paint(canvas, const Size(300, 300));
+          speciesIndex: species[r],
+          stage: 2,
+          sad: false,
+          mood: moods[c],
+        ).paint(canvas, const Size(300, 300));
         canvas.restore();
       }
     }
     final image = await recorder.endRecording().toImage(
-        (cell * moods.length).toInt(), (cell * species.length).toInt());
+          (cell * moods.length).toInt(),
+          (cell * species.length).toInt(),
+        );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    File('$dir/expressions_sheet.png')
-        .writeAsBytesSync(bytes!.buffer.asUint8List());
+    File(
+      '$dir/expressions_sheet.png',
+    ).writeAsBytesSync(bytes!.buffer.asUint8List());
   });
 
   test('render dress-up items preview sheet', () async {
@@ -93,10 +113,14 @@ void main() {
     const cols = 5;
     final rows = (shopItems.length / cols).ceil();
     final recorder = ui.PictureRecorder();
-    final canvas =
-        Canvas(recorder, Rect.fromLTWH(0, 0, cell * cols, cell * rows));
-    canvas.drawRect(Rect.fromLTWH(0, 0, cell * cols, cell * rows),
-        Paint()..color = const Color(0xFFEAF6FF));
+    final canvas = Canvas(
+      recorder,
+      Rect.fromLTWH(0, 0, cell * cols, cell * rows),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, cell * cols, cell * rows),
+      Paint()..color = const Color(0xFFEAF6FF),
+    );
     for (var i = 0; i < shopItems.length; i++) {
       final item = shopItems[i];
       canvas.save();
@@ -111,9 +135,10 @@ void main() {
       ).paint(canvas, const Size(300, 300));
       canvas.restore();
     }
-    final image = await recorder
-        .endRecording()
-        .toImage((cell * cols).toInt(), (cell * rows).toInt());
+    final image = await recorder.endRecording().toImage(
+          (cell * cols).toInt(),
+          (cell * rows).toInt(),
+        );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     File('$dir/items_sheet.png').writeAsBytesSync(bytes!.buffer.asUint8List());
   });

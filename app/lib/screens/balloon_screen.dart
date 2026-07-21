@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
-import '../widgets/game_overlays.dart';
 import '../widgets/particles.dart';
-import '../widgets/ui_kit.dart';
 import 'timed_arcade_game.dart';
 
 /// ふうせんわり(docs/game-design.md §5)。上がってくる風船をタップ、💣は-2。
@@ -35,6 +33,8 @@ class _BalloonScreenState extends State<BalloonScreen>
   bool get gameFinished => _game.finished;
   @override
   int get gameScore => _game.score;
+  @override
+  int get gameTimeLeft => _game.timeLeft;
 
   @override
   void startGameInstance() =>
@@ -56,8 +56,10 @@ class _BalloonScreenState extends State<BalloonScreen>
       _particleKey.currentState?.spawn('💥', d.localPosition);
     } else {
       widget.controller.sfx.play(Sfx.pop);
-      _particleKey.currentState
-          ?.spawn(hit.golden ? '✨' : '🎉', d.localPosition);
+      _particleKey.currentState?.spawn(
+        hit.golden ? '✨' : '🎉',
+        d.localPosition,
+      );
     }
     setState(() {});
   }
@@ -88,8 +90,10 @@ class _BalloonScreenState extends State<BalloonScreen>
                       Positioned(
                         left: it.renderX - 24,
                         top: it.y - 24,
-                        child: Text(it.emoji,
-                            style: TextStyle(fontSize: it.bomb ? 40 : 46)),
+                        child: Text(
+                          it.emoji,
+                          style: TextStyle(fontSize: it.bomb ? 40 : 46),
+                        ),
                       ),
                   ],
                 ),
@@ -99,32 +103,13 @@ class _BalloonScreenState extends State<BalloonScreen>
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(14),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    StatPill('⏰ ${_game.timeLeft}'),
-                    StatPill('🎈 ${_game.score}'),
-                  ],
-                ),
+                child: buildScoreHeader('🎈'),
               ),
             ),
-            if (phase == ArcadePhase.countdown)
-              GameCountdown(
-                  onDone: startGame,
-                  onTick: () => widget.controller.sfx.play(Sfx.tap)),
-            if (phase == ArcadePhase.intro)
-              GameStartOverlay(
-                title: '🎈 ふうせんわり',
-                desc: 'ふわふわ あがる ふうせんを われ!\n⭐は 3コイン、💣は さわっちゃダメ!',
-                onStart: () => setState(() => phase = ArcadePhase.countdown),
-                onBack: () => Navigator.of(context).pop(),
-              ),
-            if (phase == ArcadePhase.ended)
-              GameEndOverlay(
-                emoji: '🎉',
-                result: '+${_game.score} コイン げっと!',
-                onDone: () => Navigator.of(context).pop(),
-              ),
+            ...buildArcadeOverlays(
+              title: '🎈 ふうせんわり',
+              desc: 'ふわふわ あがる ふうせんを われ!\n⭐は 3コイン、💣は さわっちゃダメ!',
+            ),
           ],
         ),
       ),

@@ -22,8 +22,9 @@ class Cloud extends StatelessWidget {
                 width: width,
                 height: h,
                 decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                ),
               ),
             ),
             Positioned(
@@ -45,7 +46,9 @@ class Cloud extends StatelessWidget {
   Widget _bump(double d) => Container(
         width: d,
         height: d,
-        decoration:
-            const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
       );
 }

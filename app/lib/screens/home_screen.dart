@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../audio/sound_synth.dart';
 import '../data/backgrounds.dart';
 import '../data/foods.dart';
+import '../data/species.dart';
 import '../logic/game_controller.dart';
 import '../models/game_state.dart';
 import '../widgets/bg_decor.dart';
@@ -136,7 +137,9 @@ class _HomeScreenState extends State<HomeScreen>
     _syncPattern();
     // 進化予兆のキラキラ(数値は出さない)。プロトタイプは2.2秒間隔。
     _sparkleTimer = Timer.periodic(
-        const Duration(milliseconds: 2200), (_) => _spawnSparkle());
+      const Duration(milliseconds: 2200),
+      (_) => _spawnSparkle(),
+    );
     if (s.stage == 0) {
       later(const Duration(milliseconds: 800), () => _hint('たまごを タッチしてみて! 👆'));
     }
@@ -169,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen>
     _hintTimer?.cancel();
     _sparkleTimer?.cancel();
     _idleTimer?.cancel();
+    _patternImage?.dispose();
     super.dispose();
   }
 
@@ -185,7 +189,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// おみやげが発生していたら受け取ってお祝いする(docs §14)。
+  /// ミニゲーム等がホームの上に積まれている間は消費せず、復帰後に受け取る
+  /// (見えない画面の上にダイアログが被るのを防ぐ。docs/review-findings.md #51)。
   void _maybeShowGift() {
+    if (ModalRoute.of(context)?.isCurrent != true) return;
     final gift = c.takePendingGift();
     if (gift == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -209,7 +216,9 @@ class _HomeScreenState extends State<HomeScreen>
     if (near && !_glowHinted) {
       _glowHinted = true;
       later(
-          const Duration(milliseconds: 600), () => _hint('なんだか からだが ひかってる…!'));
+        const Duration(milliseconds: 600),
+        () => _hint('なんだか からだが ひかってる…!'),
+      );
     }
     if (!near) _glowHinted = false;
     _sparkleProgressHint();
@@ -223,14 +232,26 @@ class _HomeScreenState extends State<HomeScreen>
     if (p == _patternSource) return;
     _patternSource = p;
     if (p == null) {
-      setState(() => _patternImage = null);
+      setState(() => _setPatternImage(null));
       return;
     }
     decodeImageFromList(base64Decode(p)).then((img) {
       if (mounted && _patternSource == p) {
-        setState(() => _patternImage = img);
+        setState(() => _setPatternImage(img));
+      } else {
+        // 画面破棄後・デコード中に模様が変わった場合は表示されないまま捨てる
+        img.dispose();
       }
+    }).catchError((Object _) {
+      // 画像として壊れたデータは模様なしとして無視(docs/review-findings.md #43)
     });
+  }
+
+  /// `_patternImage` の差し替え。`ui.Image` はネイティブ側メモリを持つため、
+  /// 古い参照は明示的に dispose する(docs/review-findings.md #18)。
+  void _setPatternImage(ui.Image? img) {
+    _patternImage?.dispose();
+    _patternImage = img;
   }
 
   void _hint(String msg) {
@@ -270,13 +291,15 @@ class _HomeScreenState extends State<HomeScreen>
       case CreatureTapOutcome.hatched:
         _creatureKey.currentState?.play(CreatureAnim.wiggle);
         // 進化リビールと同じ路線の効果音(BGMを一時停止して主役にする)
-        showCelebrate(context,
-            sfx: c.sfx,
-            sound: Sfx.megaFanfare,
-            duckBgm: true,
-            emoji: '🐣',
-            title: 'うまれた!',
-            desc: '「${s.currentSpecies.names[1]}」が うまれたよ! ごはんを あげて そだてよう!');
+        showCelebrate(
+          context,
+          sfx: c.sfx,
+          sound: Sfx.megaFanfare,
+          duckBgm: true,
+          emoji: '🐣',
+          title: 'うまれた!',
+          desc: '「${s.currentSpecies.names[1]}」が うまれたよ! ごはんを あげて そだてよう!',
+        );
       case CreatureTapOutcome.puffed:
         _creatureKey.currentState?.flashMood(CreatureMood.surprised);
         _showPuffEffects(box);
@@ -286,7 +309,9 @@ class _HomeScreenState extends State<HomeScreen>
         _creatureKey.currentState?.play(_petAnims[zone]!);
         final particles = _petParticles[zone]!;
         _spawnParticleAtGlobal(
-            particles[_rng.nextInt(particles.length)], d.globalPosition);
+          particles[_rng.nextInt(particles.length)],
+          d.globalPosition,
+        );
         final lines = _petLines[zone]!;
         _hint(lines[_rng.nextInt(lines.length)]);
         _checkEvolve();
@@ -352,13 +377,15 @@ class _HomeScreenState extends State<HomeScreen>
         'simon' => SimonScreen(controller: c),
         _ => MemoryScreen(controller: c),
       };
-      await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => screen));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => screen));
       c.sfx.clearOverrideBgm(); // ホームBGMへ戻す(勝利曲中なら曲側が戻す)
       if (!mounted) return;
       c.sfx.playBabble(s.species);
       _hint('たのしかった〜!');
       await _checkEvolve();
+      _maybeShowGift(); // ゲーム中に発生したおみやげは戻ってから受け取る(#51)
     } finally {
       _navigating = false;
     }
@@ -373,12 +400,14 @@ class _HomeScreenState extends State<HomeScreen>
     _navigating = true;
     try {
       c.sfx.playOverrideBgm(Sfx.bgmPaint); // おえかき中はまったり曲
-      final saved = await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => PaintScreen(controller: c)));
+      final saved = await Navigator.of(context).push(
+        MaterialPageRoute<bool>(builder: (_) => PaintScreen(controller: c)),
+      );
       c.sfx.clearOverrideBgm();
       if (saved == true && mounted) {
         _celebratePaint();
         await _checkEvolve();
+        _maybeShowGift(); // おえかき中に発生したおみやげも同様(#51)
       }
     } finally {
       _navigating = false;
@@ -387,8 +416,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// お絵かき保存の褒め演出: くるっと回る+キラキラ+褒めセリフ。
   void _celebratePaint() {
-    _creatureKey.currentState?.flashMood(CreatureMood.happy,
-        duration: const Duration(milliseconds: 1600));
+    _creatureKey.currentState?.flashMood(
+      CreatureMood.happy,
+      duration: const Duration(milliseconds: 1600),
+    );
     _creatureKey.currentState?.play(CreatureAnim.spin);
     _hint(_paintPraiseLines[_rng.nextInt(_paintPraiseLines.length)]);
     final box =
@@ -422,12 +453,14 @@ class _HomeScreenState extends State<HomeScreen>
     if (result == null || !mounted) return;
     switch (result) {
       case BookNewEgg(species: final sp):
-        if (sp == 3) {
-          await showCelebrate(context,
-              sfx: c.sfx,
-              emoji: '🌟',
-              title: 'なにこれ!?',
-              desc: 'きんいろに かがやく たまごが とどいた…!');
+        if (sp == secretSpeciesIndex) {
+          await showCelebrate(
+            context,
+            sfx: c.sfx,
+            emoji: '🌟',
+            title: 'なにこれ!?',
+            desc: 'きんいろに かがやく たまごが とどいた…!',
+          );
         } else {
           c.sfx.play(Sfx.happy);
           _hint('あたらしい たまごが きたよ! タッチしてみて! 👆');
@@ -437,20 +470,25 @@ class _HomeScreenState extends State<HomeScreen>
           _creatureKey.currentState?.flashMood(CreatureMood.happy);
           _creatureKey.currentState?.play(CreatureAnim.spin);
           _hint(
-              '「${s.nickname ?? s.currentSpecies.names[s.stage]}」が あそびに きたよ!');
+            '「${s.nickname ?? s.currentSpecies.names[s.stage]}」が あそびに きたよ!',
+          );
         }
     }
   }
 
   void _onFed(Food food) {
-    _creatureKey.currentState?.flashMood(CreatureMood.yum,
-        duration: const Duration(milliseconds: 1400));
+    _creatureKey.currentState?.flashMood(
+      CreatureMood.yum,
+      duration: const Duration(milliseconds: 1400),
+    );
     _creatureKey.currentState?.play(CreatureAnim.munch);
     final box =
         _creatureBoxKey.currentContext?.findRenderObject() as RenderBox?;
     if (box != null) {
       _spawnParticleAtGlobal(
-          food.emoji, box.localToGlobal(box.size.center(Offset.zero)));
+        food.emoji,
+        box.localToGlobal(box.size.center(Offset.zero)),
+      );
     }
     later(const Duration(milliseconds: 900), _checkEvolve);
   }
@@ -571,7 +609,10 @@ class _HomeScreenState extends State<HomeScreen>
               width: creatureSize,
               height: creatureSize,
               child: CreatureView(
-                  key: _creatureKey, state: s, pattern: _patternImage),
+                key: _creatureKey,
+                state: s,
+                pattern: _patternImage,
+              ),
             ),
           ),
         ),
@@ -612,20 +653,23 @@ class _HomeScreenState extends State<HomeScreen>
             if (s.stage == 3) ...[
               // キング専用: きらきらゲージ(満タンでおみやげ)
               StatMeter(
-                  icon: '✨',
-                  value: s.kingSparkle,
-                  colors: const [Color(0xFFFFE28A), Color(0xFFF0A92D)]),
+                icon: '✨',
+                value: s.kingSparkle,
+                colors: const [Color(0xFFFFE28A), Color(0xFFF0A92D)],
+              ),
               const SizedBox(height: 10),
             ],
             StatMeter(
-                icon: '🍖',
-                value: s.hunger,
-                colors: const [Color(0xFFFFC46B), Color(0xFFFF9A3D)]),
+              icon: '🍖',
+              value: s.hunger,
+              colors: const [Color(0xFFFFC46B), Color(0xFFFF9A3D)],
+            ),
             const SizedBox(height: 10),
             StatMeter(
-                icon: '💖',
-                value: s.happy,
-                colors: const [Color(0xFFFF9CC2), Color(0xFFFF6EA6)]),
+              icon: '💖',
+              value: s.happy,
+              colors: const [Color(0xFFFF9CC2), Color(0xFFFF6EA6)],
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -706,7 +750,7 @@ class _SpeechText extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _colors[(seed * 5) % _colors.length];
     final align = _aligns[seed % _aligns.length];
-    final angle = ((seed * 37) % 9 - 4) * 3.14159 / 180; // -4°〜+4°
+    final angle = ((seed * 37) % 9 - 4) * pi / 180; // -4°〜+4°
 
     const style = TextStyle(
       fontSize: 30,
@@ -731,20 +775,23 @@ class _SpeechText extends StatelessWidget {
           child: Stack(
             children: [
               // 白フチ(空色背景でも読めるように)+うっすら影
-              Text(message,
-                  style: style.copyWith(
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 8
-                      ..strokeJoin = StrokeJoin.round
-                      ..color = Colors.white,
-                    shadows: const [
-                      Shadow(
-                          color: Color(0x553A3F52),
-                          blurRadius: 10,
-                          offset: Offset(0, 4)),
-                    ],
-                  )),
+              Text(
+                message,
+                style: style.copyWith(
+                  foreground: Paint()
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = 8
+                    ..strokeJoin = StrokeJoin.round
+                    ..color = Colors.white,
+                  shadows: const [
+                    Shadow(
+                      color: Color(0x553A3F52),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+              ),
               Text(message, style: style.copyWith(color: color)),
             ],
           ),

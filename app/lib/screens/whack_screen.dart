@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
+import '../data/species.dart';
 import '../logic/minigames.dart';
 import '../widgets/creature_painter.dart';
-import '../widgets/game_overlays.dart';
 import '../widgets/particles.dart';
-import '../widgets/ui_kit.dart';
 import 'timed_arcade_game.dart';
 
 /// もぐらたたき(docs/game-design.md §5)。穴から出るいきものをタップ!
@@ -35,6 +34,8 @@ class _WhackScreenState extends State<WhackScreen>
   bool get gameFinished => _game.finished;
   @override
   int get gameScore => _game.score;
+  @override
+  int get gameTimeLeft => _game.timeLeft;
 
   @override
   void startGameInstance() => _game = widget.gameFactory?.call() ?? WhackGame();
@@ -77,13 +78,7 @@ class _WhackScreenState extends State<WhackScreen>
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        StatPill('⏰ ${_game.timeLeft}'),
-                        StatPill('🔨 ${_game.score}'),
-                      ],
-                    ),
+                    buildScoreHeader('🔨'),
                     Expanded(
                       child: Center(
                         child: ConstrainedBox(
@@ -106,23 +101,10 @@ class _WhackScreenState extends State<WhackScreen>
               ),
             ),
             Positioned.fill(child: ParticleField(key: _particleKey)),
-            if (phase == ArcadePhase.countdown)
-              GameCountdown(
-                  onDone: startGame,
-                  onTick: () => widget.controller.sfx.play(Sfx.tap)),
-            if (phase == ArcadePhase.intro)
-              GameStartOverlay(
-                title: '🔨 もぐらたたき',
-                desc: 'あなから でてくる いきものを\nタッチしよう!\nきんいろは 3コイン!',
-                onStart: () => setState(() => phase = ArcadePhase.countdown),
-                onBack: () => Navigator.of(context).pop(),
-              ),
-            if (phase == ArcadePhase.ended)
-              GameEndOverlay(
-                emoji: '🎉',
-                result: '+${_game.score} コイン げっと!',
-                onDone: () => Navigator.of(context).pop(),
-              ),
+            ...buildArcadeOverlays(
+              title: '🔨 もぐらたたき',
+              desc: 'あなから でてくる いきものを\nタッチしよう!\nきんいろは 3コイン!',
+            ),
           ],
         ),
       ),
@@ -147,7 +129,8 @@ class _WhackScreenState extends State<WhackScreen>
                 height: 78,
                 child: CustomPaint(
                   painter: CreaturePainter(
-                    speciesIndex: mole.golden ? 3 : mole.speciesIndex,
+                    speciesIndex:
+                        mole.golden ? secretSpeciesIndex : mole.speciesIndex,
                     stage: 1,
                     sad: false,
                   ),

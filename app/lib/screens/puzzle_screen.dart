@@ -12,7 +12,7 @@ import '../widgets/shape_painter.dart';
 import 'mistake_game_over.dart';
 import 'timer_bag.dart';
 
-/// おなじのどれ?(docs/game-design.md §5)。8ラウンド、不正解ペナルティなし。
+/// おなじのどれ?(docs/game-design.md §5)。8ラウンド、3ミスでゲームオーバー。
 class PuzzleScreen extends StatefulWidget {
   final GameController controller;
 
@@ -46,7 +46,9 @@ class _PuzzleScreenState extends State<PuzzleScreen>
   void initState() {
     super.initState();
     _shake = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
   }
 
   @override
@@ -123,23 +125,29 @@ class _PuzzleScreenState extends State<PuzzleScreen>
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x1F3A3F52),
-                blurRadius: 24,
-                offset: Offset(0, 10)),
+              color: Color(0x1F3A3F52),
+              blurRadius: 24,
+              offset: Offset(0, 10),
+            ),
           ],
         ),
         child: Column(
           children: [
-            const Text('これと おなじのは どれ?',
-                style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: ink2Color)),
+            const Text(
+              'これと おなじのは どれ?',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: ink2Color,
+              ),
+            ),
             const SizedBox(height: 8),
             CustomPaint(
               size: const Size(96, 96),
               painter: ShapePainter(
-                  shape: _game.target.shape, color: Color(_game.target.color)),
+                shape: _game.target.shape,
+                color: Color(_game.target.color),
+              ),
             ),
           ],
         ),
@@ -168,8 +176,10 @@ class _PuzzleScreenState extends State<PuzzleScreen>
           padding: const EdgeInsets.all(8),
           child: CustomPaint(
             size: const Size(64, 64),
-            painter:
-                ShapePainter(shape: piece.shape, color: Color(piece.color)),
+            painter: ShapePainter(
+              shape: piece.shape,
+              color: Color(piece.color),
+            ),
           ),
         ),
       ),

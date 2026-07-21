@@ -2,40 +2,36 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mokomon/data/save_store.dart';
-import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/logic/minigames.dart';
-import 'package:mokomon/models/game_state.dart';
 import 'package:mokomon/screens/catch_screen.dart';
 import 'package:mokomon/screens/memory_screen.dart';
 import 'package:mokomon/screens/puzzle_screen.dart';
 import 'package:mokomon/widgets/shape_painter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'helpers.dart';
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  GameController controller() =>
-      GameController(GameState()..stage = 1, SaveStore());
-
-  Future<void> pumpScreen(WidgetTester tester, Widget screen) =>
-      tester.pumpWidget(MaterialApp(home: screen));
-
-  testWidgets('puzzle: answering all 8 rounds pays 16 coins + shared reward',
-      (tester) async {
-    final c = controller();
+  testWidgets('puzzle: answering all 8 rounds pays 16 coins + shared reward', (
+    tester,
+  ) async {
+    final c = stage1Controller();
     final game = PuzzleGame(rng: Random(5));
     await pumpScreen(tester, PuzzleScreen(controller: c, game: game));
 
     for (var round = 0; round < puzzleRounds; round++) {
       final target = game.target;
       // ターゲットと同じ図形の選択肢セルをタップする
-      final choiceFinder = find.byWidgetPredicate((w) =>
-          w is CustomPaint &&
-          w.painter is ShapePainter &&
-          (w.painter as ShapePainter).shape == target.shape &&
-          (w.painter as ShapePainter).color.toARGB32() == target.color &&
-          w.size == const Size(64, 64));
+      final choiceFinder = find.byWidgetPredicate(
+        (w) =>
+            w is CustomPaint &&
+            w.painter is ShapePainter &&
+            (w.painter as ShapePainter).shape == target.shape &&
+            (w.painter as ShapePainter).color.toARGB32() == target.color &&
+            w.size == const Size(64, 64),
+      );
       expect(choiceFinder, findsOneWidget);
       await tester.tap(choiceFinder);
       await tester.pump(const Duration(milliseconds: 600));
@@ -47,26 +43,31 @@ void main() {
     expect(c.state.xp, 10);
   });
 
-  testWidgets('puzzle: wrong answer shakes but does not advance',
-      (tester) async {
-    final c = controller();
+  testWidgets('puzzle: wrong answer shakes but does not advance', (
+    tester,
+  ) async {
+    final c = stage1Controller();
     final game = PuzzleGame(rng: Random(5));
     await pumpScreen(tester, PuzzleScreen(controller: c, game: game));
 
     final wrong = game.choices.firstWhere((p) => p != game.target);
-    await tester.tap(find.byWidgetPredicate((w) =>
-        w is CustomPaint &&
-        w.painter is ShapePainter &&
-        (w.painter as ShapePainter).shape == wrong.shape &&
-        (w.painter as ShapePainter).color.toARGB32() == wrong.color &&
-        w.size == const Size(64, 64)));
+    await tester.tap(
+      find.byWidgetPredicate(
+        (w) =>
+            w is CustomPaint &&
+            w.painter is ShapePainter &&
+            (w.painter as ShapePainter).shape == wrong.shape &&
+            (w.painter as ShapePainter).color.toARGB32() == wrong.color &&
+            w.size == const Size(64, 64),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 500));
     expect(game.round, 0);
     expect(c.state.coins, 10);
   });
 
   testWidgets('memory: finding all pairs pays 12 coins', (tester) async {
-    final c = controller();
+    final c = stage1Controller();
     final game = MemoryGame(rng: Random(3));
     await pumpScreen(tester, MemoryScreen(controller: c, game: game));
 
@@ -85,9 +86,10 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
-  testWidgets('catch: countdown starts the game and time-up pays the score',
-      (tester) async {
-    final c = controller();
+  testWidgets('catch: countdown starts the game and time-up pays the score', (
+    tester,
+  ) async {
+    final c = stage1Controller();
     late CatchGame game;
     await pumpScreen(
       tester,
@@ -116,7 +118,8 @@ void main() {
 
     // 直接アイテムを置いてタップ→スコア加算
     game.items.add(
-        CatchItem(x: 200, y: 300, vy: 0, emoji: '⭐', star: true, wobble: 0));
+      CatchItem(x: 200, y: 300, vy: 0, emoji: '⭐', star: true, wobble: 0),
+    );
     await tester.pump(const Duration(milliseconds: 16));
     expect(find.text('⭐'), findsOneWidget);
     await tester.tapAt(const Offset(200, 300));

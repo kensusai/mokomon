@@ -46,8 +46,10 @@ class CreatureViewState extends State<CreatureView>
   Timer? _moodTimer;
 
   /// 一時的に誇張表情へ切り替える(自動で元に戻る)。
-  void flashMood(CreatureMood mood,
-      {Duration duration = const Duration(milliseconds: 950)}) {
+  void flashMood(
+    CreatureMood mood, {
+    Duration duration = const Duration(milliseconds: 950),
+  }) {
     _moodTimer?.cancel();
     setState(() => _mood = mood);
     _moodTimer = Timer(duration, () {
@@ -58,11 +60,12 @@ class CreatureViewState extends State<CreatureView>
   void play(CreatureAnim anim) {
     _current = anim;
     _tap.duration = Duration(
-        milliseconds: switch (anim) {
-      CreatureAnim.munch => 800,
-      CreatureAnim.spin => 700,
-      _ => 500,
-    });
+      milliseconds: switch (anim) {
+        CreatureAnim.munch => 800,
+        CreatureAnim.spin => 700,
+        _ => 500,
+      },
+    );
     _tap.forward(from: 0);
   }
 
@@ -100,10 +103,7 @@ class CreatureViewState extends State<CreatureView>
       animation: Listenable.merge([_floaty, _glow, _tap]),
       builder: (context, _) {
         final floatY = -8 * Curves.easeInOut.transform(_floaty.value);
-        Widget core = CustomPaint(
-          size: Size.infinite,
-          painter: painter,
-        );
+        Widget core = CustomPaint(size: Size.infinite, painter: painter);
 
         if (_glowing) {
           core = DecoratedBox(
@@ -111,8 +111,9 @@ class CreatureViewState extends State<CreatureView>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD23E)
-                      .withValues(alpha: 0.45 + 0.5 * _glow.value),
+                  color: const Color(
+                    0xFFFFD23E,
+                  ).withValues(alpha: 0.45 + 0.5 * _glow.value),
                   blurRadius: 6 + 18 * _glow.value,
                   spreadRadius: 2 + 6 * _glow.value,
                 ),
@@ -170,15 +171,24 @@ class CreatureViewState extends State<CreatureView>
         if (t < 0.25) {
           final k = t / 0.25;
           return Matrix4.diagonal3Values(
-              _lerp(1, 1.06, k), _lerp(1, 0.94, k), 1);
+            _lerp(1, 1.06, k),
+            _lerp(1, 0.94, k),
+            1,
+          );
         } else if (t < 0.5) {
           final k = (t - 0.25) / 0.25;
           return Matrix4.diagonal3Values(
-              _lerp(1.06, 0.96, k), _lerp(0.94, 1.05, k), 1);
+            _lerp(1.06, 0.96, k),
+            _lerp(0.94, 1.05, k),
+            1,
+          );
         } else if (t < 0.75) {
           final k = (t - 0.5) / 0.25;
           return Matrix4.diagonal3Values(
-              _lerp(0.96, 1.05, k), _lerp(1.05, 0.95, k), 1);
+            _lerp(0.96, 1.05, k),
+            _lerp(1.05, 0.95, k),
+            1,
+          );
         }
         final k = (t - 0.75) / 0.25;
         return Matrix4.diagonal3Values(_lerp(1.05, 1, k), _lerp(0.95, 1, k), 1);
@@ -199,8 +209,13 @@ class CreatureViewState extends State<CreatureView>
     }
   }
 
-  (double, double) _key3(double t, double p1, double p2, (double, double) k1,
-      (double, double) k2) {
+  (double, double) _key3(
+    double t,
+    double p1,
+    double p2,
+    (double, double) k1,
+    (double, double) k2,
+  ) {
     if (t < p1) {
       final k = t / p1;
       return (_lerp(1, k1.$1, k), _lerp(1, k1.$2, k));
@@ -237,8 +252,12 @@ class _AuraPainter extends CustomPainter {
       canvas.drawPath(
         Path()
           ..moveTo(center.dx, center.dy)
-          ..arcTo(Rect.fromCircle(center: center, radius: radius), start,
-              wedgeRad, false)
+          ..arcTo(
+            Rect.fromCircle(center: center, radius: radius),
+            start,
+            wedgeRad,
+            false,
+          )
           ..close(),
         paint,
       );

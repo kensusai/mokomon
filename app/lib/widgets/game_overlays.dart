@@ -2,8 +2,52 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'celebrate_overlay.dart';
 import 'ui_kit.dart';
+
+/// 白スクリム+中央寄せ Column の共通骨格(docs/review-findings.md #31)。
+class _OverlayScrim extends StatelessWidget {
+  final double opacity;
+  final List<Widget> children;
+  const _OverlayScrim({required this.children, this.opacity = 0.75});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white.withValues(alpha: opacity),
+      alignment: Alignment.center,
+      child: Column(mainAxisSize: MainAxisSize.min, children: children),
+    );
+  }
+}
+
+/// オーバーレイ用のグレー二次ボタン(「もどる」「あきらめる」)。
+/// ModalCloseButton とは余白が違う(横32)ため見た目を変えずに共通化できず、
+/// オーバーレイ専用として持つ(docs/review-findings.md #31)。
+class _GrayButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+  const _GrayButton({required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        backgroundColor: fieldGray,
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          color: ink2Color,
+        ),
+      ),
+    );
+  }
+}
 
 /// ミニゲーム開始前の説明オーバーレイ(CSS .gameOverlay 相当)。
 class GameStartOverlay extends StatelessWidget {
@@ -22,42 +66,32 @@ class GameStartOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white.withValues(alpha: 0.75),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 26, fontWeight: FontWeight.w800, color: inkColor)),
-          const SizedBox(height: 16),
-          Text(desc,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.7,
-                  fontWeight: FontWeight.w700,
-                  color: ink2Color)),
-          const SizedBox(height: 16),
-          StartButton(label: 'はじめる!', onPressed: onStart),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: onBack,
-            style: TextButton.styleFrom(
-              backgroundColor: fieldGray,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-            ),
-            child: const Text('もどる',
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: ink2Color)),
+    return _OverlayScrim(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: inkColor,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          desc,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.7,
+            fontWeight: FontWeight.w700,
+            color: ink2Color,
+          ),
+        ),
+        const SizedBox(height: 16),
+        StartButton(label: 'はじめる!', onPressed: onStart),
+        const SizedBox(height: 12),
+        _GrayButton(label: 'もどる', onPressed: onBack),
+      ],
     );
   }
 }
@@ -77,21 +111,21 @@ class GameEndOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white.withValues(alpha: 0.75),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 56)),
-          const SizedBox(height: 10),
-          Text(result,
-              style: const TextStyle(
-                  fontSize: 26, fontWeight: FontWeight.w800, color: inkColor)),
-          const SizedBox(height: 16),
-          StartButton(label: 'やったー!', onPressed: onDone),
-        ],
-      ),
+    return _OverlayScrim(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 56)),
+        const SizedBox(height: 10),
+        Text(
+          result,
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: inkColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        StartButton(label: 'やったー!', onPressed: onDone),
+      ],
     );
   }
 }
@@ -114,51 +148,47 @@ class GameOverOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white.withValues(alpha: 0.85),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('😣', style: TextStyle(fontSize: 56)),
-          const SizedBox(height: 10),
-          const Text('まちがえすぎ! ゲームオーバー',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.w800, color: inkColor)),
-          const SizedBox(height: 16),
-          Opacity(
-            opacity: canAfford ? 1 : 0.5,
+    return _OverlayScrim(
+      opacity: 0.85,
+      children: [
+        const Text('😣', style: TextStyle(fontSize: 56)),
+        const SizedBox(height: 10),
+        const Text(
+          'まちがえすぎ! ゲームオーバー',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: inkColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // コイン不足時は押せない見た目+無反応にする。終了は「あきらめる」
+        // だけに限定する(docs/review-findings.md #20)。
+        Opacity(
+          opacity: canAfford ? 1 : 0.5,
+          child: IgnorePointer(
+            ignoring: !canAfford,
             child: StartButton(
               label: '🪙$cost コインで つづける',
-              onPressed: canAfford ? onContinue : onGiveUp,
+              onPressed: onContinue,
             ),
           ),
-          if (!canAfford) ...[
-            const SizedBox(height: 8),
-            const Text('コインが たりないよ',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: ink2Color)),
-          ],
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: onGiveUp,
-            style: TextButton.styleFrom(
-              backgroundColor: fieldGray,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
+        ),
+        if (!canAfford) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'コインが たりないよ',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: ink2Color,
             ),
-            child: const Text('あきらめる',
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: ink2Color)),
           ),
         ],
-      ),
+        const SizedBox(height: 12),
+        _GrayButton(label: 'あきらめる', onPressed: onGiveUp),
+      ],
     );
   }
 }
@@ -211,9 +241,10 @@ class _GameCountdownState extends State<GameCountdown> {
             color: Colors.white,
             shadows: [
               Shadow(
-                  color: Color(0x40000000),
-                  offset: Offset(0, 6),
-                  blurRadius: 18),
+                color: Color(0x40000000),
+                offset: Offset(0, 6),
+                blurRadius: 18,
+              ),
             ],
           ),
         ),
@@ -255,10 +286,15 @@ class GameHeaderBar extends StatelessWidget {
       children: [
         BackIconButton(onTap: onBack),
         Expanded(
-          child: Text(title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w800, color: inkColor)),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: inkColor,
+            ),
+          ),
         ),
         SizedBox(width: trailingWidth),
       ],
@@ -278,7 +314,7 @@ class RoundProgressDots extends StatelessWidget {
     required this.total,
     required this.current,
     this.size = 14,
-    this.color = const Color(0xFF34C98E),
+    this.color = accentGreen,
     this.trackColor = const Color(0xFFDFE3EF),
   });
 

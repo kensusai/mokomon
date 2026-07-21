@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/species.dart';
 import '../logic/game_controller.dart';
 import '../models/game_state.dart';
-import '../widgets/creature_painter.dart';
+import 'creature_painter.dart';
 import 'ui_kit.dart';
 
 /// ずかんの操作結果。
@@ -27,7 +27,9 @@ class BookSwitch extends BookResult {
 /// 入手済みの子をタップすると交代([BookSwitch])、
 /// キング中は新しいたまごも迎えられる([BookNewEgg])。
 Future<BookResult?> showBookModal(
-    BuildContext context, GameController controller) {
+  BuildContext context,
+  GameController controller,
+) {
   return showDialog<BookResult>(
     context: context,
     builder: (dialogContext) {
@@ -66,28 +68,33 @@ Future<BookResult?> showBookModal(
                 : 'キングまで そだてると ずかんに とうろく! そだてた子は タップで こうたいできるよ',
             textAlign: TextAlign.center,
             style: const TextStyle(
-                fontSize: 13,
-                height: 1.6,
-                fontWeight: FontWeight.w700,
-                color: ink2Color),
+              fontSize: 13,
+              height: 1.6,
+              fontWeight: FontWeight.w700,
+              color: ink2Color,
+            ),
           ),
         ],
         footer: [
           if (kinged) ...[
             PressableGradient(
               colors: greenGradient,
-              onTap: () => Navigator.of(dialogContext)
-                  .pop(BookNewEgg(controller.newEgg())),
+              onTap: () => Navigator.of(
+                dialogContext,
+              ).pop(BookNewEgg(controller.newEgg())),
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 13),
                 child: Column(
                   children: [
                     Text('🥚', style: TextStyle(fontSize: 26)),
-                    Text('あたらしい たまごを むかえる',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white)),
+                    Text(
+                      'あたらしい たまごを むかえる',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -95,7 +102,9 @@ Future<BookResult?> showBookModal(
             const SizedBox(height: 10),
           ],
           ModalCloseButton(
-              label: 'とじる', onTap: () => Navigator.of(dialogContext).pop()),
+            label: 'とじる',
+            onTap: () => Navigator.of(dialogContext).pop(),
+          ),
         ],
       );
     },
@@ -145,15 +154,20 @@ class _BookCell extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           ColorFiltered(
-            colorFilter:
-                const ColorFilter.mode(Color(0xFFD5D9E6), BlendMode.srcIn),
+            colorFilter: const ColorFilter.mode(
+              Color(0xFFD5D9E6),
+              BlendMode.srcIn,
+            ),
             child: mini,
           ),
-          const Text('?',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFFAAB0C5))),
+          const Text(
+            '?',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFFAAB0C5),
+            ),
+          ),
         ],
       );
     }
@@ -167,9 +181,7 @@ class _BookCell extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: current
-                ? Border.all(color: const Color(0xFF34C98E), width: 3)
-                : null,
+            border: current ? Border.all(color: accentGreen, width: 3) : null,
           ),
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
           child: Column(
@@ -177,18 +189,24 @@ class _BookCell extends StatelessWidget {
             children: [
               SizedBox(width: 40, height: 40, child: mini),
               const SizedBox(height: 2),
-              Text(owned ? (nickname ?? sp.names[3]) : '???',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: owned ? inkColor : ink2Color)),
+              Text(
+                owned ? (nickname ?? sp.names[3]) : '???',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: owned ? inkColor : ink2Color,
+                ),
+              ),
               if (current)
-                const Text('そだてちゅう',
-                    style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF34C98E))),
+                const Text(
+                  'そだてちゅう',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: accentGreen,
+                  ),
+                ),
             ],
           ),
         ),

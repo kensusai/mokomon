@@ -12,8 +12,14 @@ void main() {
       expect(speciesList, hasLength(15));
       expect(speciesList[7].key, 'nyan');
       expect(speciesList[8].key, 'dandy');
-      expect(speciesList.sublist(9).map((s) => s.key).toList(),
-          ['mojya', 'guru', 'paku', 'nemu', 'robo', 'obake']);
+      expect(speciesList.sublist(9).map((s) => s.key).toList(), [
+        'mojya',
+        'guru',
+        'paku',
+        'nemu',
+        'robo',
+        'obake',
+      ]);
       expect(secretSpeciesIndex, 3); // 金のたまごは変わらず pika
       // 色・名前・絵文字が全種族で揃っている
       for (final sp in speciesList) {
@@ -24,29 +30,33 @@ void main() {
 
     test('display names follow the stage pattern', () {
       expect(
-          (GameState()
-                ..species = 7
-                ..stage = 1)
-              .displayName,
-          '🐱 にゃん');
+        (GameState()
+              ..species = 7
+              ..stage = 1)
+            .displayName,
+        '🐱 にゃん',
+      );
       expect(
-          (GameState()
-                ..species = 7
-                ..stage = 3)
-              .displayName,
-          '👑 キングにゃんこ');
+        (GameState()
+              ..species = 7
+              ..stage = 3)
+            .displayName,
+        '👑 キングにゃんこ',
+      );
       expect(
-          (GameState()
-                ..species = 8
-                ..stage = 2)
-              .displayName,
-          '🧔 ダンディ');
+        (GameState()
+              ..species = 8
+              ..stage = 2)
+            .displayName,
+        '🧔 ダンディ',
+      );
       expect(
-          (GameState()
-                ..species = 8
-                ..stage = 3)
-              .displayName,
-          '👑 キングダンディ');
+        (GameState()
+              ..species = 8
+              ..stage = 3)
+            .displayName,
+        '👑 キングダンディ',
+      );
     });
 
     test('collection bits for index 8 roundtrip through あいことば', () {
@@ -69,8 +79,9 @@ void main() {
       expect(drawn, containsAll([7, 8, 9, 10, 11, 12, 13, 14]));
     });
 
-    testWidgets('every species renders at every stage without throwing',
-        (tester) async {
+    testWidgets('every species renders at every stage without throwing', (
+      tester,
+    ) async {
       for (var sp = 0; sp < speciesList.length; sp++) {
         for (var stage = 1; stage <= 3; stage++) {
           for (final sad in [false, true]) {
@@ -78,13 +89,19 @@ void main() {
               MaterialApp(
                 home: CustomPaint(
                   size: const Size(300, 300),
-                  painter:
-                      CreaturePainter(speciesIndex: sp, stage: stage, sad: sad),
+                  painter: CreaturePainter(
+                    speciesIndex: sp,
+                    stage: stage,
+                    sad: sad,
+                  ),
                 ),
               ),
             );
-            expect(tester.takeException(), isNull,
-                reason: 'species=$sp stage=$stage sad=$sad');
+            expect(
+              tester.takeException(),
+              isNull,
+              reason: 'species=$sp stage=$stage sad=$sad',
+            );
           }
         }
       }

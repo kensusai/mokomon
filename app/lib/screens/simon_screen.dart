@@ -127,9 +127,14 @@ class _SimonScreenState extends State<SimonScreen>
       ],
       children: [
         const SizedBox(height: 6),
-        Text('${_game.sequence.length}れんぞく! $_hint',
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w800, color: ink2Color)),
+        Text(
+          '${_game.sequence.length}れんぞく! $_hint',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: ink2Color,
+          ),
+        ),
         Expanded(
           child: Center(
             child: ConstrainedBox(
@@ -140,9 +145,7 @@ class _SimonScreenState extends State<SimonScreen>
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                children: [
-                  for (var i = 0; i < simonPads; i++) _pad(i),
-                ],
+                children: [for (var i = 0; i < simonPads; i++) _pad(i)],
               ),
             ),
           ),
@@ -166,8 +169,10 @@ class _SimonScreenState extends State<SimonScreen>
           borderRadius: BorderRadius.circular(26),
           onTap: () => _tapPad(i),
           child: Center(
-            child: Text(const ['🌸', '💧', '🍀', '⭐'][i],
-                style: TextStyle(fontSize: lit ? 44 : 34)),
+            child: Text(
+              const ['🌸', '💧', '🍀', '⭐'][i],
+              style: TextStyle(fontSize: lit ? 44 : 34),
+            ),
           ),
         ),
       ),

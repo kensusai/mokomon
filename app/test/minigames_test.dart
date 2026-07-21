@@ -14,10 +14,11 @@ void main() {
   group('shared minigame reward (docs/game-design.md §5)', () {
     test('adds coins, happy +12 (clamped), xp +10', () {
       final c = GameController(
-          GameState()
-            ..stage = 1
-            ..happy = 95,
-          SaveStore());
+        GameState()
+          ..stage = 1
+          ..happy = 95,
+        SaveStore(),
+      );
       c.finishMinigame(7);
       expect(c.state.coins, 17);
       expect(c.state.happy, 100);
@@ -49,10 +50,12 @@ void main() {
 
     test('tap within 44px scores 1 for fruit and 3 for star', () {
       final g = CatchGame(rng: Random(1));
-      g.items.add(CatchItem(
-          x: 100, y: 100, vy: 100, emoji: '🍎', star: false, wobble: 0));
-      g.items.add(CatchItem(
-          x: 300, y: 300, vy: 100, emoji: '⭐', star: true, wobble: 0));
+      g.items.add(
+        CatchItem(x: 100, y: 100, vy: 100, emoji: '🍎', star: false, wobble: 0),
+      );
+      g.items.add(
+        CatchItem(x: 300, y: 300, vy: 100, emoji: '⭐', star: true, wobble: 0),
+      );
       expect(g.tapAt(100 + 43, 100), isNotNull);
       expect(g.score, 1);
       expect(g.tapAt(300, 300), isNotNull);
@@ -63,8 +66,16 @@ void main() {
 
     test('items falling past the bottom are removed', () {
       final g = CatchGame(rng: Random(1));
-      g.items.add(CatchItem(
-          x: 100, y: 590, vy: 10000, emoji: '🍎', star: false, wobble: 0));
+      g.items.add(
+        CatchItem(
+          x: 100,
+          y: 590,
+          vy: 10000,
+          emoji: '🍎',
+          star: false,
+          wobble: 0,
+        ),
+      );
       g.update(0.05, 400, 600);
       expect(g.items.where((i) => i.y > 650), isEmpty);
     });
@@ -132,7 +143,7 @@ void main() {
       // 不一致ペアを探す
       final remaining = [
         for (var i = 0; i < 12; i++)
-          if (!g.matched.contains(i)) i
+          if (!g.matched.contains(i)) i,
       ];
       final a = remaining[0];
       final b = remaining.firstWhere((i) => g.cards[i] != g.cards[a]);

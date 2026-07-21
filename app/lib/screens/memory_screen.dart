@@ -9,7 +9,7 @@ import '../widgets/game_overlays.dart';
 import '../widgets/minigame_scaffold.dart';
 import 'timer_bag.dart';
 
-/// ペアさがし(docs/game-design.md §5)。3×4=6ペア。
+/// ペアさがし(docs/game-design.md §5)。4×5=10ペア(こどもFBで増量)。
 class MemoryScreen extends StatefulWidget {
   final GameController controller;
 
@@ -162,7 +162,10 @@ class _MemoryCard extends StatelessWidget {
           color: front ? Colors.white : null,
           boxShadow: const [
             BoxShadow(
-                color: Color(0x1F3A3F52), blurRadius: 12, offset: Offset(0, 4)),
+              color: Color(0x1F3A3F52),
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
           ],
         ),
         alignment: Alignment.center,

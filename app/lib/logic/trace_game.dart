@@ -34,10 +34,16 @@ Path traceShapePath(String key) {
     case 'moon':
       return Path()
         ..moveTo(190, 40)
-        ..arcToPoint(const Offset(190, 260),
-            radius: const Radius.circular(115), clockwise: false)
-        ..arcToPoint(const Offset(190, 40),
-            radius: const Radius.circular(150), clockwise: true)
+        ..arcToPoint(
+          const Offset(190, 260),
+          radius: const Radius.circular(115),
+          clockwise: false,
+        )
+        ..arcToPoint(
+          const Offset(190, 40),
+          radius: const Radius.circular(150),
+          clockwise: true,
+        )
         ..close();
     case 'lightning':
       return Path()

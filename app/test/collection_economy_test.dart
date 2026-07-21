@@ -77,9 +77,11 @@ void main() {
     });
 
     test('pattern survives json roundtrip but not あいことば', () {
-      final s = GameState()..pattern = 'abc';
+      // #43 の境界検証があるため、フィクスチャは正しい base64 にする
+      const pattern = 'aGVsbG8=';
+      final s = GameState()..pattern = pattern;
       final viaJson = GameState()..loadJson(s.toJson());
-      expect(viaJson.pattern, 'abc');
+      expect(viaJson.pattern, pattern);
 
       final viaCode = GameState()..pattern = 'stale';
       expect(viaCode.loadCode(s.makeCode()), isTrue);
@@ -87,9 +89,11 @@ void main() {
     });
 
     test('newEgg clears the pattern', () {
-      final c = fresh(GameState()
-        ..stage = 3
-        ..pattern = 'abc');
+      final c = fresh(
+        GameState()
+          ..stage = 3
+          ..pattern = 'abc',
+      );
       c.newEgg();
       expect(c.state.pattern, isNull);
     });
@@ -98,8 +102,15 @@ void main() {
   group('expanded content (docs/game-design.md §3, §7, §13)', () {
     test('10 foods with the new entries', () {
       expect(foods, hasLength(10));
-      expect(foods.map((f) => f.key).toList().sublist(3),
-          ['onigiri', 'ramen', 'parfait', 'tamago', 'pizza', 'burger', 'ice']);
+      expect(foods.map((f) => f.key).toList().sublist(3), [
+        'onigiri',
+        'ramen',
+        'parfait',
+        'tamago',
+        'pizza',
+        'burger',
+        'ice',
+      ]);
     });
 
     test('40 shop items, appended after the original 6', () {

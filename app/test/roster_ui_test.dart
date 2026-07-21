@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/data/species.dart';
@@ -10,8 +11,11 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   testWidgets('rename via the name pill', (tester) async {
-    final c = await bootApp(tester,
-        state: GameState()..stage = 1, rng: NoPuffRandom());
+    final c = await bootApp(
+      tester,
+      state: GameState()..stage = 1,
+      rng: NoPuffRandom(),
+    );
 
     await tester.tap(find.text('🐣 もこ'));
     await tester.pump();
@@ -29,6 +33,36 @@ void main() {
     await drainTimers(tester);
   });
 
+  testWidgets('rename dialog disposes its text controller', (tester) async {
+    // docs/review-findings.md #25: 関数スコープの TextEditingController が
+    // 誰にも dispose されず、開くたびに未破棄の ChangeNotifier が残っていた。
+    final live = <Object>{};
+    void onEvent(ObjectEvent e) {
+      if (e.object is TextEditingController) {
+        if (e is ObjectCreated) live.add(e.object);
+        if (e is ObjectDisposed) live.remove(e.object);
+      }
+    }
+
+    FlutterMemoryAllocations.instance.addListener(onEvent);
+    addTearDown(
+      () => FlutterMemoryAllocations.instance.removeListener(onEvent),
+    );
+
+    await bootApp(tester, state: GameState()..stage = 1, rng: NoPuffRandom());
+    await tester.tap(find.text('🐣 もこ'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('✏️ なまえを つける'), findsOneWidget);
+
+    await tester.tap(find.text('とじる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(live, isEmpty, reason: 'ダイアログを閉じたらコントローラも破棄される');
+    await drainTimers(tester);
+  });
+
   testWidgets('rename is blocked on the egg stage', (tester) async {
     await bootApp(tester, state: GameState());
     await tester.tap(find.text('🥚 たまご'));
@@ -38,8 +72,9 @@ void main() {
     await drainTimers(tester);
   });
 
-  testWidgets('switch to a past king from the book keeps its dress-up',
-      (tester) async {
+  testWidgets('switch to a past king from the book keeps its dress-up', (
+    tester,
+  ) async {
     final state = GameState()
       ..stage = 1
       ..species = 1

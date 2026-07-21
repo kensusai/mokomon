@@ -5,15 +5,19 @@ import 'package:flutter/material.dart';
 
 import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
-import 'celebrate_overlay.dart';
+import '../models/game_state.dart';
 import 'confetti.dart';
 import 'creature_painter.dart';
+import 'ui_kit.dart';
 
 /// 進化カットシーン(docs/game-design.md §3)。
 /// 暗転 → 白シルエット振動2.4s → 白フラッシュ → 新形態リビール+紙吹雪。
 /// リビール時点で [GameController.applyEvolution] を呼び状態を確定する。
 Future<void> showEvolution(
-    BuildContext context, GameController controller, int newStage) {
+  BuildContext context,
+  GameController controller,
+  int newStage,
+) {
   return Navigator.of(context).push(
     PageRouteBuilder(
       opaque: true,
@@ -37,14 +41,21 @@ class _EvolutionScreen extends StatefulWidget {
 class _EvolutionScreenState extends State<_EvolutionScreen>
     with TickerProviderStateMixin {
   late final AnimationController _shake = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 2400));
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  );
   late final AnimationController _flash = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 900));
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
   late final AnimationController _pop = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 600));
-  late final AnimationController _rays =
-      AnimationController(vsync: this, duration: const Duration(seconds: 9))
-        ..repeat();
+    vsync: this,
+    duration: const Duration(milliseconds: 600),
+  );
+  late final AnimationController _rays = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 9),
+  )..repeat();
 
   final _timers = <Timer>[];
   var _revealed = false;
@@ -56,11 +67,13 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
     // カットシーン中はBGMを止めて演出音を主役にする
     widget.controller.sfx.syncBgm(suspend: true);
     widget.controller.sfx.play(Sfx.evoRiser);
-    _timers.add(Timer(const Duration(milliseconds: 2150), () {
-      if (!mounted) return;
-      _flash.forward(from: 0);
-      widget.controller.sfx.play(Sfx.shine);
-    }));
+    _timers.add(
+      Timer(const Duration(milliseconds: 2150), () {
+        if (!mounted) return;
+        _flash.forward(from: 0);
+        widget.controller.sfx.play(Sfx.shine);
+      }),
+    );
     _timers.add(Timer(const Duration(milliseconds: 2550), _reveal));
   }
 
@@ -138,11 +151,14 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
                   SizedBox(
                     height: 36,
                     child: _revealed
-                        ? Text(_text,
+                        ? Text(
+                            _text,
                             style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800))
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          )
                         : null,
                   ),
                   const SizedBox(height: 20),
@@ -170,7 +186,8 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
                         ? (t < 0.25 ? t / 0.25 : 1 - (t - 0.25) / 0.75)
                         : 0.0;
                     return Container(
-                        color: Colors.white.withValues(alpha: o.clamp(0, 1)));
+                      color: Colors.white.withValues(alpha: o.clamp(0, 1)),
+                    );
                   },
                 ),
               ),
@@ -182,7 +199,7 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
   }
 
   /// 進化前の姿を真っ白なシルエットで震わせる(CSS evoShake 相当)。
-  Widget _silhouette(dynamic s) {
+  Widget _silhouette(GameState s) {
     final old = CreaturePainter(
       speciesIndex: s.species,
       stage: widget.newStage - 1,
@@ -211,7 +228,7 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
     );
   }
 
-  Widget _revealCreature(dynamic s) {
+  Widget _revealCreature(GameState s) {
     return ScaleTransition(
       scale: TweenSequence<double>([
         TweenSequenceItem(tween: Tween(begin: 0.4, end: 1.15), weight: 60),
@@ -270,8 +287,12 @@ class _RaysPainter extends CustomPainter {
       canvas.drawPath(
         Path()
           ..moveTo(center.dx, center.dy)
-          ..arcTo(Rect.fromCircle(center: center, radius: radius), start, wedge,
-              false)
+          ..arcTo(
+            Rect.fromCircle(center: center, radius: radius),
+            start,
+            wedge,
+            false,
+          )
           ..close(),
         paint,
       );

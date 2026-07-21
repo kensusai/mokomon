@@ -56,10 +56,11 @@ class _CodeDialogBodyState extends State<_CodeDialogBody> {
           '「あいことば」を メモしておくと、べつの スマホや パソコンでも つづきから あそべるよ!\n(もようの おえかきは ひきつがれないよ)',
           textAlign: TextAlign.center,
           style: TextStyle(
-              fontSize: 12,
-              height: 1.7,
-              fontWeight: FontWeight.w700,
-              color: ink2Color),
+            fontSize: 12,
+            height: 1.7,
+            fontWeight: FontWeight.w700,
+            color: ink2Color,
+          ),
         ),
         const SizedBox(height: 12),
         _bigButton(
@@ -77,11 +78,14 @@ class _CodeDialogBodyState extends State<_CodeDialogBody> {
               border: Border.all(color: const Color(0xFFE3E6F0), width: 3),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: SelectableText(_code!,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: inkColor)),
+            child: SelectableText(
+              _code!,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: inkColor,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           ModalCloseButton(
@@ -100,7 +104,10 @@ class _CodeDialogBodyState extends State<_CodeDialogBody> {
         TextField(
           controller: _input,
           style: const TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w700, color: inkColor),
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: inkColor,
+          ),
           decoration: InputDecoration(
             hintText: 'あいことばを ここに いれてね',
             contentPadding: const EdgeInsets.all(10),
@@ -110,7 +117,7 @@ class _CodeDialogBodyState extends State<_CodeDialogBody> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFF34C98E), width: 3),
+              borderSide: const BorderSide(color: accentGreen, width: 3),
             ),
           ),
         ),
@@ -124,7 +131,9 @@ class _CodeDialogBodyState extends State<_CodeDialogBody> {
         ),
         const SizedBox(height: 10),
         ModalCloseButton(
-            label: 'とじる', onTap: () => Navigator.of(context).pop()),
+          label: 'とじる',
+          onTap: () => Navigator.of(context).pop(),
+        ),
       ],
     );
   }
@@ -145,11 +154,14 @@ class _CodeDialogBodyState extends State<_CodeDialogBody> {
           children: [
             Text(emoji, style: const TextStyle(fontSize: 20)),
             const SizedBox(width: 8),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
       ),

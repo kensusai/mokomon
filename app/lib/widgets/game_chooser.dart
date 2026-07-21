@@ -44,12 +44,15 @@ Future<String?> showGameChooser(BuildContext context) {
                       Text(emoji, style: const TextStyle(fontSize: 26)),
                       FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(title,
-                            maxLines: 1,
-                            style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white)),
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -60,7 +63,9 @@ Future<String?> showGameChooser(BuildContext context) {
       ],
       footer: [
         ModalCloseButton(
-            label: 'やめる', onTap: () => Navigator.of(dialogContext).pop()),
+          label: 'やめる',
+          onTap: () => Navigator.of(dialogContext).pop(),
+        ),
       ],
     ),
   );

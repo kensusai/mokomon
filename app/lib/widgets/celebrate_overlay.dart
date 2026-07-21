@@ -38,25 +38,33 @@ Future<void> showCelebrate(
             children: [
               _PulsingEmoji(emoji),
               const SizedBox(height: 10),
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: inkColor),
-                  textAlign: TextAlign.center),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: inkColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 6),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Text(desc,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: ink2Color),
-                    textAlign: TextAlign.center),
+                child: Text(
+                  desc,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: ink2Color,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
               const SizedBox(height: 20),
               StartButton(
-                  label: 'わーい!', onPressed: () => Navigator.of(context).pop()),
+                label: 'わーい!',
+                onPressed: () => Navigator.of(context).pop(),
+              ),
             ],
           ),
         ),
@@ -91,31 +99,10 @@ class _PulsingEmojiState extends State<_PulsingEmoji>
   Widget build(BuildContext context) {
     return ScaleTransition(
       scale: Tween(begin: 1.0, end: 1.15).animate(_c),
-      child: Text(widget.emoji,
-          style: const TextStyle(fontSize: 64), textAlign: TextAlign.center),
-    );
-  }
-}
-
-/// 緑の大きな開始ボタン(CSS .startbtn 相当)。共通利用。
-class StartButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-  const StartButton({super.key, required this.label, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return PressableGradient(
-      colors: greenGradient,
-      radius: 999,
-      onTap: onPressed,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-        child: Text(label,
-            style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Colors.white)),
+      child: Text(
+        widget.emoji,
+        style: const TextStyle(fontSize: 64),
+        textAlign: TextAlign.center,
       ),
     );
   }

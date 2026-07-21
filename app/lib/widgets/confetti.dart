@@ -63,8 +63,10 @@ class _ConfettiBurstState extends State<ConfettiBurst>
                               ((nowMs - p.delayMs) / p.durationMs),
                       child: Transform.rotate(
                         angle: 4 * pi * ((nowMs - p.delayMs) / p.durationMs),
-                        child:
-                            Text(p.emoji, style: const TextStyle(fontSize: 22)),
+                        child: Text(
+                          p.emoji,
+                          style: const TextStyle(fontSize: 22),
+                        ),
                       ),
                     ),
               ],

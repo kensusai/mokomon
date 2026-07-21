@@ -31,8 +31,11 @@ void main() {
       final freqs = [
         for (var i = 0; i < speciesList.length; i++) babbleBaseFreq(i),
       ];
-      expect(freqs.toSet().length, speciesList.length,
-          reason: 'species share a voice pitch: $freqs');
+      expect(
+        freqs.toSet().length,
+        speciesList.length,
+        reason: 'species share a voice pitch: $freqs',
+      );
       // 段の設計上27体までしか区別できない(超えたら段数を見直す)
       expect(speciesList.length, lessThanOrEqualTo(27));
     });
@@ -68,8 +71,9 @@ void main() {
       expect(c.state.xp, 0);
     });
 
-    testWidgets('tapping the bottom 30% of the creature triggers 💨',
-        (tester) async {
+    testWidgets('tapping the bottom 30% of the creature triggers 💨', (
+      tester,
+    ) async {
       final c = await bootApp(tester, state: GameState()..stage = 1);
 
       final rect = tester.getRect(find.byType(CreatureView));
@@ -92,28 +96,43 @@ void main() {
     const bellyLines = ['くすぐったい〜!', 'ぽんぽん だいすき', 'ぷにぷに でしょ?', 'ぽかぽか する〜'];
     const sideLines = ['ひゃっ!', 'そこ そこ〜!', 'わきわき くすぐったい!', 'なになに〜?'];
 
-    Future<void> expectZoneLine(WidgetTester tester, Offset Function(Rect) pos,
-        List<String> pool) async {
-      final c = await bootApp(tester,
-          state: GameState()..stage = 1, rng: NoPuffRandom());
+    Future<void> expectZoneLine(
+      WidgetTester tester,
+      Offset Function(Rect) pos,
+      List<String> pool,
+    ) async {
+      final c = await bootApp(
+        tester,
+        state: GameState()..stage = 1,
+        rng: NoPuffRandom(),
+      );
       final rect = tester.getRect(find.byType(CreatureView));
       await tester.tapAt(pos(rect));
       await tester.pump();
       expect(c.state.happy, 83); // なでなで +3
       expect(c.state.xp, 1);
-      expect(pool.any((line) => find.text(line).evaluate().isNotEmpty), isTrue,
-          reason: 'expected one of $pool');
+      expect(
+        pool.any((line) => find.text(line).evaluate().isNotEmpty),
+        isTrue,
+        reason: 'expected one of $pool',
+      );
       await drainTimers(tester);
     }
 
     testWidgets('head tap (top 34%)', (tester) async {
-      await expectZoneLine(tester,
-          (r) => Offset(r.center.dx, r.top + r.height * 0.15), headLines);
+      await expectZoneLine(
+        tester,
+        (r) => Offset(r.center.dx, r.top + r.height * 0.15),
+        headLines,
+      );
     });
 
     testWidgets('side tap (outer 30%)', (tester) async {
-      await expectZoneLine(tester,
-          (r) => Offset(r.left + r.width * 0.08, r.center.dy), sideLines);
+      await expectZoneLine(
+        tester,
+        (r) => Offset(r.left + r.width * 0.08, r.center.dy),
+        sideLines,
+      );
     });
 
     testWidgets('belly tap (center)', (tester) async {
@@ -126,10 +145,14 @@ void main() {
       await bootApp(tester, state: GameState()..stage = 1, rng: NoPuffRandom());
 
       bool hasMood(CreatureMood? mood) => tester
-          .widgetList(find.byWidgetPredicate((w) =>
-              w is CustomPaint &&
-              w.painter is CreaturePainter &&
-              (w.painter as CreaturePainter).mood == mood))
+          .widgetList(
+            find.byWidgetPredicate(
+              (w) =>
+                  w is CustomPaint &&
+                  w.painter is CreaturePainter &&
+                  (w.painter as CreaturePainter).mood == mood,
+            ),
+          )
           .isNotEmpty;
 
       expect(hasMood(null), isTrue); // 通常は種族の顔
@@ -150,14 +173,19 @@ void main() {
       await tester.tapAt(Offset(rect.center.dx, rect.top + rect.height * 0.9));
       await tester.pump();
       expect(
-          tester
-              .widgetList(find.byWidgetPredicate((w) =>
-                  w is CustomPaint &&
-                  w.painter is CreaturePainter &&
-                  (w.painter as CreaturePainter).mood ==
-                      CreatureMood.surprised))
-              .isNotEmpty,
-          isTrue);
+        tester
+            .widgetList(
+              find.byWidgetPredicate(
+                (w) =>
+                    w is CustomPaint &&
+                    w.painter is CreaturePainter &&
+                    (w.painter as CreaturePainter).mood ==
+                        CreatureMood.surprised,
+              ),
+            )
+            .isNotEmpty,
+        isTrue,
+      );
       await drainTimers(tester);
     });
   });
@@ -170,10 +198,14 @@ void main() {
       'あたらしい もよう だいすき!',
     ];
 
-    testWidgets('saving a drawing makes the creature celebrate',
-        (tester) async {
-      final c = await bootApp(tester,
-          state: GameState()..stage = 1, rng: NoPuffRandom());
+    testWidgets('saving a drawing makes the creature celebrate', (
+      tester,
+    ) async {
+      final c = await bootApp(
+        tester,
+        state: GameState()..stage = 1,
+        rng: NoPuffRandom(),
+      );
 
       await tester.tap(find.text('おえかき'));
       await tester.pump();
@@ -196,8 +228,10 @@ void main() {
       // ホームに戻って褒めセリフ
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      expect(praiseLines.any((line) => find.text(line).evaluate().isNotEmpty),
-          isTrue);
+      expect(
+        praiseLines.any((line) => find.text(line).evaluate().isNotEmpty),
+        isTrue,
+      );
 
       await drainTimers(tester);
     });
@@ -225,8 +259,9 @@ void main() {
       expect(restored.bgmTrack, 2);
     });
 
-    testWidgets('🎵 button cycles the track and shows the name',
-        (tester) async {
+    testWidgets('🎵 button cycles the track and shows the name', (
+      tester,
+    ) async {
       final c = await bootApp(tester, state: GameState()..stage = 1);
       await tester.tap(find.text('🎵'));
       await tester.pump();
@@ -247,8 +282,10 @@ void main() {
         }
       }
       // キャッシュされ、同じ入力は同一バイト列
-      expect(identical(synth.wavForBabble(0, 0), synth.wavForBabble(0, 0)),
-          isTrue);
+      expect(
+        identical(synth.wavForBabble(0, 0), synth.wavForBabble(0, 0)),
+        isTrue,
+      );
       // 種族が違えば別の声
       expect(synth.wavForBabble(0, 0), isNot(equals(synth.wavForBabble(5, 0))));
     });

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/widgets/creature_view.dart';
 import 'package:mokomon/data/foods.dart';
@@ -13,11 +14,12 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   GameController king({double sparkle = 0}) => GameController(
-      GameState()
-        ..stage = 3
-        ..kingSparkle = sparkle,
-      SaveStore(),
-      rng: NoPuffRandom());
+        GameState()
+          ..stage = 3
+          ..kingSparkle = sparkle,
+        SaveStore(),
+        rng: NoPuffRandom(),
+      );
 
   group('きらきらゲージ (docs/game-design.md §14)', () {
     test('accrues only for kings', () {
@@ -78,13 +80,16 @@ void main() {
   });
 
   group('king gift UI', () {
-    testWidgets('sparkle meter shows only for kings and gift celebrates',
-        (tester) async {
-      await bootApp(tester,
-          state: GameState()
-            ..stage = 3
-            ..kingSparkle = 95,
-          rng: NoPuffRandom());
+    testWidgets('sparkle meter shows only for kings and gift celebrates', (
+      tester,
+    ) async {
+      await bootApp(
+        tester,
+        state: GameState()
+          ..stage = 3
+          ..kingSparkle = 95,
+        rng: NoPuffRandom(),
+      );
       expect(find.text('✨'), findsWidgets); // きらきらメーター
 
       // なでなで(+6)で満タン → おみやげ演出
@@ -96,6 +101,54 @@ void main() {
 
       await tester.tap(find.text('わーい!'));
       await tester.pump();
+      await drainTimers(tester);
+    });
+
+    testWidgets('gift is deferred while another screen covers home', (
+      tester,
+    ) async {
+      // docs/review-findings.md #51: ミニゲーム中に満タンになっても、
+      // その画面の上にお祝いを被せず、ホーム復帰後に受け取る。
+      final c = await bootApp(
+        tester,
+        state: GameState()
+          ..stage = 3
+          ..kingSparkle = 80,
+        rng: NoPuffRandom(),
+      );
+
+      // ホームの上に別画面を積む(ミニゲーム相当)
+      final nav = tester.state<NavigatorState>(find.byType(Navigator));
+      nav.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('game')),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // ミニゲームクリア相当(+30 で満タン → gift 発生 → notify)
+      c.finishMinigame(10);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(
+        find.text('おうさまの おみやげ!'),
+        findsNothing,
+        reason: 'ゲーム画面の上にお祝いを被せない',
+      );
+
+      // ホームへ戻ると受け取れる(次の state 変化で消費)
+      nav.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      c.toggleSound(); // 何らかの notify
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('おうさまの おみやげ!'), findsOneWidget);
+
+      await tester.tap(find.text('わーい!'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 5)); // ジングル分
       await drainTimers(tester);
     });
 

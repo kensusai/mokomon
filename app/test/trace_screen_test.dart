@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mokomon/data/save_store.dart';
-import 'package:mokomon/logic/game_controller.dart';
-import 'package:mokomon/models/game_state.dart';
 import 'package:mokomon/screens/trace_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'helpers.dart';
 
 /// なぞってかこう(docs/game-design.md §5)。
 /// review-findings.md #13 で Future.delayed → Timer に変更したので、
@@ -12,15 +11,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  GameController controller() =>
-      GameController(GameState()..stage = 1, SaveStore());
-
-  Future<void> pumpScreen(WidgetTester tester, Widget screen) =>
-      tester.pumpWidget(MaterialApp(home: screen));
-
-  testWidgets('tracing all shapes advances rounds and finally pays out',
-      (tester) async {
-    final c = controller();
+  testWidgets('tracing all shapes advances rounds and finally pays out', (
+    tester,
+  ) async {
+    final c = stage1Controller();
     await pumpScreen(
       tester,
       TraceScreen(controller: c, shapes: const ['circle', 'heart', 'star']),
@@ -38,9 +32,10 @@ void main() {
     expect(find.textContaining('コイン!'), findsOneWidget);
   });
 
-  testWidgets('leaving the screen during the post-judge delay does not throw',
-      (tester) async {
-    final c = controller();
+  testWidgets('leaving the screen during the post-judge delay does not throw', (
+    tester,
+  ) async {
+    final c = stage1Controller();
     await pumpScreen(
       tester,
       TraceScreen(controller: c, shapes: const ['circle', 'heart', 'star']),
@@ -52,6 +47,6 @@ void main() {
     await tester.pump(); // タイマー開始、まだ発火前
 
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1)); // 保留タイマー・遷移を固定時間で流す
   });
 }

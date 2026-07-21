@@ -10,14 +10,12 @@ class Species {
 
   /// 名前ピルに付ける絵文字。プロトタイプの SPECIES[].names に対応。
   final List<String> emojis;
-  final bool secret;
 
   const Species({
     required this.key,
     required this.color,
     required this.names,
     required this.emojis,
-    this.secret = false,
   });
 }
 
@@ -45,7 +43,6 @@ const speciesList = <Species>[
     color: Color(0xFFFFD23E),
     names: ['きんのたまご', 'ぴか', 'ぴかりん', 'キングぴかりん'],
     emojis: ['🥚', '✨', '🌟', '👑'],
-    secret: true,
   ),
   Species(
     key: 'bero',

@@ -17,10 +17,13 @@ class StatMeter extends StatelessWidget {
     return Row(
       children: [
         SizedBox(
-            width: 28,
-            child: Text(icon,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22))),
+          width: 28,
+          child: Text(
+            icon,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 22),
+          ),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Container(

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import 'ui_kit.dart';
@@ -6,8 +8,11 @@ import 'ui_kit.dart';
 /// 悲しい顔バリアントは docs/game-design.md §4。
 
 /// 種族ごとの顔を描く(プロトタイプ faceSvg() の移植)。
-void paintCreatureFace(Canvas canvas,
-    {required int speciesIndex, required bool sad}) {
+void paintCreatureFace(
+  Canvas canvas, {
+  required int speciesIndex,
+  required bool sad,
+}) {
   switch (speciesIndex) {
     case 4:
       _faceBero(canvas, sad);
@@ -98,22 +103,24 @@ void _faceBero(Canvas canvas, bool sad) {
     ..close();
   canvas.drawPath(tongue, Paint()..color = const Color(0xFFFF7EB0));
   canvas.drawPath(
-      tongue,
-      Paint()
-        ..color = const Color(0xFFE85D94)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4
-        ..strokeJoin = StrokeJoin.round);
+    tongue,
+    Paint()
+      ..color = const Color(0xFFE85D94)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeJoin = StrokeJoin.round,
+  );
   final centerLine = Path()
     ..moveTo(154, 198)
     ..quadraticBezierTo(157, 215, 160, 226);
   canvas.drawPath(
-      centerLine,
-      Paint()
-        ..color = const Color(0xFFE85D94)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round);
+    centerLine,
+    Paint()
+      ..color = const Color(0xFFE85D94)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round,
+  );
 }
 
 /// buu: 小さな目 + 巨大ぶた鼻 + 出っ歯
@@ -121,27 +128,37 @@ void _faceBuu(Canvas canvas, bool sad) {
   canvas.drawCircle(const Offset(97, 136), 7, inkFill);
   canvas.drawCircle(const Offset(203, 136), 7, inkFill);
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(150, 168), width: 72, height: 54),
-      Paint()..color = const Color(0xFFFF9CB5));
+    Rect.fromCenter(center: const Offset(150, 168), width: 72, height: 54),
+    Paint()..color = const Color(0xFFFF9CB5),
+  );
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(150, 168), width: 72, height: 54),
-      Paint()
-        ..color = const Color(0xFFE37F9C)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4);
+    Rect.fromCenter(center: const Offset(150, 168), width: 72, height: 54),
+    Paint()
+      ..color = const Color(0xFFE37F9C)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4,
+  );
   final nostril = Paint()..color = const Color(0xFFD95F85);
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(136, 168), width: 16, height: 24),
-      nostril);
+    Rect.fromCenter(center: const Offset(136, 168), width: 16, height: 24),
+    nostril,
+  );
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(164, 168), width: 16, height: 24),
-      nostril);
+    Rect.fromCenter(center: const Offset(164, 168), width: 16, height: 24),
+    nostril,
+  );
 
   if (sad) {
     canvas.drawLine(
-        const Offset(82, 120), const Offset(108, 130), inkStroke(6));
+      const Offset(82, 120),
+      const Offset(108, 130),
+      inkStroke(6),
+    );
     canvas.drawLine(
-        const Offset(218, 120), const Offset(192, 130), inkStroke(6));
+      const Offset(218, 120),
+      const Offset(192, 130),
+      inkStroke(6),
+    );
     final mouth = Path()
       ..moveTo(134, 216)
       ..quadraticBezierTo(150, 205, 166, 216);
@@ -154,14 +171,17 @@ void _faceBuu(Canvas canvas, bool sad) {
   canvas.drawPath(mouth, inkStroke(6));
   for (final x in [133.0, 152.0]) {
     final tooth = RRect.fromRectAndRadius(
-        Rect.fromLTWH(x, 202, 15, 17), const Radius.circular(3));
+      Rect.fromLTWH(x, 202, 15, 17),
+      const Radius.circular(3),
+    );
     canvas.drawRRect(tooth, Paint()..color = Colors.white);
     canvas.drawRRect(
-        tooth,
-        Paint()
-          ..color = const Color(0xFFD8DBE8)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2);
+      tooth,
+      Paint()
+        ..color = const Color(0xFFD8DBE8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
   }
 }
 
@@ -169,25 +189,32 @@ void _faceBuu(Canvas canvas, bool sad) {
 void _faceMedama(Canvas canvas, bool sad) {
   canvas.save();
   canvas.translate(150, 93);
-  canvas.rotate((sad ? 6 : -3) * 3.14159265 / 180);
+  canvas.rotate((sad ? 6 : -3) * pi / 180);
   canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(-42, -7.5, 84, 15), const Radius.circular(7.5)),
-      inkFill);
+    RRect.fromRectAndRadius(
+      const Rect.fromLTWH(-42, -7.5, 84, 15),
+      const Radius.circular(7.5),
+    ),
+    inkFill,
+  );
   canvas.restore();
 
   canvas.drawCircle(const Offset(150, 142), 36, Paint()..color = Colors.white);
   canvas.drawCircle(const Offset(150, 142), 36, inkStroke(5));
   canvas.drawCircle(
-      const Offset(150, 146), 17, Paint()..color = const Color(0xFF6CC4FF));
+    const Offset(150, 146),
+    17,
+    Paint()..color = const Color(0xFF6CC4FF),
+  );
   canvas.drawCircle(const Offset(150, 146), 9, inkFill);
   canvas.drawCircle(const Offset(157, 138), 4.5, Paint()..color = Colors.white);
   _cheeks(canvas, 100, 200, 185);
 
   if (sad) {
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(150, 206), width: 20, height: 26),
-        inkFill);
+      Rect.fromCenter(center: const Offset(150, 206), width: 20, height: 26),
+      inkFill,
+    );
     return;
   }
   final mouth = Path()
@@ -197,9 +224,12 @@ void _faceMedama(Canvas canvas, bool sad) {
   canvas.drawPath(mouth, Paint()..color = const Color(0xFF8A4A5E));
   for (final x in [137.0, 151.0]) {
     canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromLTWH(x, 192, 11, 10), const Radius.circular(2)),
-        Paint()..color = Colors.white);
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(x, 192, 11, 10),
+        const Radius.circular(2),
+      ),
+      Paint()..color = Colors.white,
+    );
   }
 }
 
@@ -222,12 +252,13 @@ void _faceNyan(Canvas canvas, bool sad) {
 
   // 鼻(小さな逆三角)
   canvas.drawPath(
-      Path()
-        ..moveTo(143, 172)
-        ..lineTo(157, 172)
-        ..lineTo(150, 181)
-        ..close(),
-      Paint()..color = const Color(0xFFFF6EA6));
+    Path()
+      ..moveTo(143, 172)
+      ..lineTo(157, 172)
+      ..lineTo(150, 181)
+      ..close(),
+    Paint()..color = const Color(0xFFFF6EA6),
+  );
 
   final mouth = Path();
   if (sad) {
@@ -251,11 +282,14 @@ void _faceDandy(Canvas canvas, bool sad) {
   void brow(double cx, double cy, double deg) {
     canvas.save();
     canvas.translate(cx, cy);
-    canvas.rotate(deg * 3.14159265 / 180);
+    canvas.rotate(deg * pi / 180);
     canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            const Rect.fromLTWH(-26, -8, 52, 16), const Radius.circular(8)),
-        inkFill);
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(-26, -8, 52, 16),
+        const Radius.circular(8),
+      ),
+      inkFill,
+    );
     canvas.restore();
   }
 
@@ -265,21 +299,23 @@ void _faceDandy(Canvas canvas, bool sad) {
   // ヒゲ(こげ茶・先端カール)
   final hige = Paint()..color = const Color(0xFF5C4033);
   canvas.drawPath(
-      Path()
-        ..moveTo(150, 172)
-        ..cubicTo(132, 160, 100, 162, 86, 178)
-        ..cubicTo(80, 186, 86, 196, 96, 194)
-        ..cubicTo(118, 190, 140, 184, 150, 180)
-        ..close(),
-      hige);
+    Path()
+      ..moveTo(150, 172)
+      ..cubicTo(132, 160, 100, 162, 86, 178)
+      ..cubicTo(80, 186, 86, 196, 96, 194)
+      ..cubicTo(118, 190, 140, 184, 150, 180)
+      ..close(),
+    hige,
+  );
   canvas.drawPath(
-      Path()
-        ..moveTo(150, 172)
-        ..cubicTo(168, 160, 200, 162, 214, 178)
-        ..cubicTo(220, 186, 214, 196, 204, 194)
-        ..cubicTo(182, 190, 160, 184, 150, 180)
-        ..close(),
-      hige);
+    Path()
+      ..moveTo(150, 172)
+      ..cubicTo(168, 160, 200, 162, 214, 178)
+      ..cubicTo(220, 186, 214, 196, 204, 194)
+      ..cubicTo(182, 190, 160, 184, 150, 180)
+      ..close(),
+    hige,
+  );
   canvas.drawCircle(const Offset(90, 190), 8, hige);
   canvas.drawCircle(const Offset(210, 190), 8, hige);
 
@@ -313,10 +349,20 @@ void _faceMojya(Canvas canvas, bool sad) {
 /// guru: ぐるぐる目+ふらふらの口
 void _faceGuru(Canvas canvas, bool sad) {
   for (final cx in [112.0, 188.0]) {
-    canvas.drawArc(Rect.fromCircle(center: Offset(cx, 150), radius: 15), 0, 4.7,
-        false, inkStroke(6));
-    canvas.drawArc(Rect.fromCircle(center: Offset(cx, 150), radius: 7), 3.1,
-        4.7, false, inkStroke(5));
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(cx, 150), radius: 15),
+      0,
+      4.7,
+      false,
+      inkStroke(6),
+    );
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(cx, 150), radius: 7),
+      3.1,
+      4.7,
+      false,
+      inkStroke(5),
+    );
   }
   _cheeks(canvas, 95, 205, 182);
   // ふらふら波線の口(悲しいときは波が下向きに)
@@ -350,10 +396,13 @@ void _facePaku(Canvas canvas, bool sad) {
   canvas.clipPath(mouth);
   // 上の歯と舌
   canvas.drawRect(
-      const Rect.fromLTWH(92, 138, 116, 22), Paint()..color = Colors.white);
+    const Rect.fromLTWH(92, 138, 116, 22),
+    Paint()..color = Colors.white,
+  );
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(150, 236), width: 84, height: 52),
-      Paint()..color = const Color(0xFFFF7EB0));
+    Rect.fromCenter(center: const Offset(150, 236), width: 84, height: 52),
+    Paint()..color = const Color(0xFFFF7EB0),
+  );
   canvas.restore();
 }
 
@@ -374,22 +423,28 @@ void _faceNemu(Canvas canvas, bool sad) {
   canvas.drawPath(mouth, inkStroke(5));
   // よだれ
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(168, 210), width: 12, height: 18),
-      Paint()..color = const Color(0xAA9CD8FF));
+    Rect.fromCenter(center: const Offset(168, 210), width: 12, height: 18),
+    Paint()..color = const Color(0xAA9CD8FF),
+  );
 }
 
 /// robo: 四角い目+ギザギザの口
 void _faceRobo(Canvas canvas, bool sad) {
   for (final cx in [112.0, 188.0]) {
     final r = RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx, 148), width: 34, height: 28),
-        const Radius.circular(6));
+      Rect.fromCenter(center: Offset(cx, 148), width: 34, height: 28),
+      const Radius.circular(6),
+    );
     canvas.drawRRect(r, Paint()..color = Colors.white);
     canvas.drawRRect(r, inkStroke(5));
     canvas.drawRect(
-        Rect.fromCenter(
-            center: Offset(cx, sad ? 154 : 148), width: 12, height: 12),
-        inkFill);
+      Rect.fromCenter(
+        center: Offset(cx, sad ? 154 : 148),
+        width: 12,
+        height: 12,
+      ),
+      inkFill,
+    );
   }
   final mouth = Path()..moveTo(120, sad ? 204 : 196);
   final amp = sad ? -10.0 : 10.0;
@@ -405,11 +460,13 @@ void _faceRobo(Canvas canvas, bool sad) {
 /// obake: うつろな たて長の目+まんまるの口
 void _faceObake(Canvas canvas, bool sad) {
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(115, 148), width: 20, height: 34),
-      inkFill);
+    Rect.fromCenter(center: const Offset(115, 148), width: 20, height: 34),
+    inkFill,
+  );
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(185, 148), width: 20, height: 34),
-      inkFill);
+    Rect.fromCenter(center: const Offset(185, 148), width: 20, height: 34),
+    inkFill,
+  );
   if (sad) {
     final mouth = Path()
       ..moveTo(132, 206)
@@ -417,13 +474,15 @@ void _faceObake(Canvas canvas, bool sad) {
     canvas.drawPath(mouth, inkStroke(6));
     // なみだ
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(107, 176), width: 10, height: 16),
-        Paint()..color = const Color(0xAA9CD8FF));
+      Rect.fromCenter(center: const Offset(107, 176), width: 10, height: 16),
+      Paint()..color = const Color(0xAA9CD8FF),
+    );
     return;
   }
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(150, 202), width: 34, height: 42),
-      inkFill);
+    Rect.fromCenter(center: const Offset(150, 202), width: 34, height: 42),
+    inkFill,
+  );
 }
 
 // ---------- リアクション用の大げさ表情(全種族共通・一時的に顔を差し替える) ----------
@@ -446,10 +505,20 @@ void paintExpressionFace(Canvas canvas, {required CreatureMood mood}) {
 /// にっこり: ∩∩の目+大きく開いた口+ほっぺ
 void _happyFace(Canvas canvas) {
   final eye = inkStroke(9);
-  canvas.drawArc(Rect.fromCircle(center: const Offset(112, 152), radius: 18),
-      3.14159, 3.14159, false, eye);
-  canvas.drawArc(Rect.fromCircle(center: const Offset(188, 152), radius: 18),
-      3.14159, 3.14159, false, eye);
+  canvas.drawArc(
+    Rect.fromCircle(center: const Offset(112, 152), radius: 18),
+    pi,
+    pi,
+    false,
+    eye,
+  );
+  canvas.drawArc(
+    Rect.fromCircle(center: const Offset(188, 152), radius: 18),
+    pi,
+    pi,
+    false,
+    eye,
+  );
 
   final cheek = Paint()
     ..color = const Color(0xFFFF9CC2).withValues(alpha: 0.85);
@@ -465,8 +534,9 @@ void _happyFace(Canvas canvas) {
   canvas.save();
   canvas.clipPath(mouth);
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(150, 228), width: 56, height: 34),
-      Paint()..color = const Color(0xFFFF7EB0));
+    Rect.fromCenter(center: const Offset(150, 228), width: 56, height: 34),
+    Paint()..color = const Color(0xFFFF7EB0),
+  );
   canvas.restore();
 }
 
@@ -480,32 +550,57 @@ void _surprisedFace(Canvas canvas) {
   }
   // 高く上がった眉
   final brow = inkStroke(7);
-  canvas.drawArc(Rect.fromCircle(center: const Offset(112, 118), radius: 16),
-      3.4, 2.6, false, brow);
-  canvas.drawArc(Rect.fromCircle(center: const Offset(188, 118), radius: 16),
-      3.4, 2.6, false, brow);
+  canvas.drawArc(
+    Rect.fromCircle(center: const Offset(112, 118), radius: 16),
+    3.4,
+    2.6,
+    false,
+    brow,
+  );
+  canvas.drawArc(
+    Rect.fromCircle(center: const Offset(188, 118), radius: 16),
+    3.4,
+    2.6,
+    false,
+    brow,
+  );
   // 「お」の口
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(150, 202), width: 22, height: 28),
-      inkFill);
+    Rect.fromCenter(center: const Offset(150, 202), width: 22, height: 28),
+    inkFill,
+  );
 }
 
 /// あーん: とじた目+大きく開けた口+舌(ごはん用)
 void _yumFace(Canvas canvas) {
   final eye = inkStroke(8);
-  canvas.drawArc(Rect.fromCircle(center: const Offset(112, 148), radius: 15),
-      3.14159, 3.14159, false, eye);
-  canvas.drawArc(Rect.fromCircle(center: const Offset(188, 148), radius: 15),
-      3.14159, 3.14159, false, eye);
+  canvas.drawArc(
+    Rect.fromCircle(center: const Offset(112, 148), radius: 15),
+    pi,
+    pi,
+    false,
+    eye,
+  );
+  canvas.drawArc(
+    Rect.fromCircle(center: const Offset(188, 148), radius: 15),
+    pi,
+    pi,
+    false,
+    eye,
+  );
   _cheeks(canvas, 92, 208, 176);
 
-  final mouth =
-      Rect.fromCenter(center: const Offset(150, 205), width: 62, height: 46);
+  final mouth = Rect.fromCenter(
+    center: const Offset(150, 205),
+    width: 62,
+    height: 46,
+  );
   canvas.drawOval(mouth, inkFill);
   canvas.save();
   canvas.clipPath(Path()..addOval(mouth));
   canvas.drawOval(
-      Rect.fromCenter(center: const Offset(150, 222), width: 44, height: 26),
-      Paint()..color = const Color(0xFFFF7EB0));
+    Rect.fromCenter(center: const Offset(150, 222), width: 44, height: 26),
+    Paint()..color = const Color(0xFFFF7EB0),
+  );
   canvas.restore();
 }

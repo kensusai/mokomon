@@ -33,7 +33,7 @@ class _CountScreenState extends State<CountScreen>
   void resetMistakes() => _game.continueAfterFail();
 
   void _choose(int index) {
-    if (_ended || gameOver) return;
+    if (_ended || finishing || gameOver) return;
     handleGuess(
       correct: _game.guess(index),
       failed: _game.failed,
@@ -60,9 +60,14 @@ class _CountScreenState extends State<CountScreen>
       ],
       children: [
         const SizedBox(height: 6),
-        Text('「${_game.target}」は なんこ?',
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w800, color: ink2Color)),
+        Text(
+          '「${_game.target}」は なんこ?',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: ink2Color,
+          ),
+        ),
         Expanded(
           child: Center(
             child: ConstrainedBox(
@@ -105,11 +110,14 @@ class _CountScreenState extends State<CountScreen>
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: Center(
-              child: Text('${_game.choices[i]}',
-                  style: const TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color: inkColor)),
+              child: Text(
+                '${_game.choices[i]}',
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: inkColor,
+                ),
+              ),
             ),
           ),
         ),

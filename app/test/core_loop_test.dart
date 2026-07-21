@@ -58,13 +58,15 @@ void main() {
 
   group('feed (docs/game-design.md §3)', () {
     test('applies cost and gains with clamping', () {
-      final c = fresh(GameState()
-        ..stage = 1
-        ..coins = 10
-        ..hunger = 50
-        ..happy = 90);
+      final c = fresh(
+        GameState()
+          ..stage = 1
+          ..coins = 10
+          ..hunger = 50
+          ..happy = 90,
+      );
       final cake = foods.firstWhere((f) => f.key == 'cake');
-      expect(c.feed(cake), isTrue);
+      expect(c.feed(cake), FeedOutcome.fed);
       expect(c.state.coins, 0);
       expect(c.state.hunger, 95); // 50 + 45
       expect(c.state.happy, 100); // 90 + 14 clamped
@@ -72,10 +74,12 @@ void main() {
     });
 
     test('fails without enough coins and changes nothing', () {
-      final c = fresh(GameState()
-        ..stage = 1
-        ..coins = 2);
-      expect(c.feed(foods.first), isFalse);
+      final c = fresh(
+        GameState()
+          ..stage = 1
+          ..coins = 2,
+      );
+      expect(c.feed(foods.first), FeedOutcome.notEnoughCoins);
       expect(c.state.coins, 2);
       expect(c.state.hunger, 80);
     });
@@ -124,9 +128,11 @@ void main() {
     });
 
     test('applyEvolution to stage 2 does not register collection', () {
-      final c = fresh(GameState()
-        ..stage = 1
-        ..xp = 30);
+      final c = fresh(
+        GameState()
+          ..stage = 1
+          ..xp = 30,
+      );
       c.applyEvolution(2);
       expect(c.state.stage, 2);
       expect(c.state.collection[0], isFalse);
@@ -183,17 +189,19 @@ void main() {
       expect(GameState().displayName, '🥚 たまご');
       expect((GameState()..stage = 1).displayName, '🐣 もこ');
       expect(
-          (GameState()
-                ..species = 3
-                ..stage = 0)
-              .displayName,
-          '🥚 きんのたまご');
+        (GameState()
+              ..species = 3
+              ..stage = 0)
+            .displayName,
+        '🥚 きんのたまご',
+      );
       expect(
-          (GameState()
-                ..species = 5
-                ..stage = 3)
-              .displayName,
-          '👑 キングぶー');
+        (GameState()
+              ..species = 5
+              ..stage = 3)
+            .displayName,
+        '👑 キングぶー',
+      );
     });
   });
 }

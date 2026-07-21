@@ -33,11 +33,12 @@ class EggPainter extends CustomPainter {
     }
     canvas.drawPath(shell, fill);
     canvas.drawPath(
-        shell,
-        Paint()
-          ..color = golden ? const Color(0xFFF0B429) : const Color(0xFFF3C98B)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 5);
+      shell,
+      Paint()
+        ..color = golden ? const Color(0xFFF0B429) : const Color(0xFFF3C98B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5,
+    );
 
     final spot = Paint()
       ..color = golden ? const Color(0xFFFFD23E) : const Color(0xFFFFD9A0);

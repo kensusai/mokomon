@@ -10,8 +10,16 @@ class Food {
   final int happy;
   final int xp;
 
-  const Food(this.key, this.emoji, this.name, this.desc, this.cost, this.hunger,
-      this.happy, this.xp);
+  const Food(
+    this.key,
+    this.emoji,
+    this.name,
+    this.desc,
+    this.cost,
+    this.hunger,
+    this.happy,
+    this.xp,
+  );
 }
 
 const foods = <Food>[

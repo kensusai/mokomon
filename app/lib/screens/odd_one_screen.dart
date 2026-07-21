@@ -33,7 +33,7 @@ class _OddOneScreenState extends State<OddOneScreen>
   void resetMistakes() => _game.continueAfterFail();
 
   void _choose(int index) {
-    if (_ended || gameOver) return;
+    if (_ended || finishing || gameOver) return;
     handleGuess(
       correct: _game.guess(index),
       failed: _game.failed,
@@ -63,11 +63,14 @@ class _OddOneScreenState extends State<OddOneScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('1つだけ ちがうのが いるよ!',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: ink2Color)),
+              const Text(
+                '1つだけ ちがうのが いるよ!',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: ink2Color,
+                ),
+              ),
               const SizedBox(height: 14),
               Center(
                 child: ConstrainedBox(

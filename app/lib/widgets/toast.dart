@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 /// 画面下部のトースト。プロトタイプの toast() に対応(2.2秒で消える)。
+/// コイン不足の共通トースト(ショップ2箇所+ごはんで同一文言だったため集約。
+/// docs/review-findings.md #59)。
+void showNotEnoughCoinsToast(BuildContext context) =>
+    showToast(context, 'コインが たりないよ! 「あそぶ」で あつめよう🎮');
+
 void showToast(BuildContext context, String message) {
   final overlay = Overlay.of(context);
   late final OverlayEntry entry;
@@ -55,8 +60,10 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
             opacity: _opacity(_c.value).clamp(0, 1),
             child: Center(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xEB3A3F52),
                   borderRadius: BorderRadius.circular(999),
