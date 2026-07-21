@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/audio/sound_synth.dart';
+import 'package:mokomon/data/species.dart';
 import 'package:mokomon/data/save_store.dart';
 import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/models/game_state.dart';
@@ -24,6 +25,23 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   group('SoundSynth', () {
+    // species % 9 で折り返していたため、10体目以降が既存の種族と同じ
+    // 声の高さになり「新しい卵なのに声が変わらない」状態だった。
+    test('every species gets a distinct babble pitch', () {
+      final freqs = [
+        for (var i = 0; i < speciesList.length; i++) babbleBaseFreq(i),
+      ];
+      expect(freqs.toSet().length, speciesList.length,
+          reason: 'species share a voice pitch: $freqs');
+      // 段の設計上27体までしか区別できない(超えたら段数を見直す)
+      expect(speciesList.length, lessThanOrEqualTo(27));
+    });
+
+    test('babble audio actually differs between colliding species', () {
+      final synth = SoundSynth();
+      expect(synth.wavForBabble(0, 0), isNot(equals(synth.wavForBabble(9, 0))));
+    });
+
     test('renders valid mono 16bit WAV for every sfx', () {
       final synth = SoundSynth();
       for (final sfx in Sfx.values) {

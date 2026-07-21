@@ -39,6 +39,36 @@ void main() {
     await drainTimers(tester);
   });
 
+  // 2匹目以降(図鑑から新しいたまごを迎えたあと)も、孵化の演出と
+  // ファンファーレが1匹目と同じように出ること。
+  testWidgets('a second egg hatches with the same birth celebration',
+      (tester) async {
+    final c = await boot(
+        tester,
+        GameState()
+          ..stage = 3
+          ..xp = 400);
+    c.newEgg();
+    await tester.pump();
+    expect(c.state.stage, 0);
+
+    final egg = find.byType(CreatureView);
+    await tester.tap(egg);
+    await tester.pump();
+    await tester.tap(egg);
+    await tester.pump();
+    await tester.tap(egg);
+    await tester.pump();
+
+    expect(find.text('うまれた!'), findsOneWidget);
+    expect(c.state.stage, 1);
+
+    await tester.tap(find.text('わーい!'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await drainTimers(tester);
+  });
+
   testWidgets('feeding an apple from the food modal costs 3 coins',
       (tester) async {
     final c = await boot(tester, GameState()..stage = 1);

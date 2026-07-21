@@ -526,6 +526,16 @@ List<_Tone> _bgmTones() {
 
 const _sampleRate = 22050;
 
+/// 種族ごとの「声の高さ」(Hz)。しゃべり声はこれを基準に合成する。
+///
+/// 42Hz刻みで9段だけ用意していたため、10体目以降が `species % 9` で1体目から
+/// 順に同じ高さへ折り返し、種族を追加するたびに「声が変わらない」いきものが
+/// 増えていた。9体を1周として、周ごとに14Hzずらすことで全種族を別の高さにする
+/// (既存9体の高さは変えない)。3周目で42Hzに達し衝突するため、種族が27体を
+/// 超えるときは段数を見直すこと — `polish_test.dart` が衝突を検知する。
+double babbleBaseFreq(int species) =>
+    300.0 + (species % 9) * 42 + (species ~/ 9) * 14;
+
 /// 効果音を 16bit PCM WAV バイト列として合成する(実行時・アセット不要)。
 /// 再生は audioplayers の BytesSource(呼び出し側)。
 class SoundSynth {
@@ -540,7 +550,7 @@ class SoundSynth {
   Uint8List wavForBabble(int species, int variant) {
     return _babbleCache.putIfAbsent(species * 16 + variant, () {
       final rng = Random(species * 31 + variant * 7 + 5);
-      final base = 300.0 + (species % 9) * 42; // 種族の声の高さ
+      final base = babbleBaseFreq(species);
       final syllables = 5 + rng.nextInt(4);
       final tones = <_Tone>[];
       var t = 0.0;
