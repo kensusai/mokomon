@@ -63,6 +63,7 @@ lib/
 | `MokoModalShell(header:, body:, footer:)` | widgets/ui_kit.dart | 全ダイアログ共通の外枠。`header`/`footer` は常に画面内に固定表示、`body` だけが画面高さ(`MediaQuery`)に応じて必要な時にスクロールする。新しいダイアログは必ずこの3引数の形で組み立て、操作ボタンは `footer` に置く(こどもFB「ボタンまでスクロールせず見えるように」) |
 | `CreaturePainter` / `EggPainter` | widgets/ | いきもの・たまご描画(300x300座標系) |
 | `CreatureView` | widgets/creature_view.dart | 浮遊・グロー・オーラ・タップアニメ込みの表示 |
+| `bgDecor(themeKey)` | widgets/bg_decor.dart | 背景テーマごとの飾り(雲・月・あわ・木など)を `Positioned` のリストで返す。ホームの `Stack` に spread して使う。背景テーマを追加したら `case` を1つ足す(docs/game-design.md §13) |
 | `ParticleField` | widgets/particles.dart | 絵文字パーティクル(上昇/💨ドリフト) |
 | `ConfettiBurst` | widgets/confetti.dart | 紙吹雪 |
 | `showToast` | widgets/toast.dart | 下部トースト(2.2秒) |
