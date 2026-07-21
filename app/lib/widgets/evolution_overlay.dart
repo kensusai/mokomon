@@ -23,7 +23,7 @@ Future<void> showEvolution(
       opaque: true,
       transitionDuration: Duration.zero,
       reverseTransitionDuration: Duration.zero,
-      pageBuilder: (_, __, ___) =>
+      pageBuilder: (_, _, _) =>
           _EvolutionScreen(controller: controller, newStage: newStage),
     ),
   );

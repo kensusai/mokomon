@@ -8,7 +8,7 @@
 
 ## 技術スタック
 
-- Flutter / Dart(SDK ^3.5.0)。依存は `shared_preferences`(セーブ)と `audioplayers`(効果音)のみ
+- Flutter / Dart(SDK ^3.8.0)。依存は `shared_preferences`(セーブ)と `audioplayers`(効果音)のみ
 - 効果音は実行時にWAV合成(`app/lib/audio/`)、フォントは M PLUS Rounded 1c(`app/assets/fonts/`、OFL)
 
 ## ディレクトリ構成

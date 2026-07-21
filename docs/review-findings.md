@@ -589,4 +589,4 @@
 - 問題: #40 の flutter_lints 更新で下限宣言が嘘になった(3.5〜3.7 のツールチェーンでは resolve 不能)。CLAUDE.md の「SDK ^3.5.0」も同様に古い。
 - 根拠: pubspec / pubspec.lock / pub cache 内の flutter_lints 6.0.0 の environment を確認。
 - 提案: `environment: sdk` を実際の下限(最低 ^3.8.0)へ上げ、CLAUDE.md も同じ変更で更新する。
-- ステータス: 未対応
+- ステータス: 対応済み(pubspec の `sdk: ^3.8.0` へ更新、CLAUDE.md / docs/tech-stack.md の記載も同時修正。言語バージョン 3.7+ で Dart の新フォーマッタ(tall style)が有効になるため全ファイルを一括整形(別コミット)し、あわせて lint 指摘(ワイルドカード引数)2件を解消。全テストパス・analyze クリーン)
