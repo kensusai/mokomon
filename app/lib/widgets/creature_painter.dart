@@ -121,30 +121,23 @@ class CreaturePainter extends CustomPainter {
     // 手(腕)は stage2 から生える
     if (stage >= 2) {
       final arm = Paint()..color = shade(bodyColor, -18);
-      canvas.save();
-      canvas.translate(50, 194);
-      canvas.rotate(-35 * 3.14159265 / 180);
-      canvas.drawOval(
-          Rect.fromCenter(center: Offset.zero, width: 46, height: 22), arm);
-      canvas.restore();
-      canvas.save();
-      canvas.translate(250, 194);
-      canvas.rotate(35 * 3.14159265 / 180);
-      canvas.drawOval(
-          Rect.fromCenter(center: Offset.zero, width: 46, height: 22), arm);
-      canvas.restore();
+      for (final side in const [-1, 1]) {
+        canvas.save();
+        canvas.translate(150 + side * 100, 194);
+        canvas.rotate(side * 35 * 3.14159265 / 180);
+        canvas.drawOval(
+            Rect.fromCenter(center: Offset.zero, width: 46, height: 22), arm);
+        canvas.restore();
+      }
     }
 
     final foot = Paint()..color = shade(bodyColor, -36);
     final footW = stage == 1 ? 38.0 : 48.0;
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: const Offset(112, 258), width: footW, height: 24),
-        foot);
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: const Offset(188, 258), width: footW, height: 24),
-        foot);
+    for (final x in const [112.0, 188.0]) {
+      canvas.drawOval(
+          Rect.fromCenter(center: Offset(x, 258), width: footW, height: 24),
+          foot);
+    }
   }
 
   /// キングの王家マント(体の後ろ・すその波+金の縁取り)。
@@ -414,7 +407,7 @@ class CreaturePainter extends CustomPainter {
         final stroke = inkStroke(6);
         canvas.drawCircle(const Offset(112, 150), 25, stroke);
         canvas.drawCircle(const Offset(188, 150), 25, stroke);
-        canvas.drawLine(const Offset(137, 150), const Offset(163, 150), stroke);
+        _eyeBridge(canvas, 137, 163, 150, inkColor, 6);
       case 'sunglass':
         canvas.drawRRect(
             RRect.fromRectAndRadius(const Rect.fromLTWH(84, 131, 54, 36),
@@ -557,21 +550,11 @@ class CreaturePainter extends CustomPainter {
       case 'heartglass': // ハートめがね
         _heart(canvas, const Offset(112, 148), 52, const Color(0xFFFF4F96));
         _heart(canvas, const Offset(188, 148), 52, const Color(0xFFFF4F96));
-        canvas.drawLine(
-            const Offset(134, 148),
-            const Offset(166, 148),
-            Paint()
-              ..color = const Color(0xFFFF4F96)
-              ..strokeWidth = 6);
+        _eyeBridge(canvas, 134, 166, 148, const Color(0xFFFF4F96), 6);
       case 'starglass': // ほしめがね
         _star(canvas, const Offset(112, 150), 58, const Color(0xFFFFB300));
         _star(canvas, const Offset(188, 150), 58, const Color(0xFFFFB300));
-        canvas.drawLine(
-            const Offset(134, 150),
-            const Offset(166, 150),
-            Paint()
-              ..color = const Color(0xFFFFB300)
-              ..strokeWidth = 6);
+        _eyeBridge(canvas, 134, 166, 150, const Color(0xFFFFB300), 6);
       case 'groucho': // はなメガネ(めがね+大きな鼻+ひげ)
         final stroke = Paint()
           ..color = inkColor
@@ -579,7 +562,7 @@ class CreaturePainter extends CustomPainter {
           ..strokeWidth = 6;
         canvas.drawCircle(const Offset(112, 148), 24, stroke);
         canvas.drawCircle(const Offset(188, 148), 24, stroke);
-        canvas.drawLine(const Offset(136, 148), const Offset(164, 148), stroke);
+        _eyeBridge(canvas, 136, 164, 148, inkColor, 6);
         canvas.drawOval(
             Rect.fromCenter(
                 center: const Offset(150, 178), width: 34, height: 42),
@@ -908,7 +891,7 @@ class CreaturePainter extends CustomPainter {
         final frame = inkStroke(5);
         canvas.drawCircle(const Offset(112, 150), 25, frame);
         canvas.drawCircle(const Offset(188, 150), 25, frame);
-        canvas.drawLine(const Offset(137, 150), const Offset(163, 150), frame);
+        _eyeBridge(canvas, 137, 163, 150, inkColor, 5);
         const rainbow = [
           Color(0xFFFF6EA6),
           Color(0xFFFFAB49),
@@ -928,6 +911,17 @@ class CreaturePainter extends CustomPainter {
           canvas.restore();
         }
     }
+  }
+
+  /// めがね系アイテムの左右レンズをつなぐ橋。
+  static void _eyeBridge(Canvas canvas, double leftX, double rightX, double y,
+      Color color, double strokeWidth) {
+    canvas.drawLine(
+        Offset(leftX, y),
+        Offset(rightX, y),
+        Paint()
+          ..color = color
+          ..strokeWidth = strokeWidth);
   }
 
   /// アイテム用の小さな星(中心・幅・色)。

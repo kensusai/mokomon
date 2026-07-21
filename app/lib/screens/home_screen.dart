@@ -110,6 +110,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final _particleKey = GlobalKey<ParticleFieldState>();
   final _rng = Random();
 
+  /// 「あそぶ」「おえかき」の連打で画面が二重に積まれないためのガード。
+  /// docs/review-findings.md #15。
+  bool _navigating = false;
+
   String _hintMsg = '';
   bool _hintVisible = false;
   int _hintSeq = 0; // 変わるたびに吹き出しのポップ演出をやり直す
@@ -336,28 +340,35 @@ class _HomeScreenState extends State<HomeScreen> {
       _hint('まずは たまごを タッチしてみて!');
       return;
     }
-    final key = await showGameChooser(context);
-    if (key == null || !mounted) return;
-    // ゲーム中は専用BGM(2曲からランダムでメリハリ)
-    c.sfx.playOverrideBgm(_rng.nextBool() ? Sfx.bgmGame : Sfx.bgmGame2);
-    final screen = switch (key) {
-      'catch' => CatchScreen(controller: c),
-      'puzzle' => PuzzleScreen(controller: c),
-      'whack' => WhackScreen(controller: c),
-      'balloon' => BalloonScreen(controller: c),
-      'order' => OrderScreen(controller: c),
-      'trace' => TraceScreen(controller: c),
-      'odd' => OddOneScreen(controller: c),
-      'count' => CountScreen(controller: c),
-      'simon' => SimonScreen(controller: c),
-      _ => MemoryScreen(controller: c),
-    };
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
-    c.sfx.clearOverrideBgm(); // ホームBGMへ戻す(勝利曲中なら曲側が戻す)
-    if (!mounted) return;
-    c.sfx.playBabble(s.species);
-    _hint('たのしかった〜!');
-    await _checkEvolve();
+    if (_navigating) return;
+    _navigating = true;
+    try {
+      final key = await showGameChooser(context);
+      if (key == null || !mounted) return;
+      // ゲーム中は専用BGM(2曲からランダムでメリハリ)
+      c.sfx.playOverrideBgm(_rng.nextBool() ? Sfx.bgmGame : Sfx.bgmGame2);
+      final screen = switch (key) {
+        'catch' => CatchScreen(controller: c),
+        'puzzle' => PuzzleScreen(controller: c),
+        'whack' => WhackScreen(controller: c),
+        'balloon' => BalloonScreen(controller: c),
+        'order' => OrderScreen(controller: c),
+        'trace' => TraceScreen(controller: c),
+        'odd' => OddOneScreen(controller: c),
+        'count' => CountScreen(controller: c),
+        'simon' => SimonScreen(controller: c),
+        _ => MemoryScreen(controller: c),
+      };
+      await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => screen));
+      c.sfx.clearOverrideBgm(); // ホームBGMへ戻す(勝利曲中なら曲側が戻す)
+      if (!mounted) return;
+      c.sfx.playBabble(s.species);
+      _hint('たのしかった〜!');
+      await _checkEvolve();
+    } finally {
+      _navigating = false;
+    }
   }
 
   Future<void> _onPaintPressed() async {
@@ -365,13 +376,19 @@ class _HomeScreenState extends State<HomeScreen> {
       _hint('うまれてから おえかき できるよ!');
       return;
     }
-    c.sfx.playOverrideBgm(Sfx.bgmPaint); // おえかき中はまったり曲
-    final saved = await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => PaintScreen(controller: c)));
-    c.sfx.clearOverrideBgm();
-    if (saved == true && mounted) {
-      _celebratePaint();
-      await _checkEvolve();
+    if (_navigating) return;
+    _navigating = true;
+    try {
+      c.sfx.playOverrideBgm(Sfx.bgmPaint); // おえかき中はまったり曲
+      final saved = await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => PaintScreen(controller: c)));
+      c.sfx.clearOverrideBgm();
+      if (saved == true && mounted) {
+        _celebratePaint();
+        await _checkEvolve();
+      }
+    } finally {
+      _navigating = false;
     }
   }
 

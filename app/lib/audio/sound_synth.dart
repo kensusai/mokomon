@@ -40,6 +40,14 @@ class _Tone {
   const _Tone(this.freq, this.dur, this.wave, this.vol, [this.delay = 0]);
 }
 
+/// 和音: 複数周波数に同じ長さ・音量の _Tone を追加する。
+void _addChord(List<_Tone> tones, List<num> freqs, double at, double dur,
+    [double vol = 0.1, _Wave wave = _Wave.triangle]) {
+  for (final f in freqs) {
+    tones.add(_Tone(f.toDouble(), dur, wave, vol, at));
+  }
+}
+
 /// プロトタイプの sfx 定義をそのまま移植。
 final Map<Sfx, List<_Tone>> _recipes = {
   Sfx.tap: const [_Tone(600, 0.06, _Wave.sine, 0.1)],
@@ -313,9 +321,7 @@ List<_Tone> _victoryTuneTones() {
     tones.add(_Tone(run[i], 0.14, _Wave.square, 0.08, i * 0.09));
   }
   // 和音ドン!
-  for (final f in const <double>[523, 659, 784]) {
-    tones.add(_Tone(f, 0.5, _Wave.triangle, 0.1, 0.5));
-  }
+  _addChord(tones, const [523, 659, 784], 0.5, 0.5);
   tones.add(const _Tone(131, 0.5, _Wave.sine, 0.07, 0.5));
   // メロディ(100bpm)
   const beat = 0.6;
@@ -343,9 +349,7 @@ List<_Tone> _victoryTuneTones() {
   }
   // 大団円の和音+シャンシャン
   const endAt = 1.3 + 12 * 0.3 + 0.3; // ≒ 5.2
-  for (final f in const <double>[523, 659, 784, 1047]) {
-    tones.add(_Tone(f, 1.6, _Wave.triangle, 0.11, endAt));
-  }
+  _addChord(tones, const [523, 659, 784, 1047], endAt, 1.6, 0.11);
   tones.add(const _Tone(1319, 1.6, _Wave.triangle, 0.09, endAt));
   tones.add(const _Tone(1568, 1.2, _Wave.sine, 0.08, endAt + 0.3));
   tones.add(const _Tone(2093, 0.9, _Wave.sine, 0.06, endAt + 0.6));
@@ -360,15 +364,9 @@ List<_Tone> _megaFanfareTones() {
     for (var i = 0; i < run.length; i++)
       _Tone(run[i], 0.1, _Wave.square, 0.07, i * 0.07),
   ];
-  void chord(List<num> freqs, double at, double dur, [double vol = 0.1]) {
-    for (final f in freqs) {
-      tones.add(_Tone(f.toDouble(), dur, _Wave.triangle, vol, at));
-    }
-  }
-
-  chord(const [523, 659, 784], 0.66, 0.28);
-  chord(const [587, 740, 880], 0.98, 0.28);
-  chord(const [523, 659, 784, 1047], 1.32, 0.85, 0.11);
+  _addChord(tones, const [523, 659, 784], 0.66, 0.28);
+  _addChord(tones, const [587, 740, 880], 0.98, 0.28);
+  _addChord(tones, const [523, 659, 784, 1047], 1.32, 0.85, 0.11);
   tones.add(const _Tone(1568, 0.8, _Wave.sine, 0.08, 1.32));
   tones.add(const _Tone(2093, 0.5, _Wave.sine, 0.06, 1.6));
   return tones;

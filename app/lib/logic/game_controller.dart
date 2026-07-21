@@ -409,7 +409,11 @@ class GameController extends ChangeNotifier {
   /// 変更を通知し保存する。書き込みは操作のたび(仕様)。
   void _commit() {
     notifyListeners();
-    _store.save(state);
+    // 保存失敗でアプリを止めない。未処理の Future エラーにもしない
+    // (docs/review-findings.md #16)。
+    _store.save(state).catchError((Object e) {
+      debugPrint('save failed: $e');
+    });
   }
 
   @override
