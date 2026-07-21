@@ -15,6 +15,34 @@ void main() {
   Future<GameController> boot(WidgetTester tester, [GameState? state]) =>
       bootApp(tester, state: state ?? (GameState()..stage = 1));
 
+  // 20テーマ(+おまかせ)= 5行あるのに高さが固定320pxで、4行目以降が
+  // 見切れて表示されていた。スクロールも無効なので手が届かない。
+  testWidgets('shop: every background cell fits inside the grid viewport',
+      (tester) async {
+    await boot(tester, GameState()..stage = 1);
+
+    await tester.tap(find.text('おみせ'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('🖼️ はいけい'), warnIfMissed: true);
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    // 最後のセル(おまかせ)が生成され、かつ枠内に収まっていること。
+    // 高さが足りないと sliver がカリングして生成すらされない。
+    expect(find.text('おまかせ'), findsOneWidget);
+    final grid = tester.getRect(find.byType(GridView).first);
+    expect(tester.getRect(find.text('おまかせ')).bottom,
+        lessThanOrEqualTo(grid.bottom),
+        reason: 'last background cell is clipped');
+
+    await tester.tap(find.text('とじる'));
+    await tester.pump(const Duration(seconds: 3));
+    await drainTimers(tester);
+  });
+
   testWidgets('shop: buying a ribbon deducts coins and equips it',
       (tester) async {
     final c = await boot(

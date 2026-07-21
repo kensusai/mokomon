@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../data/backgrounds.dart';
@@ -7,7 +9,8 @@ import 'toast.dart';
 import 'ui_kit.dart';
 
 /// きせかえショップ(docs/game-design.md §7)。
-/// 「あたま/かお/はいけい」のタブ切替で、各タブは1画面(スクロールなし)。
+/// 「あたま/かお/はいけい」のタブ切替。各タブのグリッドは中でスクロールせず、
+/// 全セルが並ぶ高さを確保する(入りきらない場合はモーダル本体側がスクロールする)。
 Future<void> showShopModal(BuildContext context, GameController controller) {
   return showDialog(
     context: context,
@@ -44,14 +47,16 @@ Future<void> showShopModal(BuildContext context, GameController controller) {
             ),
           ],
           body: [
-            SizedBox(
-              height: 320,
-              child: TabBarView(
-                children: [
-                  _itemGrid(controller, ItemSlot.head),
-                  _itemGrid(controller, ItemSlot.face),
-                  _bgGrid(controller),
-                ],
+            LayoutBuilder(
+              builder: (context, box) => SizedBox(
+                height: _tallestTabHeight(box.maxWidth),
+                child: TabBarView(
+                  children: [
+                    _itemGrid(controller, ItemSlot.head),
+                    _itemGrid(controller, ItemSlot.face),
+                    _bgGrid(controller),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -72,13 +77,41 @@ Future<void> showShopModal(BuildContext context, GameController controller) {
   );
 }
 
+/// グリッド共通のレイアウト定数。3タブとも同じ列数・間隔で並べる。
+const _cols = 4;
+const _gap = 8.0;
+const _itemAspect = 0.74;
+const _bgAspect = 0.8;
+
+/// [count] 個のセルを [_cols] 列で並べたときに必要な高さ。
+double _gridHeight(double width, int count, double aspect) {
+  final cell = (width - _gap * (_cols - 1)) / _cols;
+  final rows = (count / _cols).ceil();
+  return rows * (cell / aspect) + (rows - 1) * _gap;
+}
+
+/// `TabBarView` は子の高さを測れないので、3タブのうち一番背の高いものに合わせる。
+///
+/// 固定値にしていたときは、アイテムや背景テーマを増やすたびに下の行が
+/// 見切れ、`NeverScrollableScrollPhysics` のせいで手も届かなくなっていた
+/// (実際には sliver がカリングして生成すらされない)。データ件数から
+/// 算出することで、追加しても無言で壊れないようにする。
+double _tallestTabHeight(double width) {
+  int slotCount(ItemSlot slot) => shopItems.where((i) => i.slot == slot).length;
+  return [
+    _gridHeight(width, slotCount(ItemSlot.head), _itemAspect),
+    _gridHeight(width, slotCount(ItemSlot.face), _itemAspect),
+    _gridHeight(width, bgThemes.length + 1, _bgAspect), // +1 = おまかせ
+  ].reduce(max);
+}
+
 Widget _itemGrid(GameController controller, ItemSlot slot) => GridView.count(
-      crossAxisCount: 4,
+      crossAxisCount: _cols,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      childAspectRatio: 0.74,
+      mainAxisSpacing: _gap,
+      crossAxisSpacing: _gap,
+      childAspectRatio: _itemAspect,
       children: [
         for (final item in shopItems)
           if (item.slot == slot) _ShopCell(item: item, controller: controller),
@@ -87,12 +120,12 @@ Widget _itemGrid(GameController controller, ItemSlot slot) => GridView.count(
 
 /// 背景テーマの切替(コインで購入・端末ローカルで所持管理)。docs/game-design.md §13。
 Widget _bgGrid(GameController controller) => GridView.count(
-      crossAxisCount: 4,
+      crossAxisCount: _cols,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      childAspectRatio: 0.8,
+      mainAxisSpacing: _gap,
+      crossAxisSpacing: _gap,
+      childAspectRatio: _bgAspect,
       children: [
         for (var i = 0; i < bgThemes.length; i++)
           _BgCell(index: i, controller: controller),
