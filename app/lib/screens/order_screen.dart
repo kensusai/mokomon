@@ -4,6 +4,7 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/minigame_scaffold.dart';
 import '../widgets/ui_kit.dart';
 import 'mistake_game_over.dart';
 import 'timer_bag.dart';
@@ -58,65 +59,42 @@ class _OrderScreenState extends State<OrderScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFDFF7E8), Color(0xFFE3F0FF)],
+    return MinigameScaffold(
+      title: '🔢 じゅんばんタッチ',
+      topColor: const Color(0xFFDFF7E8),
+      bottomColor: const Color(0xFFE3F0FF),
+      overlays: [
+        if (_ended)
+          GameEndOverlay(
+            emoji: '🏆',
+            result: 'ぜんぶ おせた! +$_coins コイン!',
+            onDone: () => Navigator.of(context).pop(),
           ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    GameHeaderBar(
-                      title: '🔢 じゅんばんタッチ',
-                      onBack: () => Navigator.of(context).pop(),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                        'つぎは 「${_game.finished ? '✨' : _game.next}」!  はやく タッチ!',
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: ink2Color)),
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 330),
-                          child: GridView.count(
-                            crossAxisCount: 3,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            children: [
-                              for (var i = 0; i < _game.cells.length; i++)
-                                _cell(i),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        if (gameOver) buildGameOverOverlay(context),
+      ],
+      children: [
+        const SizedBox(height: 6),
+        Text('つぎは 「${_game.finished ? '✨' : _game.next}」!  はやく タッチ!',
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w800, color: ink2Color)),
+        Expanded(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 330),
+              child: GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                children: [
+                  for (var i = 0; i < _game.cells.length; i++) _cell(i),
+                ],
               ),
-              if (_ended)
-                GameEndOverlay(
-                  emoji: '🏆',
-                  result: 'ぜんぶ おせた! +$_coins コイン!',
-                  onDone: () => Navigator.of(context).pop(),
-                ),
-              if (gameOver) buildGameOverOverlay(context),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 

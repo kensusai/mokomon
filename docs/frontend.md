@@ -67,7 +67,8 @@ lib/
 | `ConfettiBurst` | widgets/confetti.dart | 紙吹雪 |
 | `showToast` | widgets/toast.dart | 下部トースト(2.2秒) |
 | `showCelebrate` / `StartButton` | widgets/celebrate_overlay.dart | お祝いオーバーレイ・緑大ボタン |
-| `GameStartOverlay` / `GameEndOverlay` / `GameOverOverlay` / `GameCountdown` / `BackIconButton` / `GameHeaderBar` / `RoundProgressDots` | widgets/game_overlays.dart | ミニゲーム共通UI。`GameHeaderBar`(戻る+タイトル)と `RoundProgressDots`(ラウンド進捗ドット)は新しいミニゲーム画面でも必ず使う |
+| `GameStartOverlay` / `GameEndOverlay` / `GameOverOverlay` / `GameCountdown` / `BackIconButton` / `GameHeaderBar` / `RoundProgressDots` | widgets/game_overlays.dart | ミニゲーム共通UI。`RoundProgressDots`(ラウンド進捗ドット)は新しいミニゲーム画面でも必ず使う。`GameHeaderBar` は通常 `MinigameScaffold` 経由で使う |
+| `MinigameScaffold(title:, topColor:, bottomColor:, children:, overlays:)` | widgets/minigame_scaffold.dart | ミニゲーム画面の外枠(縦グラデ背景+`SafeArea`+ヘッダー行)。`children` がヘッダー下の本体、`overlays` が全面に重ねるオーバーレイ。**新しいミニゲーム画面は `Scaffold` を直接書かずこれを使う**(catch/balloon/whack のアーケード系は `TimedArcadeGameMixin` 側の独自レイアウト) |
 | `MistakeGameOverMixin` | screens/mistake_game_over.dart | 正誤判定つきミニゲームの「ミス上限→ゲームオーバー→コインで続行」配線をまとめた mixin。`GameController get controller` と `void resetMistakes()` を実装して使う(例: puzzle/odd_one/order/count screen)。`TimerBagMixin` の上に乗るので `with TimerBagMixin<X>, MistakeGameOverMixin<X>` の順で付ける |
 | `TimerBagMixin` | screens/timer_bag.dart | 遅延処理の `Timer` をまとめて持ち `dispose()` で自動キャンセルする mixin。`later(Duration, VoidCallback)` を使う(コールバックは `mounted` が false なら発火しない)。**画面で `Timer` を直接 new しない**(繰り返し発火する `Timer.periodic` のみ例外) |
 

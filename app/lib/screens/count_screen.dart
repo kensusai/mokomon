@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/minigame_scaffold.dart';
 import '../widgets/ui_kit.dart';
 import 'mistake_game_over.dart';
 import 'timer_bag.dart';
@@ -44,72 +45,51 @@ class _CountScreenState extends State<CountScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFE6F7FF), Color(0xFFFFF3E0)],
+    return MinigameScaffold(
+      title: '🧮 かぞえてタッチ',
+      topColor: const Color(0xFFE6F7FF),
+      bottomColor: const Color(0xFFFFF3E0),
+      overlays: [
+        if (_ended)
+          GameEndOverlay(
+            emoji: '🧮',
+            result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
+            onDone: () => Navigator.of(context).pop(),
           ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    GameHeaderBar(
-                      title: '🧮 かぞえてタッチ',
-                      onBack: () => Navigator.of(context).pop(),
-                    ),
-                    const SizedBox(height: 6),
-                    Text('「${_game.target}」は なんこ?',
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: ink2Color)),
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 340),
-                          child: Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              for (final e in _game.items)
-                                Text(e, style: const TextStyle(fontSize: 34)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        for (var i = 0; i < _game.choices.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 12),
-                          Expanded(child: _choiceButton(i)),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _dots(),
-                  ],
-                ),
+        if (gameOver) buildGameOverOverlay(context),
+      ],
+      children: [
+        const SizedBox(height: 6),
+        Text('「${_game.target}」は なんこ?',
+            style: const TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w800, color: ink2Color)),
+        Expanded(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 340),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final e in _game.items)
+                    Text(e, style: const TextStyle(fontSize: 34)),
+                ],
               ),
-              if (_ended)
-                GameEndOverlay(
-                  emoji: '🧮',
-                  result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
-                  onDone: () => Navigator.of(context).pop(),
-                ),
-              if (gameOver) buildGameOverOverlay(context),
-            ],
+            ),
           ),
         ),
-      ),
+        Row(
+          children: [
+            for (var i = 0; i < _game.choices.length; i++) ...[
+              if (i > 0) const SizedBox(width: 12),
+              Expanded(child: _choiceButton(i)),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        _dots(),
+      ],
     );
   }
 

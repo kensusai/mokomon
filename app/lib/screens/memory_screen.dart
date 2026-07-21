@@ -6,6 +6,7 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/minigame_scaffold.dart';
 import 'timer_bag.dart';
 
 /// ペアさがし(docs/game-design.md §5)。3×4=6ペア。
@@ -55,66 +56,47 @@ class _MemoryScreenState extends State<MemoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFE2F3FF), Color(0xFFFFF0E2)],
+    return MinigameScaffold(
+      title: '🃏 ペアさがし',
+      topColor: const Color(0xFFE2F3FF),
+      bottomColor: const Color(0xFFFFF0E2),
+      trailingWidth: 40,
+      overlays: [
+        if (_ended)
+          GameEndOverlay(
+            emoji: '🎉',
+            result: 'ぜんぶ みつけた! +$memoryReward コイン!',
+            onDone: () => Navigator.of(context).pop(),
           ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    GameHeaderBar(
-                      title: '🃏 ペアさがし',
-                      trailingWidth: 40,
-                      onBack: () => Navigator.of(context).pop(),
+      ],
+      children: [
+        Expanded(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 330),
+              child: GridView.count(
+                crossAxisCount: 4,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 4 / 5,
+                children: [
+                  for (var i = 0; i < _game.cards.length; i++)
+                    _MemoryCard(
+                      key: ValueKey('mem-$i'),
+                      emoji: _game.cards[i],
+                      faceUp:
+                          _game.faceUp.contains(i) || _game.matched.contains(i),
+                      matched: _game.matched.contains(i),
+                      onTap: () => _flip(i),
                     ),
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 330),
-                          child: GridView.count(
-                            crossAxisCount: 4,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 8,
-                            crossAxisSpacing: 8,
-                            childAspectRatio: 4 / 5,
-                            children: [
-                              for (var i = 0; i < _game.cards.length; i++)
-                                _MemoryCard(
-                                  key: ValueKey('mem-$i'),
-                                  emoji: _game.cards[i],
-                                  faceUp: _game.faceUp.contains(i) ||
-                                      _game.matched.contains(i),
-                                  matched: _game.matched.contains(i),
-                                  onTap: () => _flip(i),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
-              if (_ended)
-                GameEndOverlay(
-                  emoji: '🎉',
-                  result: 'ぜんぶ みつけた! +$memoryReward コイン!',
-                  onDone: () => Navigator.of(context).pop(),
-                ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

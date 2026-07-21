@@ -6,6 +6,7 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/minigame_scaffold.dart';
 import '../widgets/ui_kit.dart';
 import '../widgets/shape_painter.dart';
 import 'mistake_game_over.dart';
@@ -84,53 +85,34 @@ class _PuzzleScreenState extends State<PuzzleScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFF3EDFF), Color(0xFFE8F9EF)],
+    return MinigameScaffold(
+      title: '🧩 おなじの どれ?',
+      topColor: const Color(0xFFF3EDFF),
+      bottomColor: const Color(0xFFE8F9EF),
+      trailingWidth: 40,
+      overlays: [
+        if (_ended)
+          GameEndOverlay(
+            emoji: '🏆',
+            result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
+            onDone: () => Navigator.of(context).pop(),
           ),
-        ),
-        child: SafeArea(
-          child: Stack(
+        if (gameOver) buildGameOverOverlay(context),
+      ],
+      children: [
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    GameHeaderBar(
-                      title: '🧩 おなじの どれ?',
-                      trailingWidth: 40,
-                      onBack: () => Navigator.of(context).pop(),
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _targetCard(),
-                          const SizedBox(height: 16),
-                          _choices(),
-                          const SizedBox(height: 16),
-                          _dots(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (_ended)
-                GameEndOverlay(
-                  emoji: '🏆',
-                  result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
-                  onDone: () => Navigator.of(context).pop(),
-                ),
-              if (gameOver) buildGameOverOverlay(context),
+              _targetCard(),
+              const SizedBox(height: 16),
+              _choices(),
+              const SizedBox(height: 16),
+              _dots(),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 

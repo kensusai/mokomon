@@ -6,6 +6,7 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/minigames.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/minigame_scaffold.dart';
 import '../widgets/ui_kit.dart';
 import 'timer_bag.dart';
 
@@ -110,64 +111,43 @@ class _SimonScreenState extends State<SimonScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFEFE9FF), Color(0xFFE3F6FF)],
+    return MinigameScaffold(
+      title: '💡 おぼえてタッチ',
+      topColor: const Color(0xFFEFE9FF),
+      bottomColor: const Color(0xFFE3F6FF),
+      overlays: [
+        if (_phase == _Phase.ended)
+          GameEndOverlay(
+            emoji: _game.reward > 0 ? '💡' : '🙈',
+            result: _game.reward > 0
+                ? '+${_game.reward} コイン げっと!'
+                : 'ざんねん! また ちょうせんしてね',
+            onDone: () => Navigator.of(context).pop(),
           ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    GameHeaderBar(
-                      title: '💡 おぼえてタッチ',
-                      onBack: () => Navigator.of(context).pop(),
-                    ),
-                    const SizedBox(height: 6),
-                    Text('${_game.sequence.length}れんぞく! $_hint',
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: ink2Color)),
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 320),
-                          child: GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            children: [
-                              for (var i = 0; i < simonPads; i++) _pad(i),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+      ],
+      children: [
+        const SizedBox(height: 6),
+        Text('${_game.sequence.length}れんぞく! $_hint',
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w800, color: ink2Color)),
+        Expanded(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                children: [
+                  for (var i = 0; i < simonPads; i++) _pad(i),
+                ],
               ),
-              if (_phase == _Phase.ended)
-                GameEndOverlay(
-                  emoji: _game.reward > 0 ? '💡' : '🙈',
-                  result: _game.reward > 0
-                      ? '+${_game.reward} コイン げっと!'
-                      : 'ざんねん! また ちょうせんしてね',
-                  onDone: () => Navigator.of(context).pop(),
-                ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 

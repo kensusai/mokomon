@@ -6,6 +6,7 @@ import '../audio/sound_synth.dart';
 import '../logic/game_controller.dart';
 import '../logic/trace_game.dart';
 import '../widgets/game_overlays.dart';
+import '../widgets/minigame_scaffold.dart';
 import '../widgets/ui_kit.dart';
 import 'timer_bag.dart';
 
@@ -64,107 +65,80 @@ class _TraceScreenState extends State<TraceScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFE8E4FF), Color(0xFFFFF3E0)],
+    return MinigameScaffold(
+      title: '✏️ なぞって かこう!',
+      topColor: const Color(0xFFE8E4FF),
+      bottomColor: const Color(0xFFFFF3E0),
+      overlays: [
+        if (_ended)
+          GameEndOverlay(
+            emoji: '🏆',
+            result:
+                '${'⭐' * _starsEarned.fold(0, (a, b) => a + b)}\n+$_coins コイン!',
+            onDone: () => Navigator.of(context).pop(),
+          ),
+      ],
+      children: [
+        const SizedBox(height: 6),
+        Text('${_shapeIndex + 1} / ${_shapes.length}  てんせんを なぞってね',
+            style: const TextStyle(
+                fontSize: 15, fontWeight: FontWeight.w700, color: ink2Color)),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Center(
+            child: LayoutBuilder(builder: (context, box) {
+              final size = min(min(box.maxWidth, box.maxHeight), 340.0);
+              return Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: const [cardShadow],
+                ),
+                child: GestureDetector(
+                  onPanStart: (d) => setState(
+                      () => _strokePoints.add(d.localPosition * (300 / size))),
+                  onPanUpdate: (d) => setState(
+                      () => _strokePoints.add(d.localPosition * (300 / size))),
+                  child: CustomPaint(
+                    painter: _TracePainter(
+                      shapeKey: _currentShape,
+                      strokePoints: _strokePoints,
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         ),
-        child: SafeArea(
-          child: Stack(
+        const SizedBox(height: 10),
+        if (_lastStars != null)
+          Text('⭐' * _lastStars!, style: const TextStyle(fontSize: 40))
+        else
+          Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    GameHeaderBar(
-                      title: '✏️ なぞって かこう!',
-                      onBack: () => Navigator.of(context).pop(),
-                    ),
-                    const SizedBox(height: 6),
-                    Text('${_shapeIndex + 1} / ${_shapes.length}  てんせんを なぞってね',
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: ink2Color)),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: Center(
-                        child: LayoutBuilder(builder: (context, box) {
-                          final size =
-                              min(min(box.maxWidth, box.maxHeight), 340.0);
-                          return Container(
-                            width: size,
-                            height: size,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: const [cardShadow],
-                            ),
-                            child: GestureDetector(
-                              onPanStart: (d) => setState(() => _strokePoints
-                                  .add(d.localPosition * (300 / size))),
-                              onPanUpdate: (d) => setState(() => _strokePoints
-                                  .add(d.localPosition * (300 / size))),
-                              child: CustomPaint(
-                                painter: _TracePainter(
-                                  shapeKey: _currentShape,
-                                  strokePoints: _strokePoints,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    if (_lastStars != null)
-                      Text('⭐' * _lastStars!,
-                          style: const TextStyle(fontSize: 40))
-                    else
-                      Row(
-                        children: [
-                          Expanded(
-                            child: BigActionButton(
-                              icon: '🧽',
-                              label: 'やりなおす',
-                              colors: const [
-                                Color(0xFFC3C9DD),
-                                Color(0xFFA6ADC7)
-                              ],
-                              onTap: () =>
-                                  setState(() => _strokePoints.clear()),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 2,
-                            child: BigActionButton(
-                              icon: '✨',
-                              label: 'できた!',
-                              colors: greenGradient,
-                              onTap: _strokePoints.isEmpty ? () {} : _judge,
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
+              Expanded(
+                child: BigActionButton(
+                  icon: '🧽',
+                  label: 'やりなおす',
+                  colors: const [Color(0xFFC3C9DD), Color(0xFFA6ADC7)],
+                  onTap: () => setState(() => _strokePoints.clear()),
                 ),
               ),
-              if (_ended)
-                GameEndOverlay(
-                  emoji: '🏆',
-                  result:
-                      '${'⭐' * _starsEarned.fold(0, (a, b) => a + b)}\n+$_coins コイン!',
-                  onDone: () => Navigator.of(context).pop(),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: BigActionButton(
+                  icon: '✨',
+                  label: 'できた!',
+                  colors: greenGradient,
+                  onTap: _strokePoints.isEmpty ? () {} : _judge,
                 ),
+              ),
             ],
           ),
-        ),
-      ),
+      ],
     );
   }
 }
