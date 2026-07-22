@@ -42,13 +42,15 @@ class SfxPlayer {
   Sfx? _overrideTrack; // ゲームBGM・勝利曲など一時的な差し替え
   Timer? _overrideTimer;
 
+  // NOTE: PlayerMode.lowLatency(Android の SoundPool)は BytesSource 未対応で
+  // 例外になり、実機で全効果音が無音になる(audioplayers_android の
+  // BytesSource.setForSoundPool 参照)。合成WAVを使う本アプリでは既定の
+  // MediaPlayer モードを使うこと。
+
   Future<void> play(Sfx sfx) async {
     if (_disabled || !enabled()) return;
     try {
-      final player = _players.putIfAbsent(
-        sfx,
-        () => _createPlayer()..setPlayerMode(PlayerMode.lowLatency),
-      );
+      final player = _players.putIfAbsent(sfx, _createPlayer);
       await player.stop();
       await player.play(BytesSource(_synth.wavFor(sfx), mimeType: 'audio/wav'));
     } catch (e) {
@@ -61,7 +63,7 @@ class SfxPlayer {
   Future<void> playBabble(int species) async {
     if (_disabled || !enabled()) return;
     try {
-      _voice ??= _createPlayer()..setPlayerMode(PlayerMode.lowLatency);
+      _voice ??= _createPlayer();
       await _voice!.stop();
       await _voice!.play(
         BytesSource(
