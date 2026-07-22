@@ -189,7 +189,7 @@ class GameController extends ChangeNotifier {
   /// (判定は state.evolveCheck())。キング到達でずかん登録。
   void applyEvolution(int newStage) {
     state.stage = newStage;
-    if (newStage == 3) state.collection[state.species] = true;
+    if (newStage == kingStage) state.collection[state.species] = true;
     _commit();
   }
 
@@ -285,7 +285,7 @@ class GameController extends ChangeNotifier {
     } else {
       // 記録がない(旧セーブ等)場合はキング姿の初期状態で迎える
       state
-        ..stage = 3
+        ..stage = kingStage
         ..xp = 0
         ..eggTaps = 0
         ..hunger = 80
@@ -403,7 +403,7 @@ class GameController extends ChangeNotifier {
 
   /// きらきらゲージ(キングのみ)。満タンでおみやげ発生(docs §14)。
   void _addSparkle(double amount) {
-    if (state.stage != 3) return;
+    if (state.stage != kingStage) return;
     state.kingSparkle = min(100, state.kingSparkle + amount);
     if (state.kingSparkle < 100) return;
     state.kingSparkle = 0;

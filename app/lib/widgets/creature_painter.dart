@@ -60,20 +60,28 @@ class CreaturePainter extends CustomPainter {
     canvas.scale(s, s);
 
     // キング=1.2 / ベビー=0.62(足元アンカー)。docs §3
-    final scale = stage == 1 ? 0.62 : (stage == 3 ? 1.2 : 1.0);
+    final scale = stage == 1
+        ? 0.62
+        : stage == kingStage
+        ? 1.2
+        : stage == 3
+        ? 1.1 // 新段階: 中間より一回り大きい(5段階化)
+        : 1.0;
     canvas.translate(150 * (1 - scale), 270 * (1 - scale));
     canvas.scale(scale, scale);
 
-    // アクセサリ(耳・トゲ・星)は stage2 から。キングは大型化して威厳を出す
+    // アクセサリ(耳・トゲ・星)は stage2 から。段階が上がるほど大型化
+    // (新段階 1.08 / キング 1.18)して成長を見せる。
     if (stage >= 2) {
-      if (stage == 3) {
+      final accScale = stage == kingStage ? 1.18 : (stage == 3 ? 1.08 : 1.0);
+      if (accScale != 1.0) {
         canvas.save();
         canvas.translate(150, 64);
-        canvas.scale(1.18, 1.18);
+        canvas.scale(accScale, accScale);
         canvas.translate(-150, -64);
       }
       _paintAccessories(canvas);
-      if (stage == 3) canvas.restore();
+      if (accScale != 1.0) canvas.restore();
     }
     _paintBody(canvas);
     if (mood != null) {
@@ -81,7 +89,7 @@ class CreaturePainter extends CustomPainter {
     } else {
       paintCreatureFace(canvas, speciesIndex: speciesIndex, sad: sad);
     }
-    if (stage >= 3 && equipHead == null) _paintCrown(canvas);
+    if (stage >= kingStage && equipHead == null) _paintCrown(canvas);
     if (equipFace != null) paintEquipItem(canvas, equipFace!);
     if (equipHead != null) paintEquipItem(canvas, equipHead!);
   }
@@ -89,13 +97,13 @@ class CreaturePainter extends CustomPainter {
   // ---------- body ----------
 
   void _paintBody(Canvas canvas) {
-    if (stage == 3) _paintMantle(canvas);
+    if (stage == kingStage) _paintMantle(canvas);
 
     final body = stage == 1 ? babyBodyPath() : bodyPath();
     canvas.drawPath(body, Paint()..color = bodyColor);
 
     // キングはおなかに明るいパッチ(体格の変化を強調)
-    if (stage == 3) {
+    if (stage == kingStage) {
       canvas.save();
       canvas.clipPath(body);
       canvas.drawOval(

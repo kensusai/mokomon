@@ -86,7 +86,7 @@ void main() {
     tester,
   ) async {
     final state = GameState()
-      ..stage = 3
+      ..stage = kingStage
       ..xp = 99
       ..species = 0;
     state.collection[0] = true;
@@ -109,6 +109,64 @@ void main() {
     expect(c.state.species, isNot(3)); // キング1体では金のたまごは来ない
     expect(find.textContaining('あたらしい たまごが きたよ!'), findsWidgets);
 
+    await drainTimers(tester);
+  });
+
+  testWidgets('book: a baby can welcome a new egg and come back later', (
+    tester,
+  ) async {
+    // こどもFB: キングにならなくても途中で新しいたまごを迎えられる。
+    // いまの子は名簿に保存され、ずかんのセルから続きを再開できる。
+    final c = await boot(
+      tester,
+      GameState()
+        ..stage = 1
+        ..xp = 10
+        ..nickname = 'もこすけ',
+    );
+
+    await tester.tap(find.text('📖'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('あたらしい たまごを むかえる'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('あたらしい たまごを むかえる'));
+    await tester.pump();
+    await tester.tap(find.text('あたらしい たまごを むかえる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(c.state.stage, 0); // 新しいたまご
+    expect(c.state.roster[0]?.stage, 1); // もとの子は名簿にベビーのまま保存
+    expect(c.state.roster[0]?.nickname, 'もこすけ');
+    expect(c.state.collection[0], isFalse); // 図鑑登録はキング到達のみ
+
+    // ずかんを開き直すと、育成途中の子が「???」ではなく名前つきで見える
+    await tester.pump(const Duration(seconds: 2)); // 孵化お祝いのあと
+    await tester.tap(find.text('📖'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('もこすけ'), findsOneWidget);
+
+    // タップで交代して続きから
+    await tester.tap(find.text('もこすけ'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(c.state.species, 0);
+    expect(c.state.stage, 1);
+    expect(c.state.xp, 10);
+
+    await drainTimers(tester);
+  });
+
+  testWidgets('book: no new-egg button while still an egg', (tester) async {
+    await boot(tester, GameState()); // たまご段階
+    await tester.tap(find.text('📖'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('あたらしい たまごを むかえる'), findsNothing);
+    await tester.tap(find.text('とじる'));
+    await tester.pump(const Duration(milliseconds: 400));
     await drainTimers(tester);
   });
 

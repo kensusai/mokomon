@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../audio/sound_synth.dart';
+import '../data/species.dart';
 import '../logic/game_controller.dart';
 import '../models/game_state.dart';
 import 'confetti.dart';
@@ -101,9 +102,9 @@ class _EvolutionScreenState extends State<_EvolutionScreen>
 
   String get _text {
     final sp = widget.controller.state.currentSpecies;
-    return widget.newStage == 3
-        ? '${sp.names[3]} たんじょう!!'
-        : '${sp.names[2]} に しんかした!!';
+    return widget.newStage == kingStage
+        ? '${sp.names[kingStage]} たんじょう!!'
+        : '${sp.names[widget.newStage]} に しんかした!!';
   }
 
   @override

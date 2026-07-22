@@ -117,21 +117,32 @@ void main() {
   group('evolution application', () {
     test('applyEvolution to king registers collection', () {
       final s = GameState()
-        ..stage = 2
-        ..xp = 80
+        ..stage = 3
+        ..xp = 240
         ..species = 1;
       final c = fresh(s);
-      expect(s.evolveCheck(), 3);
-      c.applyEvolution(3);
-      expect(s.stage, 3);
+      expect(s.evolveCheck(), kingStage);
+      c.applyEvolution(kingStage);
+      expect(s.stage, kingStage);
       expect(s.collection[1], isTrue);
+    });
+
+    test('applyEvolution to stage 3 does not register collection', () {
+      final c = fresh(
+        GameState()
+          ..stage = 2
+          ..xp = 120,
+      );
+      c.applyEvolution(3);
+      expect(c.state.stage, 3);
+      expect(c.state.collection[0], isFalse);
     });
 
     test('applyEvolution to stage 2 does not register collection', () {
       final c = fresh(
         GameState()
           ..stage = 1
-          ..xp = 30,
+          ..xp = 45,
       );
       c.applyEvolution(2);
       expect(c.state.stage, 2);
@@ -142,7 +153,7 @@ void main() {
   group('newEgg (docs/game-design.md §4)', () {
     test('resets state for the drawn species', () {
       final s = GameState()
-        ..stage = 3
+        ..stage = kingStage
         ..xp = 99
         ..coins = 50
         ..hunger = 12
@@ -198,7 +209,7 @@ void main() {
       expect(
         (GameState()
               ..species = 5
-              ..stage = 3)
+              ..stage = kingStage)
             .displayName,
         '👑 キングぶー',
       );

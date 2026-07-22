@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -8,29 +9,38 @@ import 'package:mokomon/models/game_state.dart';
 
 void main() {
   group('evolveCheck / nearEvolve (docs/game-design.md §3)', () {
-    test('stage1 evolves to 2 at xp 30', () {
+    test('stage1 evolves to 2 at xp 45', () {
       final s = GameState()
         ..stage = 1
-        ..xp = 29;
+        ..xp = 44;
       expect(s.evolveCheck(), isNull);
-      s.xp = 30;
+      s.xp = 45;
       expect(s.evolveCheck(), 2);
     });
 
-    test('stage2 evolves to 3 at xp 80', () {
+    test('stage2 evolves to 3 at xp 120', () {
       final s = GameState()
         ..stage = 2
-        ..xp = 79;
+        ..xp = 119;
       expect(s.evolveCheck(), isNull);
-      s.xp = 80;
+      s.xp = 120;
       expect(s.evolveCheck(), 3);
+    });
+
+    test('stage3 evolves to king(4) at xp 240', () {
+      final s = GameState()
+        ..stage = 3
+        ..xp = 239;
+      expect(s.evolveCheck(), isNull);
+      s.xp = 240;
+      expect(s.evolveCheck(), kingStage);
     });
 
     test('egg and king never evolve', () {
       expect((GameState()..xp = 999).evolveCheck(), isNull);
       expect(
         (GameState()
-              ..stage = 3
+              ..stage = kingStage
               ..xp = 999)
             .evolveCheck(),
         isNull,
@@ -39,15 +49,21 @@ void main() {
 
     test('near-evolve glow starts 8 before stage2 and 12 before stage3', () {
       final s = GameState()..stage = 1;
-      s.xp = 21;
+      s.xp = 36;
       expect(s.nearEvolve, isFalse);
-      s.xp = 22;
+      s.xp = 37;
       expect(s.nearEvolve, isTrue);
       s
         ..stage = 2
-        ..xp = 67;
+        ..xp = 107;
       expect(s.nearEvolve, isFalse);
-      s.xp = 68;
+      s.xp = 108;
+      expect(s.nearEvolve, isTrue);
+      s
+        ..stage = 3
+        ..xp = 223;
+      expect(s.nearEvolve, isFalse);
+      s.xp = 224;
       expect(s.nearEvolve, isTrue);
     });
   });
@@ -79,6 +95,25 @@ void main() {
         final next = s.nextEggSpecies(Random(i));
         expect(s.collection[next], isFalse);
         expect(next, isNot(secretSpeciesIndex));
+      }
+    });
+
+    test('lottery skips the current child and roster entries in progress', () {
+      // キング前の「あたらしいたまご」解禁に伴い、いま育てている子と
+      // 名簿で続きを待っている子の種族は抽選しない(上書き消失を防ぐ)。
+      final s = GameState()..species = 1;
+      s.roster[2] = CreatureSnapshot(
+        stage: 1,
+        xp: 10,
+        eggTaps: 3,
+        hunger: 80,
+        happy: 80,
+        color: 0,
+      );
+      for (var i = 0; i < 60; i++) {
+        final next = s.nextEggSpecies(Random(i));
+        expect(next, isNot(1), reason: 'いまの子は引かない');
+        expect(next, isNot(2), reason: '名簿で待っている子は引かない');
       }
     });
 
@@ -318,7 +353,7 @@ void main() {
             'hunger': 500,
             'happy': -20,
           });
-        expect(restored.stage, inInclusiveRange(0, 3));
+        expect(restored.stage, inInclusiveRange(0, kingStage));
         expect(restored.xp, greaterThanOrEqualTo(0));
         expect(restored.coins, greaterThanOrEqualTo(0));
         expect(restored.hunger, inInclusiveRange(0, 100));
@@ -326,6 +361,57 @@ void main() {
       });
     },
   );
+
+  group('5-stage migration (stage 3 was king before v2)', () {
+    test('legacy save (no schema version) promotes king 3 -> 4', () {
+      final restored = GameState()..loadJson({'stage': 3});
+      expect(restored.stage, kingStage);
+      // 名簿のキングも同様に引き上げる
+      final withRoster = GameState()
+        ..loadJson({
+          'stage': 1,
+          'v': null,
+          'roster': {
+            '2': {'stage': 3, 'color': 0},
+          },
+        });
+      expect(withRoster.roster[2]?.stage, kingStage);
+    });
+
+    test('v2 save keeps stage 3 as the new pre-king stage', () {
+      final s = GameState()..stage = 3;
+      final restored = GameState()..loadJson(s.toJson());
+      expect(restored.stage, 3);
+    });
+
+    test('v1 あいことば promotes king 3 -> 4, v2 keeps stages as-is', () {
+      // v1 コードを手作り(現行 makeCode は v2 を出すため)
+      String v1Code(int stage) {
+        final body = [1, stage, 0, 10, 80, 80, 0, 0, 0, -1, -1].join(',');
+        var sum = 0;
+        for (final c in body.codeUnits) {
+          sum = (sum + c) % 97;
+        }
+        final b64 = base64Encode(
+          utf8.encode('$body;$sum'),
+        ).replaceAll(RegExp(r'=+$'), '');
+        return 'MOKO-$b64';
+      }
+
+      final legacyKing = GameState();
+      expect(legacyKing.loadCode(v1Code(3)), isTrue);
+      expect(legacyKing.stage, kingStage);
+
+      final legacyMid = GameState();
+      expect(legacyMid.loadCode(v1Code(2)), isTrue);
+      expect(legacyMid.stage, 2);
+
+      final v2 = GameState()..stage = 3;
+      final restored = GameState();
+      expect(restored.loadCode(v2.makeCode()), isTrue);
+      expect(restored.stage, 3);
+    });
+  });
 
   group('corrupt save restore (docs/review-findings.md #17)', () {
     test('loadJson clamps out-of-range species even when color is missing', () {
@@ -395,7 +481,7 @@ void main() {
           'bg': 99,
         });
         // switchCreature が snap をそのまま state に流すため、ここで正規化する。
-        expect(snap.stage, inInclusiveRange(0, 3));
+        expect(snap.stage, inInclusiveRange(0, kingStage));
         expect(snap.hunger, inInclusiveRange(0, 100));
         expect(snap.happy, inInclusiveRange(0, 100));
         expect(snap.bg, isNull);

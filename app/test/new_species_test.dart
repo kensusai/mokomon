@@ -23,8 +23,8 @@ void main() {
       expect(secretSpeciesIndex, 3); // 金のたまごは変わらず pika
       // 色・名前・絵文字が全種族で揃っている
       for (final sp in speciesList) {
-        expect(sp.names, hasLength(4), reason: sp.key);
-        expect(sp.emojis, hasLength(4), reason: sp.key);
+        expect(sp.names, hasLength(5), reason: sp.key);
+        expect(sp.emojis, hasLength(5), reason: sp.key);
       }
     });
 
@@ -39,7 +39,7 @@ void main() {
       expect(
         (GameState()
               ..species = 7
-              ..stage = 3)
+              ..stage = kingStage)
             .displayName,
         '👑 キングにゃんこ',
       );
@@ -53,7 +53,7 @@ void main() {
       expect(
         (GameState()
               ..species = 8
-              ..stage = 3)
+              ..stage = kingStage)
             .displayName,
         '👑 キングダンディ',
       );

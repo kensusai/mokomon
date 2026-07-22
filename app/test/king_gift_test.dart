@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/widgets/creature_view.dart';
 import 'package:mokomon/data/foods.dart';
 import 'package:mokomon/data/save_store.dart';
+import 'package:mokomon/data/species.dart';
 import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/models/game_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,7 +16,7 @@ void main() {
 
   GameController king({double sparkle = 0}) => GameController(
     GameState()
-      ..stage = 3
+      ..stage = kingStage
       ..kingSparkle = sparkle,
     SaveStore(),
     rng: NoPuffRandom(),
@@ -86,7 +87,7 @@ void main() {
       await bootApp(
         tester,
         state: GameState()
-          ..stage = 3
+          ..stage = kingStage
           ..kingSparkle = 95,
         rng: NoPuffRandom(),
       );
@@ -112,7 +113,7 @@ void main() {
       final c = await bootApp(
         tester,
         state: GameState()
-          ..stage = 3
+          ..stage = kingStage
           ..kingSparkle = 80,
         rng: NoPuffRandom(),
       );

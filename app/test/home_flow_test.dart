@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mokomon/audio/sound_synth.dart';
+import 'package:mokomon/data/species.dart';
 import 'package:mokomon/logic/game_controller.dart';
 import 'package:mokomon/models/game_state.dart';
 import 'package:mokomon/widgets/creature_view.dart';
@@ -40,6 +43,37 @@ void main() {
     await drainTimers(tester);
   });
 
+  testWidgets('hatching plays the mega fanfare and ducks the bgm', (
+    tester,
+  ) async {
+    // 「うまれた!」の瞬間に megaFanfare が鳴り、BGMが一時停止すること
+    // (配線の回帰テスト)。
+    final rec = RecordingSfx();
+    await bootApp(tester, rng: NoPuffRandom(), sfx: rec.sfx);
+    await rec.sfx.startBgm(); // 実アプリでは main() が呼ぶ
+    final bgm = rec.players.single;
+
+    final egg = find.byType(CreatureView);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(egg);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('うまれた!'), findsOneWidget);
+
+    expect(bgm.calls, contains('pause'), reason: 'ジングル中はBGMを止める');
+    final fanfare = SoundSynth().wavFor(Sfx.megaFanfare);
+    expect(
+      rec.players.any((p) => p.playedBytes.any((b) => listEquals(b, fanfare))),
+      isTrue,
+      reason: 'megaFanfare が再生される',
+    );
+
+    await tester.tap(find.text('わーい!'));
+    await tester.pump();
+    await drainRewardJingle(tester); // ダックタイマーを流す
+    await drainTimers(tester);
+  });
+
   // 2匹目以降(図鑑から新しいたまごを迎えたあと)も、孵化の演出と
   // ファンファーレが1匹目と同じように出ること。
   testWidgets('a second egg hatches with the same birth celebration', (
@@ -48,7 +82,7 @@ void main() {
     final c = await boot(
       tester,
       GameState()
-        ..stage = 3
+        ..stage = kingStage
         ..xp = 400,
     );
     c.newEgg();
@@ -129,12 +163,12 @@ void main() {
       tester,
       GameState()
         ..stage = 1
-        ..xp = 29,
+        ..xp = 44,
     );
 
     await tester.tap(find.byType(CreatureView));
     await tester.pump();
-    expect(c.state.xp, 30);
+    expect(c.state.xp, 45);
 
     // カットシーン: シルエット2.4s → フラッシュ → リビール
     await tester.pump(const Duration(milliseconds: 100));
@@ -160,15 +194,15 @@ void main() {
     final c = await boot(
       tester,
       GameState()
-        ..stage = 2
-        ..xp = 79
+        ..stage = 3
+        ..xp = 239
         ..species = 1,
     );
 
     await tester.tap(find.byType(CreatureView));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 2700));
-    expect(c.state.stage, 3);
+    expect(c.state.stage, kingStage);
     expect(c.state.collection[1], isTrue);
     expect(find.text('キングぴょん たんじょう!!'), findsOneWidget);
 

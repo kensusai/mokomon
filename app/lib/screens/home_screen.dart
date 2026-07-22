@@ -181,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen>
   /// きらきらゲージの途中経過を吹き出しで知らせる(進捗の手ごたえ)。
   void _sparkleProgressHint() {
     final v = s.kingSparkle;
-    if (s.stage == 3) {
+    if (s.stage == kingStage) {
       if (_lastSparkle < 50 && v >= 50) _hint('きらきらが たまってきた…!');
       if (_lastSparkle < 85 && v >= 85) _hint('もうすこしで なにか おこりそう…!');
     }
@@ -503,7 +503,7 @@ class _HomeScreenState extends State<HomeScreen>
     _evoBusy = true;
     await showEvolution(context, c, next);
     _evoBusy = false;
-    if (next == 3 && mounted) {
+    if (next == kingStage && mounted) {
       showToast(context, 'ずかんに とうろくされたよ! 📖から あたらしい たまごを むかえられるよ!');
     }
   }
@@ -653,7 +653,7 @@ class _HomeScreenState extends State<HomeScreen>
           child: StatPill(s.displayName),
         ),
         const SizedBox(height: 10),
-        if (s.stage == 3) ...[
+        if (s.stage == kingStage) ...[
           // キング専用: きらきらゲージ(満タンでおみやげ)
           StatMeter(
             icon: '✨',

@@ -82,7 +82,7 @@ void main() {
       ..collection = (List.filled(speciesList.length, false)..[0] = true)
       ..roster = {
         0: CreatureSnapshot(
-          stage: 3,
+          stage: kingStage,
           xp: 0,
           eggTaps: 0,
           hunger: 80,
@@ -104,7 +104,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(c.state.species, 0);
-    expect(c.state.stage, 3);
+    expect(c.state.stage, kingStage);
     expect(c.state.equipHead, 'ribbon');
     expect(c.state.nickname, 'モコタン');
     expect(find.textContaining('「モコタン」が あそびに きたよ!'), findsWidgets);

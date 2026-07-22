@@ -91,7 +91,7 @@ void main() {
     test('newEgg clears the pattern', () {
       final c = fresh(
         GameState()
-          ..stage = 3
+          ..stage = kingStage
           ..pattern = 'abc',
       );
       c.newEgg();
@@ -198,7 +198,7 @@ void main() {
   group('equipment persists across newEgg', () {
     test('owned/equip kept, growth state reset', () {
       final s = GameState()
-        ..stage = 3
+        ..stage = kingStage
         ..coins = 40;
       final c = fresh(s);
       c.tapShopItem(item('sunglass'));
@@ -211,7 +211,7 @@ void main() {
 
   group('nextEggSpecies still respects lottery from controller', () {
     test('golden egg after 3 kings via newEgg', () {
-      final s = GameState()..stage = 3;
+      final s = GameState()..stage = kingStage;
       s.collection[0] = true;
       s.collection[1] = true;
       s.collection[2] = true;

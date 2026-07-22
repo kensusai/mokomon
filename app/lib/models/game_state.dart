@@ -6,7 +6,8 @@ import '../data/items.dart';
 import '../data/species.dart';
 
 /// 進化しきい値(隠しパラメータ)。docs/game-design.md §3。
-const evolveXp = [0, 30, 80];
+/// こどもFB「進化が早すぎる」で 30/80 → 45/120、5段階化で 240(キング)を追加。
+const evolveXp = [0, 45, 120, 240];
 
 /// 保存データ由来の背景 index。範囲外は null(=種族デフォルト)に落とす。
 /// 素通しすると `bgThemes[effectiveBg]` が毎フレーム RangeError になる
@@ -59,6 +60,9 @@ class CreatureSnapshot {
   });
 
   Map<String, dynamic> toJson() => {
+    // セーブ形式のバージョン。v2 で5段階化(v1 の stage 3=キングは
+    // 読み込み時に kingStage へ引き上げる)。
+    'v': 2,
     'stage': stage,
     'xp': xp,
     'eggTaps': eggTaps,
@@ -76,7 +80,7 @@ class CreatureSnapshot {
   /// 壊れた値は範囲内へ正規化する。`switchCreature` がスナップショットを
   /// そのまま state に流すため、ここが最後の防波堤(docs/review-findings.md #17)。
   factory CreatureSnapshot.fromJson(Map<String, dynamic> j) => CreatureSnapshot(
-    stage: ((j['stage'] ?? 3) as int).clamp(0, 3),
+    stage: ((j['stage'] ?? kingStage) as int).clamp(0, kingStage),
     xp: max(0, ((j['xp'] ?? 0) as num).toDouble()),
     eggTaps: max(0, (j['eggTaps'] ?? 0) as int),
     hunger: ((j['hunger'] ?? 80) as num).toDouble().clamp(0, 100).toDouble(),
@@ -96,7 +100,7 @@ class CreatureSnapshot {
 
 /// ゲーム状態。プロトタイプの `S` オブジェクトに対応。
 class GameState {
-  int stage = 0; // 0=たまご 1=ベビー 2=中間 3=キング
+  int stage = 0; // 0=たまご 1=ベビー 2=中間 3=新段階 4=キング(kingStage)
   double xp = 0;
   int coins = 10;
   double hunger = 80;
@@ -154,12 +158,14 @@ class GameState {
   /// 進化予兆(金色グロー)。数値は絶対にUIに出さないこと。
   bool get nearEvolve =>
       (stage == 1 && xp >= evolveXp[1] - 8) ||
-      (stage == 2 && xp >= evolveXp[2] - 12);
+      (stage == 2 && xp >= evolveXp[2] - 12) ||
+      (stage == 3 && xp >= evolveXp[3] - 16);
 
   /// 進化可能なら次のstageを返す(演出はUI側で)。
   int? evolveCheck() {
     if (stage == 1 && xp >= evolveXp[1]) return 2;
     if (stage == 2 && xp >= evolveXp[2]) return 3;
+    if (stage == 3 && xp >= evolveXp[3]) return kingStage;
     return null;
   }
 
@@ -173,13 +179,25 @@ class GameState {
     if (!collection[secretSpeciesIndex] && kinged >= 3) {
       return secretSpeciesIndex; // 金のたまご(最優先)
     }
-    final unowned = normals.where((i) => !collection[i]).toList();
+    // いまの子と、名簿で続きを待っている子の種族は引かない。引いてしまうと
+    // newEgg の名簿退避で保存が上書き消失する(キング前たまご解禁に伴う規則)。
+    bool inProgress(int i) => i == species || roster.containsKey(i);
+    final unowned = normals
+        .where((i) => !collection[i] && !inProgress(i))
+        .toList();
     if (unowned.isNotEmpty) return unowned[rng.nextInt(unowned.length)];
     final pool = [
       for (var i = 0; i < speciesList.length; i++)
-        if (i != species) i,
+        if (!inProgress(i)) i,
     ];
-    return pool[rng.nextInt(pool.length)];
+    // 全種族が育成中/名簿という極端な状況では現在種以外から選ぶ
+    final candidates = pool.isNotEmpty
+        ? pool
+        : [
+            for (var i = 0; i < speciesList.length; i++)
+              if (i != species) i,
+          ];
+    return candidates[rng.nextInt(candidates.length)];
   }
 
   /// オフライン減衰。復帰時に一度だけ呼ぶ。
@@ -197,6 +215,9 @@ class GameState {
   // ---------- 直列化(保存自体は data/save_store.dart) ----------
 
   Map<String, dynamic> toJson() => {
+    // セーブ形式のバージョン。v2 で5段階化(v1 の stage 3=キングは
+    // 読み込み時に kingStage へ引き上げる)。
+    'v': 2,
     'stage': stage,
     'xp': xp,
     'coins': coins,
@@ -222,7 +243,9 @@ class GameState {
   };
 
   void loadJson(Map<String, dynamic> j) {
-    stage = ((j['stage'] ?? 0) as int).clamp(0, 3);
+    final legacy = ((j['v'] ?? 1) as int) < 2;
+    stage = ((j['stage'] ?? 0) as int).clamp(0, kingStage);
+    if (legacy && stage == 3) stage = kingStage; // 旧キングを降格させない
     xp = max(0, ((j['xp'] ?? 0) as num).toDouble());
     coins = max(0, (j['coins'] ?? 10) as int);
     hunger = ((j['hunger'] ?? 80) as num).toDouble().clamp(0, 100).toDouble();
@@ -264,6 +287,11 @@ class GameState {
         // このエントリだけスキップする
       }
     }
+    if (legacy) {
+      for (final snap in roster.values) {
+        if (snap.stage == 3) snap.stage = kingStage; // 名簿の旧キングも同様
+      }
+    }
     lastSavedMs = (j['last'] ?? 0) as int;
   }
 
@@ -284,7 +312,7 @@ class GameState {
     final eqH = shopItems.indexWhere((it) => it.key == equipHead);
     final eqF = shopItems.indexWhere((it) => it.key == equipFace);
     final body = [
-      1,
+      2, // v2: 5段階化(stage 0..4)。v1 は stage 3=キング
       stage,
       xp.round(),
       coins,
@@ -322,9 +350,11 @@ class GameState {
       }
       if ('$sum' != parts[1]) return false;
       final f = parts[0].split(',');
-      if (f.length < 11 || f[0] != '1') return false;
+      final version = int.parse(f[0]);
+      if (f.length < 11 || (version != 1 && version != 2)) return false;
       final a = [for (final x in f.take(7)) int.parse(x)];
-      stage = a[1].clamp(0, 3);
+      stage = a[1].clamp(0, kingStage);
+      if (version == 1 && stage == 3) stage = kingStage; // 旧キングを維持
       xp = max(0, a[2]).toDouble();
       coins = max(0, a[3]);
       hunger = a[4].clamp(0, 100).toDouble();

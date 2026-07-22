@@ -34,7 +34,10 @@ Future<BookResult?> showBookModal(
     context: context,
     builder: (dialogContext) {
       final s = controller.state;
-      final kinged = s.stage == 3;
+      final kinged = s.stage == kingStage;
+      // こどもFB: キング前でも新しいたまごを迎えられる(たまご中は除く)。
+      // いまの子は名簿に保存され、セルから交代して続きを育てられる。
+      final canNewEgg = s.stage >= 1;
       return MokoModalShell(
         header: const [ModalTitle('📖 いきもの ずかん')],
         body: [
@@ -66,7 +69,7 @@ Future<BookResult?> showBookModal(
           Text(
             kinged
                 ? 'あたらしい たまごを むかえよう! そだてた子は タップで あそびに こられるよ'
-                : 'キングまで そだてると ずかんに とうろく! そだてた子は タップで こうたいできるよ',
+                : 'キングまで そだてると ずかんに とうろく! とちゅうの子も タップで こうたいできるよ',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 13,
@@ -77,7 +80,7 @@ Future<BookResult?> showBookModal(
           ),
         ],
         footer: [
-          if (kinged) ...[
+          if (canNewEgg) ...[
             PressableGradient(
               colors: greenGradient,
               onTap: () => Navigator.of(
@@ -137,7 +140,10 @@ class _BookCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final sp = speciesList[speciesIndex];
     final color = liveState?.color ?? snapshot?.color;
-    final stage = liveState?.stage ?? snapshot?.stage ?? 3;
+    final stage = liveState?.stage ?? snapshot?.stage ?? kingStage;
+    // 図鑑登録(キング)前でも、いまの子と名簿の子はすがたと名前を見せる。
+    // シルエット+「???」は未知の種族だけ。
+    final known = owned || snapshot != null || liveState != null;
     Widget mini = CustomPaint(
       size: const Size(40, 40),
       painter: CreaturePainter(
@@ -149,7 +155,7 @@ class _BookCell extends StatelessWidget {
         equipFace: liveState?.equipFace ?? snapshot?.equipFace,
       ),
     );
-    if (!owned) {
+    if (!known) {
       // 未入手はシルエット+「?」
       mini = Stack(
         alignment: Alignment.center,
@@ -191,12 +197,12 @@ class _BookCell extends StatelessWidget {
               SizedBox(width: 40, height: 40, child: mini),
               const SizedBox(height: 2),
               Text(
-                owned ? (nickname ?? sp.names[3]) : '???',
+                known ? (nickname ?? sp.names[stage]) : '???',
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: owned ? inkColor : ink2Color,
+                  color: known ? inkColor : ink2Color,
                 ),
               ),
               if (current)

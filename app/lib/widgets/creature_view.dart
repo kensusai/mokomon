@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../data/species.dart';
 import '../models/game_state.dart';
 import 'creature_faces.dart';
 import 'creature_painter.dart';
@@ -133,7 +134,7 @@ class CreatureViewState extends State<CreatureView>
           ),
         );
 
-        if (s.stage == 3) {
+        if (s.stage == kingStage) {
           core = Stack(
             clipBehavior: Clip.none,
             children: [

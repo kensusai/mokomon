@@ -12,7 +12,7 @@ void main() {
   GameController fresh(GameState s) => GameController(s, SaveStore());
 
   GameState kingMoko() => GameState()
-    ..stage = 3
+    ..stage = kingStage
     ..species = 0
     ..xp = 99
     ..color = 0xFF112233
@@ -27,7 +27,7 @@ void main() {
       final c = fresh(kingMoko());
       c.newEgg();
       final snap = c.state.roster[0]!;
-      expect(snap.stage, 3);
+      expect(snap.stage, kingStage);
       expect(snap.color, 0xFF112233);
       expect(snap.pattern, 'moko-pattern');
       expect(snap.equipHead, 'ribbon');
@@ -47,7 +47,7 @@ void main() {
 
       expect(c.switchCreature(0), isTrue);
       expect(s.species, 0);
-      expect(s.stage, 3);
+      expect(s.stage, kingStage);
       expect(s.equipHead, 'ribbon');
       expect(s.nickname, 'モコタン');
       expect(s.pattern, 'moko-pattern');

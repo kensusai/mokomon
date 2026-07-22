@@ -124,12 +124,19 @@ class FixedRandom implements Random {
 
 /// アプリ全体を起動してコントローラを返す。
 /// いきものをタップするテストは rng に [NoPuffRandom] を渡して決定的にする。
+/// [sfx] に [RecordingSfx.sfx] を渡すと再生内容を検証できる。
 Future<GameController> bootApp(
   WidgetTester tester, {
   GameState? state,
   Random? rng,
+  SfxPlayer? sfx,
 }) async {
-  final c = GameController(state ?? GameState(), SaveStore(), rng: rng);
+  final c = GameController(
+    state ?? GameState(),
+    SaveStore(),
+    rng: rng,
+    sfx: sfx,
+  );
   await tester.pumpWidget(MokomonApp(controller: c));
   return c;
 }
