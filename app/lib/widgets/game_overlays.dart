@@ -102,11 +102,16 @@ class GameEndOverlay extends StatelessWidget {
   final String result;
   final VoidCallback onDone;
 
+  /// 閉じるボタンのラベル。報酬ゼロの「ざんねん」系メッセージでは
+  /// 「やったー!」が不自然なため、画面側で励まし文言に差し替えられる。
+  final String buttonLabel;
+
   const GameEndOverlay({
     super.key,
     required this.emoji,
     required this.result,
     required this.onDone,
+    this.buttonLabel = 'やったー!',
   });
 
   @override
@@ -124,7 +129,7 @@ class GameEndOverlay extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        StartButton(label: 'やったー!', onPressed: onDone),
+        StartButton(label: buttonLabel, onPressed: onDone),
       ],
     );
   }

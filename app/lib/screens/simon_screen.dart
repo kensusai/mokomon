@@ -122,6 +122,7 @@ class _SimonScreenState extends State<SimonScreen>
             result: _game.reward > 0
                 ? '+${_game.reward} コイン げっと!'
                 : 'ざんねん! また ちょうせんしてね',
+            buttonLabel: _game.reward > 0 ? 'やったー!' : 'つぎは がんばる!',
             onDone: () => Navigator.of(context).pop(),
           ),
       ],

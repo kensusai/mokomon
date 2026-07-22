@@ -79,6 +79,27 @@ void main() {
     expect(c.state.coins, 10);
   });
 
+  testWidgets('simon: failing with no reward shows an encouraging button', (
+    tester,
+  ) async {
+    // 「ざんねん! また ちょうせんしてね」に「やったー!」ボタンは不自然。
+    // 報酬ゼロの終了では励ましのラベルに切り替える。
+    final c = stage1Controller();
+    final game = SimonGame(rng: Random(1));
+    await pumpScreen(tester, SimonScreen(controller: c, game: game));
+
+    // お手本(2連)が終わるのを待って、最初のタッチから間違える
+    await tester.pump(const Duration(milliseconds: 1000));
+    await tester.pump(const Duration(milliseconds: 2200));
+    final wrongPad = (game.sequence[0] + 1) % simonPads;
+    await tester.tap(find.byKey(ValueKey('simon-$wrongPad')));
+    await tester.pump(const Duration(milliseconds: 700));
+
+    expect(find.text('ざんねん! また ちょうせんしてね'), findsOneWidget);
+    expect(find.text('やったー!'), findsNothing);
+    expect(find.text('つぎは がんばる!'), findsOneWidget);
+  });
+
   testWidgets('simon: clear round 1 then a wrong pad ends with +3 coins', (
     tester,
   ) async {
