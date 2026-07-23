@@ -74,7 +74,13 @@ void main() {
     testWidgets('tapping the bottom 30% of the creature triggers 💨', (
       tester,
     ) async {
-      final c = await bootApp(tester, state: GameState()..stage = 1);
+      // 下部タップは約25%で💨(こどもFB「おならしすぎ」)。判定を
+      // 決定的に発火させる。
+      final c = await bootApp(
+        tester,
+        state: GameState()..stage = 1,
+        rng: FixedRandom(0.1),
+      );
 
       final rect = tester.getRect(find.byType(CreatureView));
       await tester.tapAt(Offset(rect.center.dx, rect.top + rect.height * 0.9));
@@ -168,7 +174,11 @@ void main() {
     });
 
     testWidgets('💨 flashes a surprised face', (tester) async {
-      await bootApp(tester, state: GameState()..stage = 1);
+      await bootApp(
+        tester,
+        state: GameState()..stage = 1,
+        rng: FixedRandom(0.1), // 下部タップの25%判定を発火させる
+      );
       final rect = tester.getRect(find.byType(CreatureView));
       await tester.tapAt(Offset(rect.center.dx, rect.top + rect.height * 0.9));
       await tester.pump();

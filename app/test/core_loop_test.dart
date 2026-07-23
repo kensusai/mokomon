@@ -26,11 +26,16 @@ void main() {
       expect(c.tapCreature(lowerBody: false), CreatureTapOutcome.hatched);
     });
 
-    test('lower-body tap always puffs (happy +2, no xp)', () {
-      final c = fresh(GameState()..stage = 1, FixedRandom(0.99));
-      expect(c.tapCreature(lowerBody: true), CreatureTapOutcome.puffed);
-      expect(c.state.happy, 82);
-      expect(c.state.xp, 0);
+    test('lower-body tap puffs about 25% of the time (happy +2, no xp)', () {
+      // こどもFB「おならしすぎ」: 下部タップは毎回→約25%の確率に。
+      final puff = fresh(GameState()..stage = 1, FixedRandom(0.2));
+      expect(puff.tapCreature(lowerBody: true), CreatureTapOutcome.puffed);
+      expect(puff.state.happy, 82);
+      expect(puff.state.xp, 0);
+
+      final pet = fresh(GameState()..stage = 1, FixedRandom(0.3));
+      expect(pet.tapCreature(lowerBody: true), CreatureTapOutcome.petted);
+      expect(pet.state.xp, 1);
     });
 
     test('normal tap pets unless the 6% roll fires', () {

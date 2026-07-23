@@ -108,7 +108,9 @@ class GameController extends ChangeNotifier {
           ? CreatureTapOutcome.hatched
           : CreatureTapOutcome.crack;
     }
-    if (lowerBody || _rng.nextDouble() < 0.06) {
+    // 下部は約25%で💨、それ以外は6%で暴発(こどもFB「おならしすぎ」で
+    // 下部の毎回発動を確率に変更。docs/game-design.md §9)
+    if (_rng.nextDouble() < (lowerBody ? 0.25 : 0.06)) {
       puff();
       return CreatureTapOutcome.puffed;
     }

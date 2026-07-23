@@ -15,6 +15,10 @@ enum Sfx {
   evoRiser,
   shine,
   puff,
+  petHead,
+  petCheek,
+  petBelly,
+  petFeet,
   megaFanfare,
   rewardJingle,
   dressUp,
@@ -55,7 +59,11 @@ void _addChord(
 
 /// プロトタイプの sfx 定義をそのまま移植。
 final Map<Sfx, List<_Tone>> _recipes = {
-  Sfx.tap: const [_Tone(600, 0.06, _Wave.sine, 0.1)],
+  // やわらかい「ぽっ♪」(こどもFB「音をかわいく」でサイン2音に)
+  Sfx.tap: const [
+    _Tone(660, 0.05, _Wave.sine, 0.09),
+    _Tone(990, 0.07, _Wave.sine, 0.05, 0.035),
+  ],
   Sfx.coin: const [
     _Tone(880, 0.08, _Wave.square, 0.06),
     _Tone(1320, 0.12, _Wave.square, 0.06, 0.07),
@@ -97,6 +105,30 @@ final Map<Sfx, List<_Tone>> _recipes = {
     _Tone(95, 0.13, _Wave.sawtooth, 0.15, 0.33),
     _Tone(78, 0.2, _Wave.sawtooth, 0.16, 0.48),
     _Tone(66, 0.16, _Wave.sawtooth, 0.12, 0.55),
+  ],
+  // なでなでゾーン別タッチ音(docs/game-design.md §3。こどもFBで追加)
+  // あたま「ぽよん♪」: 上昇2音のやわらかいサイン
+  Sfx.petHead: const [
+    _Tone(660, 0.08, _Wave.sine, 0.11),
+    _Tone(880, 0.12, _Wave.sine, 0.1, 0.07),
+  ],
+  // ほっぺ「きゅっ」: 高いところで上がって下がる小さな鳴き
+  Sfx.petCheek: const [
+    _Tone(1050, 0.05, _Wave.triangle, 0.08),
+    _Tone(1320, 0.06, _Wave.sine, 0.08, 0.04),
+    _Tone(1050, 0.07, _Wave.sine, 0.06, 0.09),
+  ],
+  // おなか「ぷにょん」: 低いゆれ(下がって戻る)
+  Sfx.petBelly: const [
+    _Tone(320, 0.09, _Wave.sine, 0.13),
+    _Tone(240, 0.1, _Wave.sine, 0.11, 0.07),
+    _Tone(300, 0.12, _Wave.sine, 0.09, 0.15),
+  ],
+  // あんよ「てちてち」: 小さな2連タップ音
+  Sfx.petFeet: const [
+    _Tone(780, 0.045, _Wave.sine, 0.09),
+    _Tone(780, 0.045, _Wave.sine, 0.09, 0.09),
+    _Tone(980, 0.05, _Wave.sine, 0.06, 0.18),
   ],
   // 進化リビール用メガファンファーレ(駆け上がり+和音3連+シャンシャン)
   Sfx.megaFanfare: _megaFanfareTones(),
@@ -577,11 +609,15 @@ class SoundSynth {
       final syllables = 5 + rng.nextInt(4);
       final tones = <_Tone>[];
       var t = 0.0;
+      // 音程はペンタトニック風の4段から選ぶ(でたらめな音程より歌っぽく
+      // かわいい)。最後の音節は高めロングで「〜♪」と語尾を上げる。
+      const steps = [1.0, 1.125, 1.25, 1.5];
       for (var i = 0; i < syllables; i++) {
-        final f = base * (0.85 + rng.nextDouble() * 0.85);
-        final dur = 0.07 + rng.nextDouble() * 0.06;
-        tones.add(_Tone(f, dur, _Wave.triangle, 0.17, t));
-        tones.add(_Tone(f * 2, dur, _Wave.sine, 0.07, t)); // 倍音で声らしく
+        final last = i == syllables - 1;
+        final f = base * (last ? 1.5 : steps[rng.nextInt(steps.length)]);
+        final dur = last ? 0.16 : 0.07 + rng.nextDouble() * 0.05;
+        tones.add(_Tone(f, dur, _Wave.sine, 0.16, t)); // サイン主体でまるい声
+        tones.add(_Tone(f * 2, dur, _Wave.triangle, 0.05, t)); // 倍音で声らしく
         t += dur + 0.02 + rng.nextDouble() * 0.04;
       }
       return _render(tones);

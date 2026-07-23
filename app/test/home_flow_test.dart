@@ -106,6 +106,48 @@ void main() {
     await drainTimers(tester);
   });
 
+  testWidgets('petting sounds differ by zone and feet do not always puff', (
+    tester,
+  ) async {
+    // こどもFB「場所でもっと音を変えて」「おならしすぎ」: 4ゾーンの
+    // タッチ音出し分けと、下部タップが毎回おならにならないこと。
+    final rec = RecordingSfx();
+    final c = await bootApp(
+      tester,
+      state: GameState()..stage = 1,
+      rng: NoPuffRandom(), // 0.99: おなら判定(25%/6%)は発火しない
+      sfx: rec.sfx,
+    );
+
+    final rect = tester.getRect(find.byType(CreatureView));
+    final synth = SoundSynth();
+
+    Future<void> tapAtFraction(double fx, double fy) async {
+      await tester.tapAt(
+        Offset(rect.left + rect.width * fx, rect.top + rect.height * fy),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    bool played(Sfx s) => rec.players.any(
+      (p) => p.playedBytes.any((b) => listEquals(b, synth.wavFor(s))),
+    );
+
+    await tapAtFraction(0.5, 0.15); // あたま
+    expect(played(Sfx.petHead), isTrue, reason: 'あたまのタッチ音');
+    await tapAtFraction(0.12, 0.55); // ほっぺ(左)
+    expect(played(Sfx.petCheek), isTrue, reason: 'ほっぺのタッチ音');
+    await tapAtFraction(0.5, 0.55); // おなか
+    expect(played(Sfx.petBelly), isTrue, reason: 'おなかのタッチ音');
+    await tapAtFraction(0.5, 0.85); // あんよ(おならは確率でしか出ない)
+    expect(played(Sfx.petFeet), isTrue, reason: 'あんよのタッチ音');
+    expect(played(Sfx.puff), isFalse, reason: '下タップが毎回おならにならない');
+    expect(c.state.xp, 4); // 4回とも なでなで扱い
+
+    await drainTimers(tester);
+  });
+
   testWidgets('feeding an apple from the food modal costs 3 coins', (
     tester,
   ) async {

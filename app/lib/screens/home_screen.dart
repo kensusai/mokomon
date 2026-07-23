@@ -50,25 +50,36 @@ const _puffLines = [
 ];
 
 /// なでなでのタップ位置ゾーン(下部30%は💨なのでここには来ない)。
-enum _PetZone { head, belly, side }
+enum _PetZone { head, belly, side, feet }
 
 /// ゾーンごとの反応(セリフ・パーティクル・鳴き声・動き)。docs/game-design.md §3。
 const _petLines = {
   _PetZone.head: ['えへへ〜', 'あたま なでなで すき!', 'もっと なでて〜', 'きもちいい〜'],
   _PetZone.belly: ['くすぐったい〜!', 'ぽんぽん だいすき', 'ぷにぷに でしょ?', 'ぽかぽか する〜'],
   _PetZone.side: ['ひゃっ!', 'そこ そこ〜!', 'わきわき くすぐったい!', 'なになに〜?'],
+  _PetZone.feet: ['てちてち♪', 'あんよ こちょこちょ?', 'あしもと くすぐったい!', 'ぴょこぴょこ!'],
 };
 
 const _petParticles = {
   _PetZone.head: ['✨', '💛', '🌟'],
   _PetZone.belly: ['💖', '💗', '💕'],
   _PetZone.side: ['🎵', '⭐', '💫'],
+  _PetZone.feet: ['🐾', '✨', '💫'],
 };
 
 const _petAnims = {
   _PetZone.head: CreatureAnim.wiggle,
   _PetZone.belly: CreatureAnim.bounce,
   _PetZone.side: CreatureAnim.wiggle,
+  _PetZone.feet: CreatureAnim.bounce,
+};
+
+/// ゾーンごとのタッチ音(docs/game-design.md §3。こどもFBで追加)。
+const _petSfx = {
+  _PetZone.head: Sfx.petHead,
+  _PetZone.belly: Sfx.petBelly,
+  _PetZone.side: Sfx.petCheek,
+  _PetZone.feet: Sfx.petFeet,
 };
 
 /// BGMの曲名(🎵ボタンで切替。SfxPlayer.bgmTracks と対応)。
@@ -271,9 +282,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ---------- interactions ----------
 
-  /// タップ位置から反応ゾーンを決める(上34%=あたま/左右30%=よこ/残り=おなか)。
+  /// タップ位置から反応ゾーンを決める
+  /// (上34%=あたま/下30%=あんよ/左右30%=ほっぺ/残り=おなか)。
   _PetZone _zoneOf(Offset local, Size size) {
-    if (local.dy / size.height < 0.34) return _PetZone.head;
+    final y = local.dy / size.height;
+    if (y < 0.34) return _PetZone.head;
+    if (y > 0.70) return _PetZone.feet;
     final x = local.dx / size.width;
     if (x < 0.30 || x > 0.70) return _PetZone.side;
     return _PetZone.belly;
@@ -307,7 +321,8 @@ class _HomeScreenState extends State<HomeScreen>
         _creatureKey.currentState?.flashMood(CreatureMood.surprised);
         _showPuffEffects(box);
       case CreatureTapOutcome.petted:
-        // ゾーンごとに動き・パーティクル・セリフを変える(反応バリエーション)
+        // ゾーンごとに音・動き・パーティクル・セリフを変える(反応バリエーション)
+        c.sfx.play(_petSfx[zone]!);
         _creatureKey.currentState?.flashMood(CreatureMood.happy);
         _creatureKey.currentState?.play(_petAnims[zone]!);
         final particles = _petParticles[zone]!;
