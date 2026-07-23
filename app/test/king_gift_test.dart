@@ -30,17 +30,17 @@ void main() {
 
       final c = king();
       c.pet();
-      expect(c.state.kingSparkle, 10);
+      expect(c.state.kingSparkle, 4);
       c.feed(foods.first);
-      expect(c.state.kingSparkle, 26);
+      expect(c.state.kingSparkle, 10);
       c.finishMinigame(5);
-      expect(c.state.kingSparkle, 56);
+      expect(c.state.kingSparkle, 22);
       c.savePaint('p');
-      expect(c.state.kingSparkle, 81);
+      expect(c.state.kingSparkle, 32);
     });
 
     test('first three gifts unlock stamps in order, then coins', () {
-      final c = king(sparkle: 95);
+      final c = king(sparkle: 97);
       c.pet(); // 100到達
       var gift = c.takePendingGift()!;
       expect(gift.stamp, '👑');
@@ -48,14 +48,14 @@ void main() {
       expect(c.state.kingSparkle, 0);
       expect(c.takePendingGift(), isNull); // 1回だけ受け取れる
 
-      c.state.kingSparkle = 95;
+      c.state.kingSparkle = 97;
       c.pet();
       expect(c.takePendingGift()!.stamp, '🎆');
-      c.state.kingSparkle = 95;
+      c.state.kingSparkle = 97;
       c.pet();
       expect(c.takePendingGift()!.stamp, '🦄');
 
-      c.state.kingSparkle = 95;
+      c.state.kingSparkle = 97;
       final before = c.state.coins;
       c.pet();
       gift = c.takePendingGift()!;
@@ -88,12 +88,12 @@ void main() {
         tester,
         state: GameState()
           ..stage = kingStage
-          ..kingSparkle = 95,
+          ..kingSparkle = 97,
         rng: NoPuffRandom(),
       );
       expect(find.text('✨'), findsWidgets); // きらきらメーター
 
-      // なでなで(+6)で満タン → おみやげ演出
+      // なでなで(+4)で満タン → おみやげ演出
       await tester.tap(find.byType(CreatureView));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -114,7 +114,7 @@ void main() {
         tester,
         state: GameState()
           ..stage = kingStage
-          ..kingSparkle = 80,
+          ..kingSparkle = 90,
         rng: NoPuffRandom(),
       );
 
@@ -128,7 +128,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // ミニゲームクリア相当(+30 で満タン → gift 発生 → notify)
+      // ミニゲームクリア相当(+12 で満タン → gift 発生 → notify)
       c.finishMinigame(10);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
