@@ -582,6 +582,101 @@ const _sampleRate = 22050;
 double babbleBaseFreq(int species) =>
     300.0 + (species % 9) * 42 + (species ~/ 9) * 14;
 
+/// 種族ごとの「声の性格」(docs/game-design.md §3。こどもFB
+/// 「キャラによって音を変えて・おもしろキャラは変な音に」)。
+/// wave=声色 / steps=音程の動き(基準周波数への倍率) / syllBase=音節の長さ /
+/// gap=音節の間 / risingEnd=語尾を上げる / cycle=steps を順番にたどる
+/// (ランダムでなく規則的な動き。ぐるぐる・ロボ向け)。
+class _VoiceStyle {
+  final _Wave wave;
+  final List<double> steps;
+  final double syllBase;
+  final double gap;
+  final bool risingEnd;
+  final bool cycle;
+  final bool overtone; // 倍音レイヤーで声を丸くする(機械声・濁声では切る)
+  const _VoiceStyle(
+    this.wave,
+    this.steps, {
+    this.syllBase = 0.07,
+    this.gap = 0.02,
+    this.risingEnd = true,
+    this.cycle = false,
+    this.overtone = true,
+  });
+}
+
+/// 既定のかわいい声(該当のない種族と、将来追加する種族はこれ)。
+const _cuteVoice = _VoiceStyle(_Wave.sine, [1.0, 1.125, 1.25, 1.5]);
+
+/// species index → 声の性格。おもしろ・変顔組はヘンな声にする。
+const _voiceStyles = <int, _VoiceStyle>{
+  // bero: べろべろした濁り声(のこぎり波・音程が上下にべたつく)
+  4: _VoiceStyle(
+    _Wave.sawtooth,
+    [0.8, 1.3, 0.7, 1.4],
+    syllBase: 0.09,
+    risingEnd: false,
+    overtone: false,
+  ),
+  // buu: 低いブヒブヒ(矩形波・鼻声)
+  5: _VoiceStyle(
+    _Wave.square,
+    [0.55, 0.7, 0.6],
+    syllBase: 0.11,
+    gap: 0.05,
+    risingEnd: false,
+    overtone: false,
+  ),
+  // medama: 音程が大きく飛ぶ不思議声
+  6: _VoiceStyle(_Wave.triangle, [0.7, 1.6, 0.9, 1.8], risingEnd: false),
+  // dandy: 低くしぶい ゆっくり声
+  8: _VoiceStyle(
+    _Wave.sine,
+    [0.55, 0.62, 0.7],
+    syllBase: 0.13,
+    gap: 0.06,
+    risingEnd: false,
+  ),
+  // guru: 上下をぐるぐる回る目まい声
+  10: _VoiceStyle(_Wave.sine, [0.85, 1.2, 1.5, 1.2], gap: 0.0, cycle: true),
+  // paku: あむあむした短い食べ声
+  11: _VoiceStyle(
+    _Wave.square,
+    [0.9, 1.0, 0.8],
+    syllBase: 0.05,
+    gap: 0.06,
+    risingEnd: false,
+    overtone: false,
+  ),
+  // nemu: ねむそうな下がり声(ふにゃ〜)
+  12: _VoiceStyle(
+    _Wave.sine,
+    [1.1, 1.0, 0.9, 0.8],
+    syllBase: 0.12,
+    gap: 0.05,
+    risingEnd: false,
+    cycle: true,
+  ),
+  // robo: ピコピコした機械声(量子化された音程)
+  13: _VoiceStyle(
+    _Wave.square,
+    [1.0, 1.25, 1.5, 2.0],
+    syllBase: 0.06,
+    gap: 0.045,
+    risingEnd: false,
+    overtone: false,
+  ),
+  // obake: ゆらゆら漂うおばけ声(ひゅ〜)
+  14: _VoiceStyle(
+    _Wave.sine,
+    [0.9, 0.95, 1.05, 1.1],
+    syllBase: 0.15,
+    gap: 0.01,
+    cycle: true,
+  ),
+};
+
 /// 効果音を 16bit PCM WAV バイト列として合成する(実行時・アセット不要)。
 /// 再生は audioplayers の BytesSource(呼び出し側)。
 class SoundSynth {
@@ -606,19 +701,27 @@ class SoundSynth {
     return _babbleCache.putIfAbsent(species * 16 + variant, () {
       final rng = Random(species * 31 + variant * 7 + 5);
       final base = babbleBaseFreq(species);
+      final style = _voiceStyles[species] ?? _cuteVoice;
       final syllables = 5 + rng.nextInt(4);
       final tones = <_Tone>[];
       var t = 0.0;
-      // 音程はペンタトニック風の4段から選ぶ(でたらめな音程より歌っぽく
-      // かわいい)。最後の音節は高めロングで「〜♪」と語尾を上げる。
-      const steps = [1.0, 1.125, 1.25, 1.5];
+      // 音程は性格ごとの段から選ぶ(かわいい系はペンタトニック風、
+      // おもしろ系は変な動き)。risingEnd なら語尾を高めロングで「〜♪」。
+      final steps = style.steps;
       for (var i = 0; i < syllables; i++) {
         final last = i == syllables - 1;
-        final f = base * (last ? 1.5 : steps[rng.nextInt(steps.length)]);
-        final dur = last ? 0.16 : 0.07 + rng.nextDouble() * 0.05;
-        tones.add(_Tone(f, dur, _Wave.sine, 0.16, t)); // サイン主体でまるい声
-        tones.add(_Tone(f * 2, dur, _Wave.triangle, 0.05, t)); // 倍音で声らしく
-        t += dur + 0.02 + rng.nextDouble() * 0.04;
+        final step = style.cycle
+            ? steps[i % steps.length]
+            : steps[rng.nextInt(steps.length)];
+        final f = base * (last && style.risingEnd ? steps.last : step);
+        final dur = last && style.risingEnd
+            ? 0.16
+            : style.syllBase + rng.nextDouble() * 0.05;
+        tones.add(_Tone(f, dur, style.wave, 0.16, t));
+        if (style.overtone) {
+          tones.add(_Tone(f * 2, dur, _Wave.triangle, 0.05, t)); // 倍音で声らしく
+        }
+        t += dur + style.gap + rng.nextDouble() * 0.04;
       }
       return _render(tones);
     });
