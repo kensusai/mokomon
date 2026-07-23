@@ -159,16 +159,16 @@ void main() {
       expect(poor.state.coins, 5);
       expect(poor.state.effectiveBg, isNot(oshiro));
 
-      final rich = fresh(GameState()..coins = 100);
+      final rich = fresh(GameState()..coins = 500); // 高級化後も買える額
       expect(rich.tapBackground(oshiro), BgTapOutcome.bought);
-      expect(rich.state.coins, 100 - bgThemes[oshiro].cost);
+      expect(rich.state.coins, 500 - bgThemes[oshiro].cost);
       expect(rich.state.ownedBg, contains('oshiro'));
       expect(rich.state.effectiveBg, oshiro);
 
       // 一度買えば、以後は無料で選び直せる
       rich.tapBackground(0);
       expect(rich.tapBackground(oshiro), BgTapOutcome.selected);
-      expect(rich.state.coins, 100 - bgThemes[oshiro].cost);
+      expect(rich.state.coins, 500 - bgThemes[oshiro].cost);
     });
 
     test('ownedBg persists in local save but not in あいことば', () {
@@ -206,6 +206,31 @@ void main() {
       expect(c.state.owned, contains('sunglass'));
       expect(c.state.equipFace, 'sunglass');
       expect(c.state.stage, 0);
+    });
+  });
+
+  group('shop price tiers (docs/game-design.md §7)', () {
+    test('has aspirational tiers, not everything is cheap', () {
+      // こどもFB「ぜんぶ安すぎ」: べらぼうに高い(300+)・けっこう高め
+      // (80〜)の商品を用意しつつ、おてごろ帯も残す。
+      final costs = shopItems.map((i) => i.cost).toList();
+      expect(costs.where((c) => c >= 300), isNotEmpty, reason: 'べらぼう帯');
+      expect(
+        costs.where((c) => c >= 80 && c < 300).length,
+        greaterThanOrEqualTo(3),
+        reason: 'けっこう高め帯',
+      );
+      expect(
+        costs.where((c) => c <= 20).length,
+        greaterThanOrEqualTo(10),
+        reason: '序盤に買えるおてごろ帯も残す',
+      );
+      // 背景にも高級テーマがある
+      expect(
+        bgThemes.map((b) => b.cost).where((c) => c >= 150),
+        isNotEmpty,
+        reason: '背景のべらぼう帯',
+      );
     });
   });
 

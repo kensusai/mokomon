@@ -37,20 +37,20 @@ const bgThemes = <BgTheme>[
   BgTheme('kazan', 'かざん', '🌋', Color(0xFF3B1212), Color(0xFFA62C2C)),
   BgTheme('niji', 'にじぞら', '🌈', Color(0xFFFFB6E1), Color(0xFFC9F0FF)),
   // ---- 以降は追加分(コインで購入)。追加は必ず末尾に ----
-  BgTheme('fukaiumi', 'ふかいうみ', '🐋', Color(0xFF0B3B5C), Color(0xFF13698F), 25),
-  BgTheme('janguru', 'ジャングル', '🐒', Color(0xFF0F3D1E), Color(0xFF2E7D42), 20),
-  BgTheme('candy', 'キャンディランド', '🍬', Color(0xFFFFC9E6), Color(0xFFD9C6FF), 20),
-  BgTheme('oshiro', 'おしろ', '🏰', Color(0xFFC9B8FF), Color(0xFFFFE8B8), 30),
-  BgTheme('aurora', 'オーロラ', '🌌', Color(0xFF0C2B3D), Color(0xFF2E9B7A), 30),
-  BgTheme('onsen', 'おんせん', '♨️', Color(0xFFFCE7EA), Color(0xFFFFF6EE), 20),
-  BgTheme('yoichi', 'よいちまつり', '🏮', Color(0xFF3B1420), Color(0xFFB3402E), 25),
+  BgTheme('fukaiumi', 'ふかいうみ', '🐋', Color(0xFF0B3B5C), Color(0xFF13698F), 40),
+  BgTheme('janguru', 'ジャングル', '🐒', Color(0xFF0F3D1E), Color(0xFF2E7D42), 30),
+  BgTheme('candy', 'キャンディランド', '🍬', Color(0xFFFFC9E6), Color(0xFFD9C6FF), 40),
+  BgTheme('oshiro', 'おしろ', '🏰', Color(0xFFC9B8FF), Color(0xFFFFE8B8), 200),
+  BgTheme('aurora', 'オーロラ', '🌌', Color(0xFF0C2B3D), Color(0xFF2E9B7A), 250),
+  BgTheme('onsen', 'おんせん', '♨️', Color(0xFFFCE7EA), Color(0xFFFFF6EE), 30),
+  BgTheme('yoichi', 'よいちまつり', '🏮', Color(0xFF3B1420), Color(0xFFB3402E), 40),
   BgTheme(
     'hanabatake',
     'はなばたけ',
     '🌷',
     Color(0xFF8FE0A8),
     Color(0xFFFFD3E8),
-    15,
+    20,
   ),
 ];
 
