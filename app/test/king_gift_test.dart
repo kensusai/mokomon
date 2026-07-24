@@ -30,17 +30,17 @@ void main() {
 
       final c = king();
       c.pet();
-      expect(c.state.kingSparkle, 4);
+      expect(c.state.kingSparkle, 2);
       c.feed(foods.first);
-      expect(c.state.kingSparkle, 10);
+      expect(c.state.kingSparkle, 5);
       c.finishMinigame(5);
-      expect(c.state.kingSparkle, 22);
+      expect(c.state.kingSparkle, 11);
       c.savePaint('p');
-      expect(c.state.kingSparkle, 32);
+      expect(c.state.kingSparkle, 16);
     });
 
     test('first three gifts unlock stamps in order, then coins', () {
-      final c = king(sparkle: 97);
+      final c = king(sparkle: 98);
       c.pet(); // 100到達
       var gift = c.takePendingGift()!;
       expect(gift.stamp, '👑');
@@ -48,14 +48,14 @@ void main() {
       expect(c.state.kingSparkle, 0);
       expect(c.takePendingGift(), isNull); // 1回だけ受け取れる
 
-      c.state.kingSparkle = 97;
+      c.state.kingSparkle = 98;
       c.pet();
       expect(c.takePendingGift()!.stamp, '🎆');
-      c.state.kingSparkle = 97;
+      c.state.kingSparkle = 98;
       c.pet();
       expect(c.takePendingGift()!.stamp, '🦄');
 
-      c.state.kingSparkle = 97;
+      c.state.kingSparkle = 98;
       final before = c.state.coins;
       c.pet();
       gift = c.takePendingGift()!;
@@ -81,19 +81,20 @@ void main() {
   });
 
   group('king gift UI', () {
-    testWidgets('sparkle meter shows only for kings and gift celebrates', (
+    testWidgets('gauge is invisible but the gift still celebrates', (
       tester,
     ) async {
+      // こどもFB「増えないゲージが気になる」: メーターは出さない。
       await bootApp(
         tester,
         state: GameState()
           ..stage = kingStage
-          ..kingSparkle = 97,
+          ..kingSparkle = 98,
         rng: NoPuffRandom(),
       );
-      expect(find.text('✨'), findsWidgets); // きらきらメーター
+      expect(find.text('✨'), findsNothing); // メーターは表示しない
 
-      // なでなで(+4)で満タン → おみやげ演出
+      // なでなで(+2)で満タン → おみやげ演出
       await tester.tap(find.byType(CreatureView));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -114,7 +115,7 @@ void main() {
         tester,
         state: GameState()
           ..stage = kingStage
-          ..kingSparkle = 90,
+          ..kingSparkle = 95,
         rng: NoPuffRandom(),
       );
 
@@ -128,7 +129,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // ミニゲームクリア相当(+12 で満タン → gift 発生 → notify)
+      // ミニゲームクリア相当(+6 で満タン → gift 発生 → notify)
       c.finishMinigame(10);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
