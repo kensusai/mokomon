@@ -104,7 +104,14 @@ class _PaintScreenState extends State<PaintScreen> {
   var _filling = false;
   var _saving = false;
 
-  static Uint8List? _bodyMask; // 300x300 体マスク(全インスタンス共有)
+  Uint8List? _bodyMask; // 300x300 体マスク(いまの子の体形に依存)
+
+  /// いまの子の体形(種族×stage)。おえかきの下絵・クリップ・ぬりつぶし
+  /// 境界のすべてにこれを使う(体形が種族ごとに違うため)。
+  Path get _bodyShape => CreaturePainter.bodyPathFor(
+    widget.controller.state.species,
+    widget.controller.state.stage,
+  );
 
   @override
   void initState() {
@@ -190,25 +197,25 @@ class _PaintScreenState extends State<PaintScreen> {
     );
     if (withBody) {
       canvas.drawPath(
-        CreaturePainter.bodyPath(),
+        _bodyShape,
         Paint()..color = Color(widget.controller.state.color),
       );
     }
-    _paintOps(canvas, _baseImage, _ops);
+    _paintOps(canvas, _bodyShape, _baseImage, _ops);
     return recorder.endRecording().toImage(
       _paintSize.toInt(),
       _paintSize.toInt(),
     );
   }
 
-  static Future<Uint8List> _maskBytes() async {
+  Future<Uint8List> _maskBytes() async {
     if (_bodyMask != null) return _bodyMask!;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(
       recorder,
       const Rect.fromLTWH(0, 0, _paintSize, _paintSize),
     );
-    canvas.drawPath(CreaturePainter.bodyPath(), Paint()..color = Colors.white);
+    canvas.drawPath(_bodyShape, Paint()..color = Colors.white);
     final img = await recorder.endRecording().toImage(
       _paintSize.toInt(),
       _paintSize.toInt(),
@@ -234,6 +241,10 @@ class _PaintScreenState extends State<PaintScreen> {
       // バイト列を取り出したらネイティブ側は不要(docs/review-findings.md #24)
       probe.dispose();
       layer.dispose();
+      // 画面破棄後はマスク描画から先に進まない(破棄後の toImage は
+      // 完了せず、生成途中のイメージがリークする。単体では旧コードでも
+      // 再現していた潜在バグ)。
+      if (!mounted) return;
       final region = findFillRegion(
         probeBytes,
         _paintSize.toInt(),
@@ -427,6 +438,7 @@ class _PaintScreenState extends State<PaintScreen> {
               listenable: widget.controller,
               builder: (context, _) => CustomPaint(
                 painter: _PaintCanvasPainter(
+                  bodyShape: _bodyShape,
                   bodyColor: Color(widget.controller.state.color),
                   baseImage: _baseImage,
                   ops: _ops,
@@ -626,9 +638,14 @@ class _PaintScreenState extends State<PaintScreen> {
 
 /// 模様レイヤー(baseImage+線+スタンプ)を体パスでクリップして描く。
 /// けしごむ(BlendMode.clear)が体色まで消さないよう saveLayer で分離する。
-void _paintOps(Canvas canvas, ui.Image? baseImage, List<_PaintOp> ops) {
+void _paintOps(
+  Canvas canvas,
+  Path bodyShape,
+  ui.Image? baseImage,
+  List<_PaintOp> ops,
+) {
   canvas.save();
-  canvas.clipPath(CreaturePainter.bodyPath());
+  canvas.clipPath(bodyShape);
   canvas.saveLayer(const Rect.fromLTWH(0, 0, _paintSize, _paintSize), Paint());
   if (baseImage != null) {
     canvas.drawImageRect(
@@ -681,11 +698,13 @@ void _paintOps(Canvas canvas, ui.Image? baseImage, List<_PaintOp> ops) {
 }
 
 class _PaintCanvasPainter extends CustomPainter {
+  final Path bodyShape;
   final Color bodyColor;
   final ui.Image? baseImage;
   final List<_PaintOp> ops;
 
   _PaintCanvasPainter({
+    required this.bodyShape,
     required this.bodyColor,
     required this.baseImage,
     required this.ops,
@@ -695,8 +714,8 @@ class _PaintCanvasPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final s = size.width / _paintSize;
     canvas.scale(s, s);
-    canvas.drawPath(CreaturePainter.bodyPath(), Paint()..color = bodyColor);
-    _paintOps(canvas, baseImage, ops);
+    canvas.drawPath(bodyShape, Paint()..color = bodyColor);
+    _paintOps(canvas, bodyShape, baseImage, ops);
   }
 
   @override

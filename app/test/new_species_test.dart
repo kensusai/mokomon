@@ -97,11 +97,58 @@ void main() {
       );
     });
 
+    test(
+      'body silhouettes are distinct per species and change on evolution',
+      () {
+        // こどもFB「イラストが全部似ている」: 種族ごとに別の体形パスを持ち、
+        // 進化(stage2→キング)でも形が変わることをパスの点標本で固定する。
+        String signature(int sp, int stage) {
+          final path = CreaturePainter.bodyPathFor(sp, stage);
+          final buf = StringBuffer();
+          for (var y = 0; y < 20; y++) {
+            for (var x = 0; x < 20; x++) {
+              buf.write(
+                path.contains(Offset(x * 15.0 + 7.5, y * 15.0 + 7.5))
+                    ? '1'
+                    : '0',
+              );
+            }
+          }
+          return buf.toString();
+        }
+
+        final stage2 = {
+          for (var sp = 0; sp < speciesList.length; sp++) signature(sp, 2),
+        };
+        expect(
+          stage2.length,
+          greaterThanOrEqualTo(12),
+          reason: 'stage2 のシルエットは種族ごとにほぼ別物',
+        );
+        final kings = {
+          for (var sp = 0; sp < speciesList.length; sp++)
+            signature(sp, kingStage),
+        };
+        expect(
+          kings.length,
+          greaterThanOrEqualTo(12),
+          reason: 'キングのシルエットも種族ごとにほぼ別物',
+        );
+        for (var sp = 0; sp < speciesList.length; sp++) {
+          expect(
+            signature(sp, 2),
+            isNot(signature(sp, kingStage)),
+            reason: '進化で体形も変わる (species=$sp)',
+          );
+        }
+      },
+    );
+
     testWidgets('every species renders at every stage without throwing', (
       tester,
     ) async {
       for (var sp = 0; sp < speciesList.length; sp++) {
-        for (var stage = 1; stage <= 3; stage++) {
+        for (var stage = 1; stage <= kingStage; stage++) {
           for (final sad in [false, true]) {
             await tester.pumpWidget(
               MaterialApp(

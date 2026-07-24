@@ -20,7 +20,7 @@ void main() {
       return;
     }
     const cell = 220.0;
-    final cols = 4; // egg + stage1..3
+    final cols = 5; // egg + stage1..king
     final rows = speciesList.length;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(
@@ -33,7 +33,7 @@ void main() {
     );
 
     for (var sp = 0; sp < rows; sp++) {
-      for (var stage = 0; stage <= 3; stage++) {
+      for (var stage = 0; stage <= kingStage; stage++) {
         canvas.save();
         canvas.translate(stage * cell + 10, sp * cell + 10);
         canvas.scale((cell - 20) / 300);
