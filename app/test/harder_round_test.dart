@@ -1,24 +1,12 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mokomon/data/foods.dart';
 import 'package:mokomon/logic/minigames.dart';
 
 /// こどもFB「もう2個ずつ+全体的にむずかしく」ラウンド。
-/// ごはん10種・あそぶ10種・各ゲームの難易度パラメータを固定する。
+/// 各ゲームの難易度パラメータを固定する
+/// (ごはんの一覧は collection_economy_test.dart で固定)。
 void main() {
-  group('10 foods (docs/game-design.md §3)', () {
-    test('two new foods appended after pizza', () {
-      expect(foods, hasLength(12));
-      expect(foods.map((f) => f.key).toList().sublist(8), [
-        'burger',
-        'ice',
-        'sushi',
-        'pudding',
-      ]);
-    });
-  });
-
   group('harder difficulty (docs/game-design.md §5)', () {
     test('catch accelerates up to 1.9x', () {
       final g = CatchGame(rng: Random(1));

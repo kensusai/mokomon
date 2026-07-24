@@ -66,7 +66,7 @@ void main() {
       final c = fresh(
         GameState()
           ..stage = 1
-          ..coins = 10
+          ..coins = 16
           ..hunger = 50
           ..happy = 90,
       );
@@ -75,7 +75,7 @@ void main() {
       expect(c.state.coins, 0);
       expect(c.state.hunger, 95); // 50 + 45
       expect(c.state.happy, 100); // 90 + 14 clamped
-      expect(c.state.xp, 9);
+      expect(c.state.xp, 13);
     });
 
     test('fails without enough coins and changes nothing', () {

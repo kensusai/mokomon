@@ -100,19 +100,31 @@ void main() {
   });
 
   group('expanded content (docs/game-design.md §3, §7, §13)', () {
-    test('12 foods with the new entries', () {
-      expect(foods, hasLength(12));
-      expect(foods.map((f) => f.key).toList().sublist(3), [
-        'onigiri',
-        'ramen',
-        'parfait',
-        'tamago',
-        'pizza',
-        'burger',
-        'ice',
-        'sushi',
-        'pudding',
-      ]);
+    test('14 foods sorted by cost with the premium entries', () {
+      // こどもFB「消費少ない順に+高い食べ物も」: 3〜80コインの階段。
+      final expected = [
+        ('apple', 3, 15, 2, 3),
+        ('onigiri', 4, 20, 3, 4),
+        ('tamago', 5, 26, 3, 5),
+        ('pudding', 7, 14, 18, 5),
+        ('meat', 8, 32, 5, 7),
+        ('ice', 10, 18, 16, 8),
+        ('ramen', 12, 38, 10, 10),
+        ('burger', 14, 40, 8, 11),
+        ('cake', 16, 45, 14, 13),
+        ('pizza', 18, 42, 12, 14),
+        ('parfait', 22, 30, 22, 16),
+        ('sushi', 30, 50, 15, 20),
+        ('steak', 45, 60, 18, 28),
+        ('dinner', 80, 70, 30, 40),
+      ];
+      expect(
+        foods.map((f) => (f.key, f.cost, f.hunger, f.happy, f.xp)).toList(),
+        expected,
+      );
+      for (var i = 1; i < foods.length; i++) {
+        expect(foods[i].cost, greaterThan(foods[i - 1].cost));
+      }
     });
 
     test('40 shop items, appended after the original 6', () {

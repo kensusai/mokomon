@@ -18,9 +18,11 @@ const _foodGradients = {
   'ice': [Color(0xFF9AD9F5), Color(0xFF5FB4E0)],
   'sushi': [Color(0xFFFF9E80), Color(0xFFE8532F)],
   'pudding': [Color(0xFFFFD98A), Color(0xFFD9942B)],
+  'steak': [Color(0xFFE87A7A), Color(0xFFB03A3A)],
+  'dinner': [Color(0xFFB78CFF), Color(0xFF6B4BC6)],
 };
 
-/// ごはんモーダル。2列グリッドで12種(必要なら本文だけスクロール)。
+/// ごはんモーダル。2列グリッドで14種・安い順(必要なら本文だけスクロール)。
 /// 給餌に成功したら閉じて [onFed] を呼ぶ。コイン不足はトーストで誘導。
 Future<void> showFoodModal(
   BuildContext context,
