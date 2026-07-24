@@ -72,4 +72,5 @@ const speciesDefaultBg = <int>[
   2, // nemu よぞら
   6, // robo うちゅう
   2, // obake よぞら
+  0, // yuni そら(にじが映える)
 ];

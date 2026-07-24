@@ -9,7 +9,7 @@ import 'package:mokomon/widgets/creature_painter.dart';
 void main() {
   group('new species: にゃん / ダンディ (index 7, 8)', () {
     test('are appended in order so あいことば stay compatible', () {
-      expect(speciesList, hasLength(15));
+      expect(speciesList, hasLength(16));
       expect(speciesList[7].key, 'nyan');
       expect(speciesList[8].key, 'dandy');
       expect(speciesList.sublist(9).map((s) => s.key).toList(), [
@@ -19,6 +19,7 @@ void main() {
         'nemu',
         'robo',
         'obake',
+        'yuni',
       ]);
       expect(secretSpeciesIndex, 3); // 金のたまごは変わらず pika
       // 色・名前・絵文字が全種族で揃っている
@@ -76,7 +77,24 @@ void main() {
       for (var i = 0; i < 2000; i++) {
         drawn.add(s.nextEggSpecies(Random(i)));
       }
-      expect(drawn, containsAll([7, 8, 9, 10, 11, 12, 13, 14]));
+      expect(drawn, containsAll([7, 8, 9, 10, 11, 12, 13, 14, 15]));
+    });
+
+    test('ゆに (index 15) display names follow the stage pattern', () {
+      expect(
+        (GameState()
+              ..species = 15
+              ..stage = 1)
+            .displayName,
+        '🐴 ゆに',
+      );
+      expect(
+        (GameState()
+              ..species = 15
+              ..stage = kingStage)
+            .displayName,
+        '👑 キングゆにこーん',
+      );
     });
 
     testWidgets('every species renders at every stage without throwing', (

@@ -338,6 +338,31 @@ class CreaturePainter extends CustomPainter {
             ..close(),
           innerEar,
         );
+      case 15: // yuni: ユニコーンの角(head装備中は非表示)+たてがみのカール
+        if (equipHead == null) {
+          final horn = Path()
+            ..moveTo(138, 62)
+            ..lineTo(150, 2)
+            ..lineTo(162, 62)
+            ..close();
+          canvas.drawPath(horn, Paint()..color = const Color(0xFFFFE08A));
+          final stripe = Paint()
+            ..color = const Color(0xFFE8A94C)
+            ..strokeWidth = 4
+            ..strokeCap = StrokeCap.round;
+          canvas.drawLine(const Offset(142, 46), const Offset(159, 38), stripe);
+          canvas.drawLine(const Offset(145, 30), const Offset(156, 24), stripe);
+        }
+        for (final (c, r) in const [
+          (Offset(104, 62), 17.0),
+          (Offset(88, 88), 15.0),
+          (Offset(80, 116), 13.0),
+          (Offset(196, 62), 17.0),
+          (Offset(212, 88), 15.0),
+          (Offset(220, 116), 13.0),
+        ]) {
+          canvas.drawCircle(c, r, acc);
+        }
     }
   }
 

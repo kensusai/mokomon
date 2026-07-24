@@ -675,6 +675,8 @@ const _voiceStyles = <int, _VoiceStyle>{
     gap: 0.01,
     cycle: true,
   ),
+  // yuni: キラキラの高音アルペジオ(すず音っぽく駆け上がる)
+  15: _VoiceStyle(_Wave.sine, [1.2, 1.5, 1.8, 2.1], syllBase: 0.06, gap: 0.03),
 };
 
 /// 効果音を 16bit PCM WAV バイト列として合成する(実行時・アセット不要)。
