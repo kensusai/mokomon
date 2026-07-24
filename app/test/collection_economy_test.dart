@@ -100,8 +100,8 @@ void main() {
   });
 
   group('expanded content (docs/game-design.md §3, §7, §13)', () {
-    test('10 foods with the new entries', () {
-      expect(foods, hasLength(10));
+    test('12 foods with the new entries', () {
+      expect(foods, hasLength(12));
       expect(foods.map((f) => f.key).toList().sublist(3), [
         'onigiri',
         'ramen',
@@ -110,6 +110,8 @@ void main() {
         'pizza',
         'burger',
         'ice',
+        'sushi',
+        'pudding',
       ]);
     });
 

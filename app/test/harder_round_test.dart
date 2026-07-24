@@ -9,8 +9,13 @@ import 'package:mokomon/logic/minigames.dart';
 void main() {
   group('10 foods (docs/game-design.md §3)', () {
     test('two new foods appended after pizza', () {
-      expect(foods, hasLength(10));
-      expect(foods.map((f) => f.key).toList().sublist(8), ['burger', 'ice']);
+      expect(foods, hasLength(12));
+      expect(foods.map((f) => f.key).toList().sublist(8), [
+        'burger',
+        'ice',
+        'sushi',
+        'pudding',
+      ]);
     });
   });
 
