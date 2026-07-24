@@ -29,6 +29,8 @@ import '../widgets/ui_kit.dart';
 import 'balloon_screen.dart';
 import 'catch_screen.dart';
 import 'count_screen.dart';
+import 'compare_screen.dart';
+import 'pika_screen.dart';
 import 'simon_screen.dart';
 import 'memory_screen.dart';
 import 'odd_one_screen.dart';
@@ -393,6 +395,8 @@ class _HomeScreenState extends State<HomeScreen>
         'odd' => OddOneScreen(controller: c),
         'count' => CountScreen(controller: c),
         'simon' => SimonScreen(controller: c),
+        'compare' => CompareScreen(controller: c),
+        'pika' => PikaScreen(controller: c),
         _ => MemoryScreen(controller: c),
       };
       await Navigator.of(
@@ -668,15 +672,9 @@ class _HomeScreenState extends State<HomeScreen>
           child: StatPill(s.displayName),
         ),
         const SizedBox(height: 10),
-        if (s.stage == kingStage) ...[
-          // キング専用: きらきらゲージ(満タンでおみやげ)
-          StatMeter(
-            icon: '✨',
-            value: s.kingSparkle,
-            colors: const [Color(0xFFFFE28A), Color(0xFFF0A92D)],
-          ),
-          const SizedBox(height: 10),
-        ],
+        // きらきらゲージのメーターは出さない(こどもFB「増えないゲージが
+        // 気になる」。進化と同じサプライズ重視で、進捗は50%/85%の吹き出し
+        // だけで見せる。docs/game-design.md §14)
         StatMeter(
           icon: '🍖',
           value: s.hunger,

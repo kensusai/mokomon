@@ -641,3 +641,89 @@ class SimonGame {
     return SimonInput.roundComplete;
   }
 }
+
+// ---------- どっちがおおい? ----------
+
+const compareRounds = 6;
+const compareRewardPerRound = 3;
+const compareEmoji = ['🍎', '⭐', '🐟', '🌸', '🍩', '🎈'];
+
+/// 「どっちが おおい?」左右のむれを見くらべて多いほうをタッチ
+/// (docs/game-design.md §5)。差は 3 → 2 → 1 個と縮んで難化する。
+class CompareGame with MistakeTracker, RoundGuessGame {
+  CompareGame({Random? rng}) : _rng = rng ?? Random() {
+    _newRound();
+  }
+
+  final Random _rng;
+  late String emoji;
+  late int leftCount;
+  late int rightCount;
+
+  /// 多いほうの側(0=ひだり / 1=みぎ)。
+  int get moreSide => leftCount > rightCount ? 0 : 1;
+
+  @override
+  int get rounds => compareRounds;
+  @override
+  int get rewardPerRound => compareRewardPerRound;
+
+  @override
+  void _newRound() {
+    emoji = compareEmoji[_rng.nextInt(compareEmoji.length)];
+    final gap = switch (round) {
+      < 2 => 3,
+      < 4 => 2,
+      _ => 1,
+    };
+    final small = 2 + _rng.nextInt(4); // 2〜5個
+    final leftIsBig = _rng.nextBool();
+    leftCount = leftIsBig ? small + gap : small;
+    rightCount = leftIsBig ? small : small + gap;
+  }
+
+  /// [side] 0=ひだり / 1=みぎ。正解なら true を返し次ラウンドへ。
+  bool guess(int side) => _applyGuess(side == moreSide);
+}
+
+// ---------- ぴかっとタッチ ----------
+
+const pikaRounds = 5;
+
+/// 「ぴかっとタッチ」光った瞬間にタッチする反射ゲーム
+/// (docs/game-design.md §5)。タイミング制御(いつ光らせるか)は画面側、
+/// 採点とラウンド進行をここで持つ。
+class PikaGame {
+  PikaGame({Random? rng}) : _rng = rng ?? Random();
+
+  final Random _rng;
+  var round = 0;
+  var reward = 0;
+
+  /// ラウンドごとの反応時間(ms)。フライングは null。
+  final reactions = <int?>[];
+
+  bool get finished => round >= pikaRounds;
+
+  /// 次のラウンドで光るまでの待ち時間(0.9〜2.6秒)。
+  int nextWaitMs() => 900 + _rng.nextInt(1701);
+
+  /// 反応速度→コイン(0.4秒未満+3 / 0.8秒未満+2 / それ以降+1)。
+  static int coinsFor(int reactionMs) =>
+      reactionMs < 400 ? 3 : (reactionMs < 800 ? 2 : 1);
+
+  /// 光ってからタッチできた。獲得コインを返しラウンドを進める。
+  int hit(int reactionMs) {
+    final c = coinsFor(reactionMs);
+    reward += c;
+    reactions.add(reactionMs);
+    round++;
+    return c;
+  }
+
+  /// フライング(光る前にタッチ)。そのラウンドは0コインで進める。
+  void tooEarly() {
+    reactions.add(null);
+    round++;
+  }
+}

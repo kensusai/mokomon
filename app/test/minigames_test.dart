@@ -166,4 +166,68 @@ void main() {
       expect(g.finished, isTrue);
     });
   });
+
+  group('CompareGame どっちがおおい? (docs/game-design.md §5)', () {
+    test('6 rounds, correct side advances with +3, wrong adds a mistake', () {
+      final g = CompareGame(rng: Random(1));
+      expect(g.leftCount, isNot(g.rightCount));
+      final wrong = g.moreSide == 0 ? 1 : 0;
+      expect(g.guess(wrong), isFalse);
+      expect(g.mistakes, 1);
+      expect(g.round, 0);
+      expect(g.guess(g.moreSide), isTrue);
+      expect(g.round, 1);
+      expect(g.reward, compareRewardPerRound);
+    });
+
+    test('difficulty: the count gap shrinks 3 -> 2 -> 1', () {
+      final g = CompareGame(rng: Random(2));
+      final gaps = <int>[];
+      while (!g.finished) {
+        gaps.add((g.leftCount - g.rightCount).abs());
+        g.guess(g.moreSide);
+      }
+      expect(gaps.sublist(0, 2), everyElement(3));
+      expect(gaps.sublist(2, 4), everyElement(2));
+      expect(gaps.sublist(4), everyElement(1));
+    });
+
+    test('3 mistakes end the game via MistakeTracker', () {
+      final g = CompareGame(rng: Random(3));
+      final wrong = g.moreSide == 0 ? 1 : 0;
+      for (var i = 0; i < minigameMaxMistakes; i++) {
+        g.guess(wrong);
+      }
+      expect(g.failed, isTrue);
+      expect(g.finished, isTrue);
+    });
+  });
+
+  group('PikaGame ぴかっとタッチ (docs/game-design.md §5)', () {
+    test('scores by reaction speed and finishes after 5 rounds', () {
+      final g = PikaGame(rng: Random(1));
+      expect(PikaGame.coinsFor(399), 3);
+      expect(PikaGame.coinsFor(400), 2);
+      expect(PikaGame.coinsFor(799), 2);
+      expect(PikaGame.coinsFor(800), 1);
+
+      expect(g.hit(200), 3);
+      g.tooEarly(); // フライングは0点でラウンドが進む
+      g.hit(600);
+      g.hit(900);
+      expect(g.finished, isFalse);
+      g.hit(100);
+      expect(g.finished, isTrue);
+      expect(g.reward, 3 + 0 + 2 + 1 + 3);
+      expect(g.reactions, [200, null, 600, 900, 100]);
+    });
+
+    test('wait times stay within 0.9-2.6s', () {
+      final g = PikaGame(rng: Random(4));
+      for (var i = 0; i < 50; i++) {
+        final w = g.nextWaitMs();
+        expect(w, inInclusiveRange(900, 2600));
+      }
+    });
+  });
 }
