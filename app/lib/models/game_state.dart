@@ -172,22 +172,34 @@ class GameState {
     return null;
   }
 
+  List<int> get _normalSpecies => [
+    for (var i = 0; i < speciesList.length; i++)
+      if (i != secretSpeciesIndex) i,
+  ];
+
+  /// いまの子か名簿で続きを待っている子の種族(たまご抽選で避ける)。
+  bool _inProgress(int i) => i == species || roster.any((r) => r.species == i);
+
+  /// 金のたまご(通常種3体キングで最優先)が控えているか。
+  bool get _goldenEggPending =>
+      !collection[secretSpeciesIndex] &&
+      _normalSpecies.where((i) => collection[i]).length >= 3;
+
+  /// 未入手で手元(いまの子・名簿)にもいない、抽選できる通常種。
+  List<int> get _drawableUnowned =>
+      _normalSpecies.where((i) => !collection[i] && !_inProgress(i)).toList();
+
+  /// あたらしいたまごの前に「どの子と おわかれする?」が必要か
+  /// (未入手の通常種も金のたまごも残っていない)。docs/game-design.md §4。
+  bool get needsFarewell => !_goldenEggPending && _drawableUnowned.isEmpty;
+
   /// 新しいたまごの種族を決める。docs/game-design.md §4。
   int nextEggSpecies(Random rng) {
-    final normals = [
-      for (var i = 0; i < speciesList.length; i++)
-        if (i != secretSpeciesIndex) i,
-    ];
-    final kinged = normals.where((i) => collection[i]).length;
-    if (!collection[secretSpeciesIndex] && kinged >= 3) {
-      return secretSpeciesIndex; // 金のたまご(最優先)
-    }
+    if (_goldenEggPending) return secretSpeciesIndex; // 金のたまご(最優先)
     // いまの子と、名簿で続きを待っている子の種族はなるべく引かない
     // (名簿が個体別になったので消える事故はないが、種族のばらつきを優先)。
-    bool inProgress(int i) => i == species || roster.any((r) => r.species == i);
-    final unowned = normals
-        .where((i) => !collection[i] && !inProgress(i))
-        .toList();
+    bool inProgress(int i) => _inProgress(i);
+    final unowned = _drawableUnowned;
     if (unowned.isNotEmpty) return unowned[rng.nextInt(unowned.length)];
     final pool = [
       for (var i = 0; i < speciesList.length; i++)

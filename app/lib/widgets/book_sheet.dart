@@ -29,6 +29,13 @@ class BookAdoptKing extends BookResult {
   const BookAdoptKing(this.species);
 }
 
+/// おわかれ入れ替えでたまごを迎えた(演出用に種族とおわかれした子の名前を持つ)
+class BookFarewell extends BookResult {
+  final int species;
+  final String name;
+  const BookFarewell(this.species, this.name);
+}
+
 /// いきものずかん(プロトタイプ #bookModal)。
 /// 入手済みの子をタップすると交代([BookSwitchRoster] / [BookAdoptKing])、
 /// キング中は新しいたまごも迎えられる([BookNewEgg])。
@@ -112,9 +119,20 @@ Future<BookResult?> showBookModal(
           if (canNewEgg) ...[
             PressableGradient(
               colors: greenGradient,
-              onTap: () => Navigator.of(
-                dialogContext,
-              ).pop(BookNewEgg(controller.newEgg())),
+              onTap: () async {
+                // 抽選できる種族が残っていなければ、おわかれ入れ替え
+                // (こどもFB「いっぱいだったら選んでお別れ」)。
+                if (!s.needsFarewell) {
+                  Navigator.of(
+                    dialogContext,
+                  ).pop(BookNewEgg(controller.newEgg()));
+                  return;
+                }
+                final res = await _pickFarewell(dialogContext, controller);
+                if (res != null && dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop(res);
+                }
+              },
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 13),
                 child: Column(
@@ -153,6 +171,67 @@ CreatureSnapshot? _bestSnapshot(GameState s, List<int> entries) {
   return best;
 }
 
+/// 名簿の個体の表示名(ニックネームがなければ種族のstage名)。
+String _rosterName(GameState s, int r) =>
+    s.roster[r].nickname ??
+    speciesList[s.roster[r].species].names[s.roster[r].stage];
+
+/// 名簿の個体1行(すがた+なまえ+stage絵文字)。個体選択・おわかれ選択で共用。
+Widget _rosterRow(
+  GameState s,
+  int r, {
+  required Key key,
+  required VoidCallback onTap,
+}) {
+  final snap = s.roster[r];
+  return Material(
+    key: key,
+    color: const Color(0xFFEAFAF1),
+    borderRadius: BorderRadius.circular(18),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: CustomPaint(
+                painter: CreaturePainter(
+                  speciesIndex: snap.species,
+                  stage: snap.stage == 0 ? 1 : snap.stage,
+                  sad: false,
+                  bodyColor: snap.color != 0 ? Color(snap.color) : null,
+                  equipHead: snap.equipHead,
+                  equipFace: snap.equipFace,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _rosterName(s, r),
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: inkColor,
+                ),
+              ),
+            ),
+            Text(
+              speciesList[snap.species].emojis[snap.stage],
+              style: const TextStyle(fontSize: 20),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 /// 同じ種族の個体が複数いるときの「どの子と こうたい?」ダイアログ。
 Future<BookResult?> _pickIndividual(
   BuildContext context,
@@ -165,61 +244,11 @@ Future<BookResult?> _pickIndividual(
       header: const [ModalTitle('どの子と こうたい?')],
       body: [
         for (final r in entries) ...[
-          Material(
+          _rosterRow(
+            s,
+            r,
             key: ValueKey('pick-$r'),
-            color: const Color(0xFFEAFAF1),
-            borderRadius: BorderRadius.circular(18),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () => Navigator.of(pickContext).pop(BookSwitchRoster(r)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 12,
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: CustomPaint(
-                        painter: CreaturePainter(
-                          speciesIndex: s.roster[r].species,
-                          stage: s.roster[r].stage == 0 ? 1 : s.roster[r].stage,
-                          sad: false,
-                          bodyColor: s.roster[r].color != 0
-                              ? Color(s.roster[r].color)
-                              : null,
-                          equipHead: s.roster[r].equipHead,
-                          equipFace: s.roster[r].equipFace,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        s.roster[r].nickname ??
-                            speciesList[s.roster[r].species].names[s
-                                .roster[r]
-                                .stage],
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: inkColor,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      speciesList[s.roster[r].species].emojis[s
-                          .roster[r]
-                          .stage],
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            onTap: () => Navigator.of(pickContext).pop(BookSwitchRoster(r)),
           ),
           const SizedBox(height: 8),
         ],
@@ -228,6 +257,101 @@ Future<BookResult?> _pickIndividual(
         ModalCloseButton(
           label: 'やめる',
           onTap: () => Navigator.of(pickContext).pop(),
+        ),
+      ],
+    ),
+  );
+}
+
+/// おわかれ入れ替え: 名簿から1匹選び、確認のうえで同種族のたまごを迎える。
+Future<BookResult?> _pickFarewell(
+  BuildContext context,
+  GameController controller,
+) {
+  final s = controller.state;
+  return showDialog<BookResult>(
+    context: context,
+    builder: (pickContext) => MokoModalShell(
+      header: const [ModalTitle('どの子と おわかれする?')],
+      body: [
+        const Text(
+          'ずかんが いっぱいだよ。おわかれした子と おなじ たまごが とどくよ',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.6,
+            fontWeight: FontWeight.w700,
+            color: ink2Color,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (var r = 0; r < s.roster.length; r++) ...[
+          _rosterRow(
+            s,
+            r,
+            key: ValueKey('farewell-$r'),
+            onTap: () async {
+              final name = _rosterName(s, r);
+              final ok = await _confirmFarewell(pickContext, name);
+              if (ok != true || !pickContext.mounted) return;
+              final species = controller.newEggReplacing(r);
+              if (species == null) return;
+              Navigator.of(pickContext).pop(BookFarewell(species, name));
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
+      footer: [
+        ModalCloseButton(
+          label: 'やめる',
+          onTap: () => Navigator.of(pickContext).pop(),
+        ),
+      ],
+    ),
+  );
+}
+
+/// うっかりタップで消えないように、おわかれの確認を1回はさむ。
+Future<bool?> _confirmFarewell(BuildContext context, String name) {
+  return showDialog<bool>(
+    context: context,
+    builder: (confirmContext) => MokoModalShell(
+      header: [ModalTitle('「$name」と おわかれする?')],
+      body: const [
+        Text(
+          'おわかれすると もう あそべないよ',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.6,
+            fontWeight: FontWeight.w700,
+            color: ink2Color,
+          ),
+        ),
+      ],
+      footer: [
+        PressableGradient(
+          colors: pinkGradient,
+          onTap: () => Navigator.of(confirmContext).pop(true),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: Text(
+                'おわかれする',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        ModalCloseButton(
+          label: 'やめる',
+          onTap: () => Navigator.of(confirmContext).pop(false),
         ),
       ],
     ),

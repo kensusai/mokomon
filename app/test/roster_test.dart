@@ -135,6 +135,51 @@ void main() {
     });
   });
 
+  group('farewell replace (こどもFB: いっぱいなら選んでおわかれ)', () {
+    test('needsFarewell only when no drawable species remain', () {
+      // 未入手種族が残っていれば通常抽選
+      expect(kingMoko().needsFarewell, isFalse);
+
+      // 金のたまご(3体キング)が控えているあいだは不要
+      final golden = GameState()..species = 0;
+      golden.collection[0] = true;
+      golden.collection[1] = true;
+      golden.collection[2] = true;
+      for (var i = 4; i < speciesList.length; i++) {
+        golden.roster.add(snapOf(i));
+      }
+      expect(golden.needsFarewell, isFalse);
+
+      // 全種族が手元(いまの子+名簿)にいる → おわかれが必要
+      final full = kingMoko();
+      full.collection = List.filled(speciesList.length, true);
+      for (var i = 1; i < speciesList.length; i++) {
+        full.roster.add(snapOf(i));
+      }
+      expect(full.needsFarewell, isTrue);
+    });
+
+    test('newEggReplacing releases the chosen one and brings its species', () {
+      final s = kingMoko()
+        ..roster = [snapOf(1, name: 'ぴょんた'), snapOf(2, name: 'とげすけ')];
+      final c = fresh(s);
+      final released = c.newEggReplacing(0); // ぴょんた と おわかれ
+      expect(released, 1);
+      expect(s.species, 1); // 同じ種族のたまごが来る
+      expect(s.stage, 0);
+      expect(s.nickname, isNull);
+      // ぴょんた は消え、とげすけ と 退避したモコタン が残る
+      expect(s.roster.map((r) => r.nickname), isNot(contains('ぴょんた')));
+      expect(s.roster.map((r) => r.nickname), containsAll(['とげすけ', 'モコタン']));
+    });
+
+    test('newEggReplacing refuses an out-of-range index', () {
+      final c = fresh(kingMoko());
+      expect(c.newEggReplacing(0), isNull);
+      expect(c.state.stage, kingStage); // 何も起きない
+    });
+  });
+
   group('roster persistence', () {
     test('survives json roundtrip with duplicate species', () {
       final s = kingMoko()..roster = [snapOf(0, name: '先代モコ')];

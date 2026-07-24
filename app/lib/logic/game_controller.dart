@@ -200,6 +200,22 @@ class GameController extends ChangeNotifier {
   int newEgg() {
     state.roster.add(_snapshotCurrent());
     final next = state.nextEggSpecies(_rng);
+    _startEgg(next);
+    return next;
+  }
+
+  /// おわかれ入れ替え(docs/game-design.md §4)。抽選できる種族が残っていない
+  /// とき、名簿の1匹とおわかれして同じ種族のたまごを迎える。
+  /// 範囲外の index なら何もしない(null)。
+  int? newEggReplacing(int rosterIndex) {
+    if (rosterIndex < 0 || rosterIndex >= state.roster.length) return null;
+    final released = state.roster.removeAt(rosterIndex);
+    state.roster.add(_snapshotCurrent());
+    _startEgg(released.species);
+    return released.species;
+  }
+
+  void _startEgg(int next) {
     state
       ..species = next
       ..stage = 0
@@ -213,7 +229,6 @@ class GameController extends ChangeNotifier {
       ..kingSparkle = 0
       ..color = speciesList[next].color.toARGB32();
     _commit();
-    return next;
   }
 
   /// 背景セルをタップ: 未購入(有料)なら購入して選択、

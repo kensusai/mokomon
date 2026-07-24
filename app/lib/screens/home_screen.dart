@@ -487,6 +487,15 @@ class _HomeScreenState extends State<HomeScreen>
           c.sfx.play(Sfx.happy);
           _hint('あたらしい たまごが きたよ! タッチしてみて! 👆');
         }
+      case BookFarewell(name: final name):
+        await showCelebrate(
+          context,
+          sfx: c.sfx,
+          emoji: '👋',
+          title: 'ばいばい! またね!',
+          desc: '「$name」は たびに でたよ。おなじ しゅぞくの たまごが とどいた!',
+        );
+        _hint('あたらしい たまごを タッチしてみて! 👆');
       case BookSwitchRoster(rosterIndex: final ri):
         if (c.switchToRoster(ri)) _greetSwitchedCreature();
       case BookAdoptKing(species: final sp):

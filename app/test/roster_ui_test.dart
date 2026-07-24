@@ -115,6 +115,103 @@ void main() {
     await drainTimers(tester);
   });
 
+  testWidgets('full collection: new egg asks who to say goodbye to', (
+    tester,
+  ) async {
+    // こどもFB「いっぱいだったら選んでいれかえ(お別れ)」。
+    CreatureSnapshot king(int species, String name) => CreatureSnapshot(
+      species: species,
+      stage: kingStage,
+      xp: 0,
+      eggTaps: 0,
+      hunger: 80,
+      happy: 80,
+      color: speciesList[species].color.toARGB32(),
+      nickname: name,
+    );
+    final state = GameState()
+      ..stage = kingStage
+      ..species = 0
+      ..collection = List.filled(speciesList.length, true)
+      ..roster = [
+        for (var i = 1; i < speciesList.length; i++) king(i, 'キング$i'),
+      ];
+    final c = await bootApp(tester, state: state, rng: NoPuffRandom());
+    expect(c.state.needsFarewell, isTrue);
+
+    await tester.tap(find.text('📖'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.ensureVisible(find.text('あたらしい たまごを むかえる'));
+    await tester.pump();
+    await tester.tap(find.text('あたらしい たまごを むかえる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // おわかれ選択 → 確認 → ばいばい演出 → 同種族のたまご
+    expect(find.text('どの子と おわかれする?'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('farewell-0'))); // キング1
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.textContaining('「キング1」と おわかれする?'), findsOneWidget);
+    await tester.tap(find.text('おわかれする'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('ばいばい! またね!'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('わーい!'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(c.state.species, 1); // おわかれした子と同じ種族のたまご
+    expect(c.state.stage, 0);
+    expect(c.state.roster.map((r) => r.nickname), isNot(contains('キング1')));
+    // 前のキングもこ(現在の子)は名簿へ退避されている
+    expect(c.state.roster.any((r) => r.species == 0), isTrue);
+
+    await drainTimers(tester);
+  });
+
+  testWidgets('farewell picker can be cancelled without losing anyone', (
+    tester,
+  ) async {
+    CreatureSnapshot king(int species) => CreatureSnapshot(
+      species: species,
+      stage: kingStage,
+      xp: 0,
+      eggTaps: 0,
+      hunger: 80,
+      happy: 80,
+      color: speciesList[species].color.toARGB32(),
+    );
+    final state = GameState()
+      ..stage = kingStage
+      ..species = 0
+      ..collection = List.filled(speciesList.length, true)
+      ..roster = [for (var i = 1; i < speciesList.length; i++) king(i)];
+    final c = await bootApp(tester, state: state, rng: NoPuffRandom());
+
+    await tester.tap(find.text('📖'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.ensureVisible(find.text('あたらしい たまごを むかえる'));
+    await tester.pump();
+    await tester.tap(find.text('あたらしい たまごを むかえる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('どの子と おわかれする?'), findsOneWidget);
+
+    await tester.tap(find.text('やめる').last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(c.state.stage, kingStage); // 何も起きていない
+    expect(c.state.roster, hasLength(speciesList.length - 1));
+
+    await drainTimers(tester);
+  });
+
   testWidgets('two individuals of one species open the picker dialog', (
     tester,
   ) async {
