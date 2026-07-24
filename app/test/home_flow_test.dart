@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/audio/sound_synth.dart';
 import 'package:mokomon/data/species.dart';
@@ -255,6 +256,24 @@ void main() {
 
     // トーストが消えるまで
     await tester.pump(const Duration(seconds: 3));
+    await drainTimers(tester);
+  });
+
+  testWidgets('no gauge-looking ground shadow under the creature', (
+    tester,
+  ) async {
+    // こどもFB「いきものの下にうすいゲージが出てる」: 横長ピルの地面の影が
+    // 空のメーターに見えていたので描かない。
+    await boot(tester, GameState()..stage = 1);
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration! as BoxDecoration).color == const Color(0x4034C98E),
+      ),
+      findsNothing,
+    );
     await drainTimers(tester);
   });
 }

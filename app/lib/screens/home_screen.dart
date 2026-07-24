@@ -612,20 +612,8 @@ class _HomeScreenState extends State<HomeScreen>
       clipBehavior: Clip.none,
       children: [
         ...bgDecor(bgThemes[s.effectiveBg].key),
-        // 地面の影
-        Align(
-          alignment: const Alignment(0, 0.86),
-          child: FractionallySizedBox(
-            widthFactor: 0.7,
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0x4034C98E),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-        ),
+        // 地面の影は描かない(こどもFB「いきものの下にうすいゲージが
+        // 出てる」: 横長ピルが空のメーターに見えていた)
         Center(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
