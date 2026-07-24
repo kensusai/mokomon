@@ -487,15 +487,19 @@ class _HomeScreenState extends State<HomeScreen>
           c.sfx.play(Sfx.happy);
           _hint('あたらしい たまごが きたよ! タッチしてみて! 👆');
         }
-      case BookSwitch(species: final sp):
-        if (c.switchCreature(sp)) {
-          _creatureKey.currentState?.flashMood(CreatureMood.happy);
-          _creatureKey.currentState?.play(CreatureAnim.spin);
-          _hint(
-            '「${s.nickname ?? s.currentSpecies.names[s.stage]}」が あそびに きたよ!',
-          );
-        }
+      case BookSwitchRoster(rosterIndex: final ri):
+        if (c.switchToRoster(ri)) _greetSwitchedCreature();
+      case BookAdoptKing(species: final sp):
+        if (c.adoptKing(sp)) _greetSwitchedCreature();
     }
+  }
+
+  /// 交代してきた子の登場演出(ずかんの [BookSwitchRoster] / [BookAdoptKing] 共通)。
+  void _greetSwitchedCreature() {
+    final s = widget.controller.state;
+    _creatureKey.currentState?.flashMood(CreatureMood.happy);
+    _creatureKey.currentState?.play(CreatureAnim.spin);
+    _hint('「${s.nickname ?? s.currentSpecies.names[s.stage]}」が あそびに きたよ!');
   }
 
   void _onFed(Food food) {

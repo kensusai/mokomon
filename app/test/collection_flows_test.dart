@@ -137,8 +137,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(c.state.stage, 0); // 新しいたまご
-    expect(c.state.roster[0]?.stage, 1); // もとの子は名簿にベビーのまま保存
-    expect(c.state.roster[0]?.nickname, 'もこすけ');
+    final stashed = c.state.roster.singleWhere((r) => r.species == 0);
+    expect(stashed.stage, 1); // もとの子は名簿にベビーのまま保存
+    expect(stashed.nickname, 'もこすけ');
     expect(c.state.collection[0], isFalse); // 図鑑登録はキング到達のみ
 
     // ずかんを開き直すと、育成途中の子が「???」ではなく名前つきで見える

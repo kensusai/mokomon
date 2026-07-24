@@ -80,8 +80,9 @@ void main() {
       ..species = 1
       ..owned = {'ribbon'}
       ..collection = (List.filled(speciesList.length, false)..[0] = true)
-      ..roster = {
-        0: CreatureSnapshot(
+      ..roster = [
+        CreatureSnapshot(
+          species: 0,
           stage: kingStage,
           xp: 0,
           eggTaps: 0,
@@ -91,7 +92,7 @@ void main() {
           equipHead: 'ribbon',
           nickname: 'モコタン',
         ),
-      };
+      ];
     final c = await bootApp(tester, state: state, rng: NoPuffRandom());
 
     await tester.tap(find.text('📖'));
@@ -109,7 +110,54 @@ void main() {
     expect(c.state.nickname, 'モコタン');
     expect(find.textContaining('「モコタン」が あそびに きたよ!'), findsWidgets);
     // 育てかけのぴょんは名簿へ
-    expect(c.state.roster[1]!.stage, 1);
+    expect(c.state.roster.singleWhere((r) => r.species == 1).stage, 1);
+
+    await drainTimers(tester);
+  });
+
+  testWidgets('two individuals of one species open the picker dialog', (
+    tester,
+  ) async {
+    CreatureSnapshot moko(int stage, String name) => CreatureSnapshot(
+      species: 0,
+      stage: stage,
+      xp: 0,
+      eggTaps: 0,
+      hunger: 80,
+      happy: 80,
+      color: speciesList[0].color.toARGB32(),
+      nickname: name,
+    );
+    final state = GameState()
+      ..stage = 1
+      ..species = 1
+      ..collection = (List.filled(speciesList.length, false)..[0] = true)
+      ..roster = [moko(kingStage, 'せんだい'), moko(1, 'にだいめ')];
+    final c = await bootApp(tester, state: state, rng: NoPuffRandom());
+
+    await tester.tap(find.text('📖'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('×2'), findsOneWidget); // 個体数バッジ
+
+    await tester.tap(find.byKey(const ValueKey('book-0')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('どの子と こうたい?'), findsOneWidget);
+    // せんだい はセルの代表(キング)としても出るので2箇所
+    expect(find.text('せんだい'), findsWidgets);
+    expect(find.text('にだいめ'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('pick-1'))); // にだいめ(ベビー)
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(c.state.species, 0);
+    expect(c.state.stage, 1);
+    expect(c.state.nickname, 'にだいめ');
+    // せんだいのキングと育てかけのぴょんが名簿に残っている
+    expect(c.state.roster, hasLength(2));
+    expect(c.state.roster.map((r) => r.nickname), containsAll(['せんだい', null]));
 
     await drainTimers(tester);
   });

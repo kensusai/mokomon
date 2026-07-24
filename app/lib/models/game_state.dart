@@ -30,7 +30,9 @@ String? _validPattern(Object? v) {
 
 /// ずかんの「名簿」に保存する個体スナップショット(docs/game-design.md §12)。
 /// 交代・新しいたまごの際に、見た目ときせかえ・なまえを保持する。
+/// 同じ種族の個体を複数持てる(こどもFB: だぶり卵で古い子が消えないように)。
 class CreatureSnapshot {
+  int species;
   int stage;
   double xp;
   int eggTaps;
@@ -45,6 +47,7 @@ class CreatureSnapshot {
   double kingSparkle;
 
   CreatureSnapshot({
+    required this.species,
     required this.stage,
     required this.xp,
     required this.eggTaps,
@@ -60,9 +63,7 @@ class CreatureSnapshot {
   });
 
   Map<String, dynamic> toJson() => {
-    // セーブ形式のバージョン。v2 で5段階化(v1 の stage 3=キングは
-    // 読み込み時に kingStage へ引き上げる)。
-    'v': 2,
+    'species': species,
     'stage': stage,
     'xp': xp,
     'eggTaps': eggTaps,
@@ -80,6 +81,7 @@ class CreatureSnapshot {
   /// 壊れた値は範囲内へ正規化する。`switchCreature` がスナップショットを
   /// そのまま state に流すため、ここが最後の防波堤(docs/review-findings.md #17)。
   factory CreatureSnapshot.fromJson(Map<String, dynamic> j) => CreatureSnapshot(
+    species: ((j['species'] ?? 0) as int).clamp(0, speciesList.length - 1),
     stage: ((j['stage'] ?? kingStage) as int).clamp(0, kingStage),
     xp: max(0, ((j['xp'] ?? 0) as num).toDouble()),
     eggTaps: max(0, (j['eggTaps'] ?? 0) as int),
@@ -143,8 +145,9 @@ class GameState {
   bool ownsBg(int index) =>
       bgThemes[index].free || ownedBg.contains(bgThemes[index].key);
 
-  /// 過去に育てた子の名簿(species index → スナップショット)。端末ローカルのみ。
-  Map<int, CreatureSnapshot> roster = {};
+  /// 過去に育てた子の名簿(個体のリスト)。同じ種族の個体を複数持てる。
+  /// 端末ローカルのみ(あいことばには含めない)。
+  List<CreatureSnapshot> roster = [];
 
   /// お絵かき模様(PNG の base64)。端末ローカルのみ・あいことばに含めない。
   String? pattern;
@@ -179,9 +182,9 @@ class GameState {
     if (!collection[secretSpeciesIndex] && kinged >= 3) {
       return secretSpeciesIndex; // 金のたまご(最優先)
     }
-    // いまの子と、名簿で続きを待っている子の種族は引かない。引いてしまうと
-    // newEgg の名簿退避で保存が上書き消失する(キング前たまご解禁に伴う規則)。
-    bool inProgress(int i) => i == species || roster.containsKey(i);
+    // いまの子と、名簿で続きを待っている子の種族はなるべく引かない
+    // (名簿が個体別になったので消える事故はないが、種族のばらつきを優先)。
+    bool inProgress(int i) => i == species || roster.any((r) => r.species == i);
     final unowned = normals
         .where((i) => !collection[i] && !inProgress(i))
         .toList();
@@ -238,7 +241,7 @@ class GameState {
     'ownedBg': ownedBg.toList(),
     'kingSparkle': kingSparkle,
     'unlockedStamps': unlockedStamps.toList(),
-    'roster': {for (final e in roster.entries) '${e.key}': e.value.toJson()},
+    'roster': [for (final r in roster) r.toJson()],
     'last': DateTime.now().millisecondsSinceEpoch,
   };
 
@@ -277,18 +280,36 @@ class GameState {
         .toSet();
     // 壊れたエントリが1つあっても、他のセーブデータは失わない
     // (docs/review-findings.md #1)。
-    roster = {};
-    for (final e in ((j['roster'] as Map?) ?? {}).entries) {
-      try {
-        roster[int.parse(e.key as String)] = CreatureSnapshot.fromJson(
-          (e.value as Map).cast<String, dynamic>(),
-        );
-      } catch (_) {
-        // このエントリだけスキップする
+    roster = [];
+    final rosterJson = j['roster'];
+    if (rosterJson is Map) {
+      // 旧形式(種族ごとに1枠の Map)。種族はキーから復元する。
+      for (final e in rosterJson.entries) {
+        try {
+          final snap = CreatureSnapshot.fromJson(
+            (e.value as Map).cast<String, dynamic>(),
+          );
+          snap.species = int.parse(
+            e.key as String,
+          ).clamp(0, speciesList.length - 1);
+          roster.add(snap);
+        } catch (_) {
+          // このエントリだけスキップする
+        }
+      }
+    } else if (rosterJson is List) {
+      for (final e in rosterJson) {
+        try {
+          roster.add(
+            CreatureSnapshot.fromJson((e as Map).cast<String, dynamic>()),
+          );
+        } catch (_) {
+          // このエントリだけスキップする
+        }
       }
     }
     if (legacy) {
-      for (final snap in roster.values) {
+      for (final snap in roster) {
         if (snap.stage == 3) snap.stage = kingStage; // 名簿の旧キングも同様
       }
     }

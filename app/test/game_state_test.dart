@@ -102,13 +102,16 @@ void main() {
       // キング前の「あたらしいたまご」解禁に伴い、いま育てている子と
       // 名簿で続きを待っている子の種族は抽選しない(上書き消失を防ぐ)。
       final s = GameState()..species = 1;
-      s.roster[2] = CreatureSnapshot(
-        stage: 1,
-        xp: 10,
-        eggTaps: 3,
-        hunger: 80,
-        happy: 80,
-        color: 0,
+      s.roster.add(
+        CreatureSnapshot(
+          species: 2,
+          stage: 1,
+          xp: 10,
+          eggTaps: 3,
+          hunger: 80,
+          happy: 80,
+          color: 0,
+        ),
       );
       for (var i = 0; i < 60; i++) {
         final next = s.nextEggSpecies(Random(i));
@@ -293,12 +296,13 @@ void main() {
     test(
       'a single malformed roster entry does not wipe the rest of the save',
       () {
-        // docs/review-findings.md #1: 名簿の壊れたキー1つで全データを失わない
+        // docs/review-findings.md #1: 名簿の壊れたエントリ1つで全データを失わない
         final s = GameState()
           ..coins = 77
           ..collection[3] = true;
-        final json = s.toJson();
-        (json['roster'] as Map)['not-a-number'] = {'stage': 3};
+        // 実運用と同じく jsonDecode 経由の List<dynamic> に壊れたエントリを足す
+        final json = jsonDecode(jsonEncode(s.toJson())) as Map<String, dynamic>;
+        (json['roster'] as List).add(42); // Mapですらない壊れたエントリ
         final restored = GameState()..loadJson(json);
         expect(restored.coins, 77);
         expect(restored.collection[3], isTrue);
@@ -308,12 +312,22 @@ void main() {
 
     test('a valid roster entry survives alongside a malformed one', () {
       final s = GameState()..coins = 20;
-      final json = s.toJson();
-      (json['roster'] as Map)
-        ..['not-a-number'] = {'stage': 3}
-        ..['2'] = {'stage': 3, 'xp': 0, 'color': 0};
+      final json = jsonDecode(jsonEncode(s.toJson())) as Map<String, dynamic>;
+      (json['roster'] as List)
+        ..add(42)
+        ..add({'species': 2, 'stage': 3, 'xp': 0, 'color': 0});
       final restored = GameState()..loadJson(json);
-      expect(restored.roster.keys, [2]);
+      expect(restored.roster.map((r) => r.species), [2]);
+    });
+
+    test('a malformed legacy map entry is also skipped', () {
+      final json = GameState().toJson();
+      json['roster'] = {
+        'not-a-number': {'stage': 3},
+        '2': {'stage': 3, 'xp': 0, 'color': 0},
+      };
+      final restored = GameState()..loadJson(json);
+      expect(restored.roster.map((r) => r.species), [2]);
     });
   });
 
@@ -375,7 +389,8 @@ void main() {
             '2': {'stage': 3, 'color': 0},
           },
         });
-      expect(withRoster.roster[2]?.stage, kingStage);
+      expect(withRoster.roster.single.species, 2);
+      expect(withRoster.roster.single.stage, kingStage);
     });
 
     test('v2 save keeps stage 3 as the new pre-king stage', () {

@@ -196,9 +196,9 @@ class GameController extends ChangeNotifier {
   }
 
   /// 新しいたまごを迎える(抽選は docs/game-design.md §4)。
-  /// いまのキングは名簿(roster)に保存され、あとで図鑑から呼び戻せる。
+  /// いまの子は名簿(roster)に個体として追加され、あとで図鑑から呼び戻せる。
   int newEgg() {
-    state.roster[state.species] = _snapshotCurrent();
+    state.roster.add(_snapshotCurrent());
     final next = state.nextEggSpecies(_rng);
     state
       ..species = next
@@ -246,6 +246,7 @@ class GameController extends ChangeNotifier {
   }
 
   CreatureSnapshot _snapshotCurrent() => CreatureSnapshot(
+    species: state.species,
     stage: state.stage,
     xp: state.xp,
     eggTaps: state.eggTaps,
@@ -260,44 +261,51 @@ class GameController extends ChangeNotifier {
     kingSparkle: state.kingSparkle,
   );
 
-  /// 図鑑から過去に育てた子と交代する(docs/game-design.md §12)。
-  /// いまの子は名簿へ退避。未入手種・現在の種族へは交代できない。
-  bool switchCreature(int speciesIndex) {
-    if (speciesIndex == state.species) return false;
-    final hasRecord = state.roster.containsKey(speciesIndex);
-    if (!state.collection[speciesIndex] && !hasRecord) return false;
+  /// 図鑑から名簿の個体と交代する(docs/game-design.md §12)。
+  /// いまの子は名簿へ個体として退避。同じ種族どうしの交代もできる。
+  bool switchToRoster(int rosterIndex) {
+    if (rosterIndex < 0 || rosterIndex >= state.roster.length) return false;
+    final snap = state.roster.removeAt(rosterIndex);
+    state.roster.add(_snapshotCurrent());
+    state
+      ..species = snap.species
+      ..stage = snap.stage
+      ..xp = snap.xp
+      ..eggTaps = snap.eggTaps
+      ..hunger = snap.hunger
+      ..happy = snap.happy
+      ..color = snap.color
+      ..pattern = snap.pattern
+      ..equipHead = snap.equipHead
+      ..equipFace = snap.equipFace
+      ..nickname = snap.nickname
+      ..bg = snap.bg
+      ..kingSparkle = snap.kingSparkle;
+    sfx.playBabble(snap.species); // ただいまのごあいさつ
+    _commit();
+    return true;
+  }
 
-    state.roster[state.species] = _snapshotCurrent();
-    final snap = state.roster.remove(speciesIndex);
-    state.species = speciesIndex;
-    if (snap != null) {
-      state
-        ..stage = snap.stage
-        ..xp = snap.xp
-        ..eggTaps = snap.eggTaps
-        ..hunger = snap.hunger
-        ..happy = snap.happy
-        ..color = snap.color
-        ..pattern = snap.pattern
-        ..equipHead = snap.equipHead
-        ..equipFace = snap.equipFace
-        ..nickname = snap.nickname
-        ..bg = snap.bg
-        ..kingSparkle = snap.kingSparkle;
-    } else {
-      // 記録がない(旧セーブ等)場合はキング姿の初期状態で迎える
-      state
-        ..stage = kingStage
-        ..xp = 0
-        ..eggTaps = 0
-        ..hunger = 80
-        ..happy = 80
-        ..pattern = null
-        ..nickname = null
-        ..bg = null
-        ..kingSparkle = 0
-        ..color = speciesList[speciesIndex].color.toARGB32();
-    }
+  /// ずかん登録ずみだが名簿に個体がいない種族(旧セーブ・あいことば復元後)を
+  /// キング姿の初期状態で迎える。個体がいる種族は [switchToRoster] を使う。
+  bool adoptKing(int speciesIndex) {
+    if (speciesIndex == state.species) return false;
+    if (!state.collection[speciesIndex]) return false;
+    if (state.roster.any((r) => r.species == speciesIndex)) return false;
+
+    state.roster.add(_snapshotCurrent());
+    state
+      ..species = speciesIndex
+      ..stage = kingStage
+      ..xp = 0
+      ..eggTaps = 0
+      ..hunger = 80
+      ..happy = 80
+      ..pattern = null
+      ..nickname = null
+      ..bg = null
+      ..kingSparkle = 0
+      ..color = speciesList[speciesIndex].color.toARGB32();
     sfx.playBabble(speciesIndex); // ただいまのごあいさつ
     _commit();
     return true;
