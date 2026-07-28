@@ -375,7 +375,9 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
                 final bubble = Paint()..color = const Color(0x66FFFFFF);
                 canvas.drawCircle(const Offset(226, 96), 12, bubble);
                 canvas.drawCircle(const Offset(246, 66), 8, bubble);
-                if (king) canvas.drawCircle(const Offset(256, 110), 6, bubble);
+                if (king) {
+                  canvas.drawCircle(const Offset(256, 110), 6, bubble);
+                }
               }
             : null,
       );
@@ -410,8 +412,9 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
                 final mudPaint = Paint()..color = _mud;
                 canvas.drawPath(_rotOval(92, 236, 44, 18, -10), mudPaint);
                 canvas.drawPath(_rotOval(212, 240, 36, 16, 12), mudPaint);
-                if (king)
+                if (king) {
                   canvas.drawPath(_rotOval(150, 252, 30, 12, 0), mudPaint);
+                }
               }
             : null,
       );
