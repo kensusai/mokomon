@@ -623,7 +623,10 @@ class _HomeScreenState extends State<HomeScreen>
         ...bgDecor(bgThemes[s.effectiveBg].key),
         // 地面の影は描かない(こどもFB「いきものの下にうすいゲージが
         // 出てる」: 横長ピルが空のメーターに見えていた)
-        Center(
+        // 下寄せ: 大きく育った耳や王冠が上部のボタン列にかぶらないように
+        // (こどもFB)。上に余白を残して装飾のはみ出しを受け止める
+        Align(
+          alignment: const Alignment(0, 0.85),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapDown: _onCreatureTap,

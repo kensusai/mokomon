@@ -144,7 +144,7 @@ Path _sparkle(double cx, double cy, double r) => _poly([
 /// (こどもFB「進化具合が微々たる」)。stage3 で新パーツ、キングで
 /// 固有の必殺装飾が付く。
 BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
-  final t = stage >= kingStage ? 1.0 : (stage == 3 ? 0.5 : 0.0);
+  final t = stage >= kingStage ? 1.0 : (stage == 3 ? 0.7 : 0.0);
   final s3 = stage >= 3;
   final king = stage >= kingStage;
   switch (species) {
@@ -152,11 +152,11 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
       return BodySpec(
         _union([
           _circle(150, 180, 92),
-          for (var i = 0; i < 8; i++)
+          for (var i = 0; i < (s3 ? 10 : 8); i++)
             _circle(
-              150 + (92 + 8 * t) * cos(pi + i * pi / 7),
-              168 + (86 + 8 * t) * sin(pi + i * pi / 7),
-              24 + 12 * t,
+              150 + (92 + 10 * t) * cos(pi + i * pi / (s3 ? 9 : 7)),
+              168 + (86 + 10 * t) * sin(pi + i * pi / (s3 ? 9 : 7)),
+              24 + 18 * t,
             ),
         ]),
         front: (canvas, body) {
@@ -200,8 +200,8 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
       return BodySpec(
         _union([
           _oval(150, 185, 158, 165),
-          _rotOval(116, 76 - 34 * t, 42 + 6 * t, 108 + 62 * t, -10),
-          _rotOval(184, 76 - 34 * t, 42 + 6 * t, 108 + 62 * t, 10),
+          _rotOval(112, 80 - 16 * t, 44 + 10 * t, 104 + 44 * t, -12 - 16 * t),
+          _rotOval(188, 80 - 16 * t, 44 + 10 * t, 104 + 44 * t, 12 + 16 * t),
           _oval(108, 262, 60, 26),
           _oval(192, 262, 60, 26),
         ]),
@@ -209,11 +209,11 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
         front: (canvas, body) {
           final inner = Paint()..color = const Color(0x73FFFFFF);
           canvas.drawPath(
-            _rotOval(116, 78 - 34 * t, 20, 70 + 44 * t, -10),
+            _rotOval(112, 82 - 16 * t, 20, 68 + 30 * t, -12 - 16 * t),
             inner,
           );
           canvas.drawPath(
-            _rotOval(184, 78 - 34 * t, 20, 70 + 44 * t, 10),
+            _rotOval(188, 82 - 16 * t, 20, 68 + 30 * t, 12 + 16 * t),
             inner,
           );
           if (king) {
@@ -230,9 +230,9 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
           if (s3) {
             // 左耳の大きなリボン
             final bow = Paint()..color = _red;
-            final size = king ? 1.25 : 1.0;
+            final size = king ? 1.5 : 1.15;
             canvas.save();
-            canvas.translate(110, 96 - 34 * t);
+            canvas.translate(104, 100 - 16 * t);
             canvas.rotate(-0.2);
             canvas.scale(size, size);
             canvas.drawPath(
@@ -259,7 +259,7 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
     case 2: // toge: 結晶 → いなずまが生える → かみなり嵐のキング
       return BodySpec(
         _poly([
-          Offset(150, 46 - 26 * t),
+          Offset(150, 46 - 40 * t),
           const Offset(205, 84),
           Offset(246 + 10 * t, 152),
           const Offset(234, 226),
@@ -294,7 +294,7 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
             ? (canvas, body) {
                 // 体からつき出す いなずま
                 final bolt = Paint()..color = _gold;
-                final k = king ? 1.4 : 1.0;
+                final k = king ? 2.0 : 1.4;
                 canvas.save();
                 canvas.translate(58, 140);
                 canvas.scale(k, k);
@@ -328,11 +328,11 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
       );
     case 3: // pika: たいよう → 光線が増える → 二重コロナのキング
       return BodySpec(
-        _spikyCircle(150, 172, 96, s3 ? 12 : 8, 18 + 26 * t, phase: -pi / 2),
+        _spikyCircle(150, 172, 96, s3 ? 12 : 8, 18 + 42 * t, phase: -pi / 2),
         back: king
             ? (canvas, body) {
                 canvas.drawPath(
-                  _spikyCircle(150, 172, 100, 12, 62, phase: -pi / 2 + pi / 12),
+                  _spikyCircle(150, 172, 100, 12, 88, phase: -pi / 2 + pi / 12),
                   Paint()..color = _orange,
                 );
               }
@@ -352,7 +352,10 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
     case 4: // bero: ゼリー → あわが出る → 水たまりでとろけるキング
       return BodySpec(
         _union([
-          _rotOval(150, 158, 176, 188, -3 - 4 * t),
+          _rotOval(150, 158, 176, 188, -3 - 7 * t),
+          if (s3) _oval(74, 240, 34, 30),
+          if (king) _oval(52, 250, 48, 34),
+          if (king) _oval(248, 244, 48, 36),
           _oval(108, 258, 40, 34),
           _oval(154, 264, 34, 30),
           _oval(196, 252 + 8 * t, 36, 30),
@@ -384,8 +387,20 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
     case 5: // buu: ぶた → どろんこ模様 → 天使のはねで飛ぶキング
       return BodySpec(
         _union([
-          _oval(150, 198, 212 + 12 * t, 148),
+          _oval(150, 198, 212 + 16 * t, 148),
           _oval(150, 122, 152, 96),
+          if (s3)
+            _poly([
+              const Offset(96, 90),
+              const Offset(106, 50),
+              const Offset(134, 78),
+            ]),
+          if (s3)
+            _poly([
+              const Offset(204, 90),
+              const Offset(194, 50),
+              const Offset(166, 78),
+            ]),
           _circle(260, 198, 14 + 8 * t),
         ]),
         back: king
@@ -393,8 +408,8 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
                 final wing = Paint()..color = const Color(0xF2FFFFFF);
                 for (final side in const [-1.0, 1.0]) {
                   canvas.save();
-                  canvas.translate(150 + side * 118, 150);
-                  canvas.scale(side, 1);
+                  canvas.translate(150 + side * 124, 146);
+                  canvas.scale(side * 1.4, 1.4);
                   canvas.drawPath(
                     _union([
                       _rotOval(-20, -10, 70, 30, -30),
@@ -421,9 +436,9 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
     case 6: // medama: たまご → 目のまわりが光る → 小さな目玉をしたがえるキング
       return BodySpec(
         _union([
-          _oval(150, 104 - 18 * t, 112, 112),
+          _oval(150, 104 - 34 * t, 112, 112),
           _oval(150, 198, 164, 144),
-          _oval(150, 150, 136, 160 + 30 * t),
+          _oval(150, 150, 136, 160 + 60 * t),
         ]),
         back: king
             ? (canvas, body) {
@@ -473,7 +488,7 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
             Offset(200, 28 - 14 * t),
             const Offset(158, 74),
           ]),
-          _rotOval(243, 218, 78 + 26 * t, 26, -34),
+          _rotOval(243, 218, 78 + 44 * t, 26 + 8 * t, -34),
           if (king) _rotOval(238, 190, 92, 24, -52),
         ]),
         front: (canvas, body) {
@@ -502,8 +517,8 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
           }
           if (king) {
             canvas.drawCircle(
-              const Offset(150, 246),
-              13,
+              const Offset(150, 244),
+              17,
               Paint()..color = _gold,
             );
             canvas.drawCircle(
@@ -523,7 +538,7 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
       );
     case 8: // dandy: しかく紳士 → 赤い蝶ネクタイ → タキシードのキング
       return BodySpec(
-        _rrect(64 - 8 * t, 84, 172 + 16 * t, 184, 40),
+        _rrect(64 - 14 * t, 84 - 24 * t, 172 + 28 * t, 184 + 24 * t, 40),
         front: (canvas, body) {
           if (king) {
             // 白シャツ+ボタン
@@ -574,7 +589,7 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
       );
     case 9: // mojya: もじゃ → 毛がのびる → たてがみが光るキング
       return BodySpec(
-        _spikyCircle(150, 176, 90, s3 ? 16 : 12, 14 + 26 * t, phase: 0.2),
+        _spikyCircle(150, 176, 90, s3 ? 16 : 12, 14 + 40 * t, phase: 0.2),
         front: king
             ? (canvas, body) {
                 canvas.drawPath(
@@ -598,9 +613,10 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
                 _rotOval(152, 232, 96, 40, 5),
               ])
             : _union([
-                _rotOval(158, 170, 184, 186, 6 + 8 * t),
+                _rotOval(158, 170, 184, 186, 6 + 14 * t),
                 _circle(98, 216, 52),
                 _circle(122, 86 - 14 * t, 30),
+                if (s3) _circle(206, 96, 30),
               ]),
         feet: !king,
         front: king
@@ -638,16 +654,16 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
     case 11: // paku: さかな → ひれが育つ → しおをふくクジラ級キング
       return BodySpec(
         _union([
-          _oval(150, 182, 216 + 14 * t, 148 + 10 * t),
+          _oval(150, 182, 216 + 24 * t, 148 + 18 * t),
           _poly([
             const Offset(244, 182),
             Offset(288 + 10 * t, 138 - 10 * t),
             Offset(288 + 10 * t, 226 + 10 * t),
           ]),
           _poly([
-            Offset(150, 92 - 22 * t),
-            const Offset(118, 122),
-            const Offset(182, 122),
+            Offset(150, 92 - 44 * t),
+            const Offset(114, 124),
+            const Offset(186, 124),
           ]),
         ]),
         arms: false,
@@ -701,7 +717,7 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
     case 12: // nemu: ねむねむ → ナイトキャップ → 三日月と星のキング
       return BodySpec(
         _union([
-          _oval(150, 196 + 6 * t, 192 + 12 * t, 148),
+          _oval(150, 196 + 6 * t, 192 + 30 * t, 148 + 12 * t),
           _oval(150, 140, 150, 120),
           _rotOval(74, 152, 40, 92, 24),
           _rotOval(226, 152, 40, 92, -24),
@@ -748,11 +764,11 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
     case 13: // robo: ろぼ → むねにモニター → 金メッキのキングメカ
       return BodySpec(
         _union([
-          _rrect(72 - 8 * t, 88, 156 + 16 * t, 172, 22),
-          _rrect(146, 42, 8, 52, 4),
+          _rrect(72 - 14 * t, 88 - 22 * t, 156 + 28 * t, 172 + 22 * t, 22),
+          _rrect(146, 42 - 10 * t, 8, 52 + 10 * t, 4),
           if (king) _rrect(108, 50, 8, 44, 4),
           if (king) _rrect(184, 50, 8, 44, 4),
-          _rrect(86, 246, 128, 22, 10),
+          _rrect(86 - 12 * t, 246, 128 + 24 * t, 22, 10),
         ]),
         feet: false,
         front: (canvas, body) {
@@ -819,10 +835,10 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
         },
       );
     case 14: // obake: おばけ → おててが生える → かぼちゃの相棒つきキング
-      final hem = 236 + 12 * t;
+      final hem = 236 + 18 * t;
       return BodySpec(
         _union([
-          _circle(150, 140 - 10 * t, 96),
+          _circle(150, 140 - 14 * t, 96 + 8 * t),
           if (s3) _rotOval(50, 150, 56, 26, -32),
           if (s3) _rotOval(250, 150, 56, 26, 32),
           _poly([
@@ -1061,7 +1077,7 @@ BodySpec bodySpecFor(int species, int stage, {String? equipHead}) {
           },
         );
       }
-      final legTop = 218.0 - 8 * t;
+      final legTop = 218.0 - 26 * t;
       return BodySpec(
         _union([
           _circle(150, 132, 76),

@@ -55,15 +55,15 @@ class CreaturePainter extends CustomPainter {
     final s = size.width / 300.0;
     canvas.scale(s, s);
 
-    // キング=1.25 / ベビー=0.62(足元アンカー)。docs §3
-    // こどもFB「進化が微々たる」: 中間を小さめ(0.95)にして段差を強調
+    // キング=1.3 / ベビー=0.62(足元アンカー)。docs §3
+    // こどもFB「進化が微々たる」: 中間を小さめ(0.9)にして段差を強調
     final scale = stage == 1
         ? 0.62
         : stage == kingStage
-        ? 1.25
+        ? 1.3
         : stage == 3
-        ? 1.1
-        : 0.95;
+        ? 1.12
+        : 0.9;
     canvas.translate(150 * (1 - scale), 270 * (1 - scale));
     canvas.scale(scale, scale);
 

@@ -137,8 +137,13 @@ void main() {
         for (var sp = 0; sp < speciesList.length; sp++) {
           expect(
             signature(sp, 2),
+            isNot(signature(sp, 3)),
+            reason: '中間→新段階でも輪郭が変わる (species=$sp)',
+          );
+          expect(
+            signature(sp, 3),
             isNot(signature(sp, kingStage)),
-            reason: '進化で体形も変わる (species=$sp)',
+            reason: '新段階→キングでも輪郭が変わる (species=$sp)',
           );
         }
       },
