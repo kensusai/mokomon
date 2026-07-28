@@ -55,14 +55,15 @@ class CreaturePainter extends CustomPainter {
     final s = size.width / 300.0;
     canvas.scale(s, s);
 
-    // キング=1.2 / ベビー=0.62(足元アンカー)。docs §3
+    // キング=1.25 / ベビー=0.62(足元アンカー)。docs §3
+    // こどもFB「進化が微々たる」: 中間を小さめ(0.95)にして段差を強調
     final scale = stage == 1
         ? 0.62
         : stage == kingStage
-        ? 1.2
+        ? 1.25
         : stage == 3
-        ? 1.1 // 新段階: 中間より一回り大きい(5段階化)
-        : 1.0;
+        ? 1.1
+        : 0.95;
     canvas.translate(150 * (1 - scale), 270 * (1 - scale));
     canvas.scale(scale, scale);
 
@@ -74,10 +75,14 @@ class CreaturePainter extends CustomPainter {
     spec?.front?.call(canvas, bodyColor);
     if (mood != null) {
       paintExpressionFace(canvas, mood: mood!);
+    } else if (spec?.ownFace != null) {
+      spec!.ownFace!(canvas, bodyColor, sad);
     } else {
       paintCreatureFace(canvas, speciesIndex: speciesIndex, sad: sad);
     }
-    if (stage >= kingStage && equipHead == null) _paintCrown(canvas);
+    if (stage >= kingStage && equipHead == null && (spec?.crown ?? true)) {
+      _paintCrown(canvas);
+    }
     if (equipFace != null) paintEquipItem(canvas, equipFace!);
     if (equipHead != null) paintEquipItem(canvas, equipHead!);
   }
@@ -85,7 +90,7 @@ class CreaturePainter extends CustomPainter {
   // ---------- body ----------
 
   void _paintBody(Canvas canvas, BodySpec? spec) {
-    if (stage == kingStage) _paintMantle(canvas);
+    if (stage == kingStage && (spec?.mantle ?? true)) _paintMantle(canvas);
     spec?.back?.call(canvas, bodyColor);
 
     final body = spec?.path ?? babyBodyPath();
