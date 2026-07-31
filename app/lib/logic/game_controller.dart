@@ -227,6 +227,10 @@ class GameController extends ChangeNotifier {
       ..nickname = null
       ..bg = null
       ..kingSparkle = 0
+      // 装備は個体ごと(前の子の分は名簿のスナップショットが持つ)。
+      // docs/review-findings.md #67。
+      ..equipHead = null
+      ..equipFace = null
       ..color = speciesList[next].color.toARGB32();
     _commit();
   }
@@ -320,6 +324,9 @@ class GameController extends ChangeNotifier {
       ..nickname = null
       ..bg = null
       ..kingSparkle = 0
+      // 装備は個体ごと(docs/review-findings.md #67)
+      ..equipHead = null
+      ..equipFace = null
       ..color = speciesList[speciesIndex].color.toARGB32();
     sfx.playBabble(speciesIndex); // ただいまのごあいさつ
     _commit();
@@ -338,7 +345,8 @@ class GameController extends ChangeNotifier {
   }
 
   /// ショップのセルをタップ: 未所持なら購入(即装備)、
-  /// 所持済みなら着脱トグル。装備は種族をまたいで維持される。
+  /// 所持済みなら着脱トグル。所持アイテムは全個体で共有だが、
+  /// 装備は個体ごと(名簿・たまごに引き継がない。docs/review-findings.md #67)。
   ShopTapOutcome tapShopItem(ShopItem item) {
     final outcome = _tapShopItem(item);
     switch (outcome) {

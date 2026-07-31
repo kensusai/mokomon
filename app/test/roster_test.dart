@@ -60,6 +60,29 @@ void main() {
     });
   });
 
+  group('equipment is per-individual (docs/review-findings.md #67)', () {
+    test('a new egg starts without the previous child\'s equipment', () {
+      final s = kingMoko()..equipFace = 'sunglass';
+      final c = fresh(s);
+      c.newEgg();
+      expect(s.equipHead, isNull);
+      expect(s.equipFace, isNull);
+      expect(s.roster.last.equipHead, 'ribbon', reason: '装備は個体の記憶として名簿へ');
+      expect(s.roster.last.equipFace, 'sunglass');
+    });
+
+    test('an adopted king arrives without borrowed equipment', () {
+      final s = kingMoko()
+        ..collection = (List.filled(speciesList.length, false)
+          ..[0] = true
+          ..[1] = true);
+      final c = fresh(s);
+      expect(c.adoptKing(1), isTrue);
+      expect(s.equipHead, isNull);
+      expect(s.equipFace, isNull);
+    });
+  });
+
   group('switchToRoster', () {
     test('swaps to a raised king and back, preserving each look', () {
       final s = kingMoko();

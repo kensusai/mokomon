@@ -209,17 +209,19 @@ void main() {
     });
   });
 
-  group('equipment persists across newEgg', () {
-    test('owned/equip kept, growth state reset', () {
+  group('equipment is per-individual across newEgg', () {
+    test('owned kept, equip resets with growth state', () {
+      // docs/review-findings.md #67: 装備は個体ごと。所持は全個体で共有。
       final s = GameState()
         ..stage = kingStage
         ..coins = 40;
       final c = fresh(s);
       c.tapShopItem(item('sunglass'));
-      c.newEgg(); // ベビーがサングラス=かわいい(仕様§7)
+      c.newEgg(); // サングラスは名簿の先代が持っていく
       expect(c.state.owned, contains('sunglass'));
-      expect(c.state.equipFace, 'sunglass');
+      expect(c.state.equipFace, isNull);
       expect(c.state.stage, 0);
+      expect(c.state.roster.last.equipFace, 'sunglass');
     });
   });
 
