@@ -22,26 +22,17 @@ class StroopScreen extends StatefulWidget {
 }
 
 class _StroopScreenState extends State<StroopScreen>
-    with TimerBagMixin<StroopScreen>, MistakeGameOverMixin<StroopScreen> {
+    with
+        TimerBagMixin<StroopScreen>,
+        MistakeGameOverMixin<StroopScreen>,
+        RoundGuessScreenMixin<StroopScreen> {
   late final _game = widget.game ?? StroopGame();
-  var _ended = false;
 
   @override
   GameController get controller => widget.controller;
 
   @override
-  void resetMistakes() => _game.continueAfterFail();
-
-  void _choose(int index) {
-    if (_ended || finishing || gameOver) return;
-    handleGuess(
-      correct: _game.guess(index),
-      failed: _game.failed,
-      finished: _game.finished,
-      reward: _game.reward,
-      onFinished: () => setState(() => _ended = true),
-    );
-  }
+  RoundGuessGame get game => _game;
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +40,11 @@ class _StroopScreenState extends State<StroopScreen>
       title: '🌈 いろタッチ',
       topColor: const Color(0xFFFFF3E0),
       bottomColor: const Color(0xFFE8F6EF),
-      overlays: [
-        if (_ended)
-          GameEndOverlay(
-            emoji: '🌈',
-            result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
-            onDone: () => Navigator.of(context).pop(),
-          ),
-        if (gameOver) buildGameOverOverlay(context),
-      ],
+      overlays: buildRoundGuessOverlays(
+        context,
+        emoji: '🌈',
+        result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
+      ),
       children: [
         const SizedBox(height: 6),
         const Text(
@@ -115,7 +102,7 @@ class _StroopScreenState extends State<StroopScreen>
     shadowColor: Color(stroopColors[i].$2).withValues(alpha: 0.5),
     child: InkWell(
       borderRadius: BorderRadius.circular(20),
-      onTap: () => _choose(i),
+      onTap: () => choose(i),
       child: Center(
         child: Text(
           stroopColors[i].$1,

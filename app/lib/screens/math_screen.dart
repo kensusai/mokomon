@@ -22,26 +22,17 @@ class MathScreen extends StatefulWidget {
 }
 
 class _MathScreenState extends State<MathScreen>
-    with TimerBagMixin<MathScreen>, MistakeGameOverMixin<MathScreen> {
+    with
+        TimerBagMixin<MathScreen>,
+        MistakeGameOverMixin<MathScreen>,
+        RoundGuessScreenMixin<MathScreen> {
   late final _game = widget.game ?? MathGame();
-  var _ended = false;
 
   @override
   GameController get controller => widget.controller;
 
   @override
-  void resetMistakes() => _game.continueAfterFail();
-
-  void _choose(int index) {
-    if (_ended || finishing || gameOver) return;
-    handleGuess(
-      correct: _game.guess(index),
-      failed: _game.failed,
-      finished: _game.finished,
-      reward: _game.reward,
-      onFinished: () => setState(() => _ended = true),
-    );
-  }
+  RoundGuessGame get game => _game;
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +40,11 @@ class _MathScreenState extends State<MathScreen>
       title: '➕ けいさんタッチ',
       topColor: const Color(0xFFE8F1FF),
       bottomColor: const Color(0xFFFFF0F5),
-      overlays: [
-        if (_ended)
-          GameEndOverlay(
-            emoji: '➕',
-            result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
-            onDone: () => Navigator.of(context).pop(),
-          ),
-        if (gameOver) buildGameOverOverlay(context),
-      ],
+      overlays: buildRoundGuessOverlays(
+        context,
+        emoji: '➕',
+        result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
+      ),
       children: [
         const SizedBox(height: 6),
         const Text(
@@ -100,25 +87,18 @@ class _MathScreenState extends State<MathScreen>
     );
   }
 
-  Widget _choiceButton(int i) => Material(
+  Widget _choiceButton(int i) => ChoiceCard(
     key: ValueKey('math-choice-$i'),
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(20),
-    elevation: 3,
-    shadowColor: const Color(0x1F3A3F52),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () => _choose(i),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Center(
-          child: Text(
-            '${_game.choices[i]}',
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              color: inkColor,
-            ),
+    onTap: () => choose(i),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Center(
+        child: Text(
+          '${_game.choices[i]}',
+          style: const TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: inkColor,
           ),
         ),
       ),

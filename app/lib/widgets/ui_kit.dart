@@ -297,3 +297,33 @@ class ModalTitle extends StatelessWidget {
     );
   }
 }
+
+/// 白い選択カード(ミニゲームの3択ボタン・グリッドセル共通。
+/// docs/review-findings.md #70)。見た目は Material+InkWell+白地+薄い影。
+class ChoiceCard extends StatelessWidget {
+  final VoidCallback onTap;
+  final double radius;
+  final double elevation;
+  final Widget child;
+
+  const ChoiceCard({
+    super.key,
+    required this.onTap,
+    this.radius = 20,
+    this.elevation = 3,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(radius),
+    elevation: elevation,
+    shadowColor: const Color(0x1F3A3F52),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(radius),
+      onTap: onTap,
+      child: child,
+    ),
+  );
+}

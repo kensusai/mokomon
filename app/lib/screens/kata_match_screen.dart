@@ -22,26 +22,17 @@ class KataMatchScreen extends StatefulWidget {
 }
 
 class _KataMatchScreenState extends State<KataMatchScreen>
-    with TimerBagMixin<KataMatchScreen>, MistakeGameOverMixin<KataMatchScreen> {
+    with
+        TimerBagMixin<KataMatchScreen>,
+        MistakeGameOverMixin<KataMatchScreen>,
+        RoundGuessScreenMixin<KataMatchScreen> {
   late final _game = widget.game ?? KataMatchGame();
-  var _ended = false;
 
   @override
   GameController get controller => widget.controller;
 
   @override
-  void resetMistakes() => _game.continueAfterFail();
-
-  void _choose(int index) {
-    if (_ended || finishing || gameOver) return;
-    handleGuess(
-      correct: _game.guess(index),
-      failed: _game.failed,
-      finished: _game.finished,
-      reward: _game.reward,
-      onFinished: () => setState(() => _ended = true),
-    );
-  }
+  RoundGuessGame get game => _game;
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +40,11 @@ class _KataMatchScreenState extends State<KataMatchScreen>
       title: '🔠 ペアもじ',
       topColor: const Color(0xFFFFEFF5),
       bottomColor: const Color(0xFFE8F6EF),
-      overlays: [
-        if (_ended)
-          GameEndOverlay(
-            emoji: '🔠',
-            result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
-            onDone: () => Navigator.of(context).pop(),
-          ),
-        if (gameOver) buildGameOverOverlay(context),
-      ],
+      overlays: buildRoundGuessOverlays(
+        context,
+        emoji: '🔠',
+        result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
+      ),
       children: [
         const SizedBox(height: 6),
         Text(
@@ -101,23 +88,16 @@ class _KataMatchScreenState extends State<KataMatchScreen>
     );
   }
 
-  Widget _choiceButton(int i) => Material(
+  Widget _choiceButton(int i) => ChoiceCard(
     key: ValueKey('kata-$i'),
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(20),
-    elevation: 3,
-    shadowColor: const Color(0x1F3A3F52),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () => _choose(i),
-      child: Center(
-        child: Text(
-          _game.choices[i],
-          style: const TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w800,
-            color: inkColor,
-          ),
+    onTap: () => choose(i),
+    child: Center(
+      child: Text(
+        _game.choices[i],
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w800,
+          color: inkColor,
         ),
       ),
     ),

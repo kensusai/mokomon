@@ -22,26 +22,17 @@ class CompareScreen extends StatefulWidget {
 }
 
 class _CompareScreenState extends State<CompareScreen>
-    with TimerBagMixin<CompareScreen>, MistakeGameOverMixin<CompareScreen> {
+    with
+        TimerBagMixin<CompareScreen>,
+        MistakeGameOverMixin<CompareScreen>,
+        RoundGuessScreenMixin<CompareScreen> {
   late final _game = widget.game ?? CompareGame();
-  var _ended = false;
 
   @override
   GameController get controller => widget.controller;
 
   @override
-  void resetMistakes() => _game.continueAfterFail();
-
-  void _choose(int side) {
-    if (_ended || finishing || gameOver) return;
-    handleGuess(
-      correct: _game.guess(side),
-      failed: _game.failed,
-      finished: _game.finished,
-      reward: _game.reward,
-      onFinished: () => setState(() => _ended = true),
-    );
-  }
+  RoundGuessGame get game => _game;
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +40,11 @@ class _CompareScreenState extends State<CompareScreen>
       title: '⚖️ どっちが おおい?',
       topColor: const Color(0xFFEFF6E8),
       bottomColor: const Color(0xFFE6F0FF),
-      overlays: [
-        if (_ended)
-          GameEndOverlay(
-            emoji: '⚖️',
-            result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
-            onDone: () => Navigator.of(context).pop(),
-          ),
-        if (gameOver) buildGameOverOverlay(context),
-      ],
+      overlays: buildRoundGuessOverlays(
+        context,
+        emoji: '⚖️',
+        result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
+      ),
       children: [
         const SizedBox(height: 6),
         Text(
@@ -83,27 +70,21 @@ class _CompareScreenState extends State<CompareScreen>
     );
   }
 
-  Widget _sideCard(int side, int count) => Material(
+  Widget _sideCard(int side, int count) => ChoiceCard(
     key: ValueKey('compare-$side'),
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(24),
-    elevation: 3,
-    shadowColor: const Color(0x1F3A3F52),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(24),
-      onTap: () => _choose(side),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Center(
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              for (var i = 0; i < count; i++)
-                Text(_game.emoji, style: const TextStyle(fontSize: 32)),
-            ],
-          ),
+    radius: 24,
+    onTap: () => choose(side),
+    child: Padding(
+      padding: const EdgeInsets.all(10),
+      child: Center(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            for (var i = 0; i < count; i++)
+              Text(_game.emoji, style: const TextStyle(fontSize: 32)),
+          ],
         ),
       ),
     ),

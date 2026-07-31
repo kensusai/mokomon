@@ -29,9 +29,9 @@ class _PuzzleScreenState extends State<PuzzleScreen>
     with
         SingleTickerProviderStateMixin,
         TimerBagMixin<PuzzleScreen>,
-        MistakeGameOverMixin<PuzzleScreen> {
+        MistakeGameOverMixin<PuzzleScreen>,
+        RoundGuessScreenMixin<PuzzleScreen> {
   late final _game = widget.game ?? PuzzleGame();
-  var _ended = false;
   var _locked = false;
   int? _shakingIndex;
   late final AnimationController _shake;
@@ -40,7 +40,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
   GameController get controller => widget.controller;
 
   @override
-  void resetMistakes() => _game.continueAfterFail();
+  RoundGuessGame get game => _game;
 
   @override
   void initState() {
@@ -58,7 +58,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
   }
 
   void _choose(int index) {
-    if (_locked || _ended || gameOver) return;
+    if (_locked || ended || gameOver) return;
     if (_game.guess(index)) {
       widget.controller.sfx.play(Sfx.happy);
       _locked = true;
@@ -67,7 +67,7 @@ class _PuzzleScreenState extends State<PuzzleScreen>
         _locked = false;
         if (_game.finished) {
           widget.controller.finishMinigame(_game.reward);
-          setState(() => _ended = true);
+          setState(() => ended = true);
         } else {
           setState(() {});
         }
@@ -92,15 +92,11 @@ class _PuzzleScreenState extends State<PuzzleScreen>
       topColor: const Color(0xFFF3EDFF),
       bottomColor: const Color(0xFFE8F9EF),
       trailingWidth: 40,
-      overlays: [
-        if (_ended)
-          GameEndOverlay(
-            emoji: '🏆',
-            result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
-            onDone: () => Navigator.of(context).pop(),
-          ),
-        if (gameOver) buildGameOverOverlay(context),
-      ],
+      overlays: buildRoundGuessOverlays(
+        context,
+        emoji: '🏆',
+        result: 'ぜんぶ せいかい! +${_game.reward} コイン!',
+      ),
       children: [
         Expanded(
           child: Column(
@@ -164,23 +160,15 @@ class _PuzzleScreenState extends State<PuzzleScreen>
 
   Widget _choice(int i) {
     final piece = _game.choices[i];
-    Widget cell = Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
+    Widget cell = ChoiceCard(
+      radius: 22,
       elevation: 4,
-      shadowColor: const Color(0x1F3A3F52),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: () => _choose(i),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: CustomPaint(
-            size: const Size(64, 64),
-            painter: ShapePainter(
-              shape: piece.shape,
-              color: Color(piece.color),
-            ),
-          ),
+      onTap: () => _choose(i),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: CustomPaint(
+          size: const Size(64, 64),
+          painter: ShapePainter(shape: piece.shape, color: Color(piece.color)),
         ),
       ),
     );

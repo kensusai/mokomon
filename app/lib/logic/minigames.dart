@@ -25,7 +25,7 @@ mixin MistakeTracker {
   void continueAfterFail() => mistakes = 0;
 }
 
-/// 採点式ラウンドゲーム(パズル/ちがうのどっち/かぞえて)共通のラウンド進行
+/// 採点式ラウンドゲーム(パズル/ちがうのどっち/かぞえて等)共通のラウンド進行
 /// (docs/review-findings.md #26)。正誤判定だけを各ゲームが持つ。
 mixin RoundGuessGame on MistakeTracker {
   var round = 0;
@@ -36,6 +36,11 @@ mixin RoundGuessGame on MistakeTracker {
 
   /// 1ラウンド正解の報酬コイン。
   int get rewardPerRound;
+
+  /// 選択肢 [index] を答える(各ゲームが実装)。正解なら true を返し
+  /// 次ラウンドへ、不正解はミスを1つ増やす(docs/review-findings.md #66:
+  /// 画面側の共通配線 RoundGuessScreenMixin がこの面だけを見る)。
+  bool guess(int index);
 
   /// 次のラウンドを生成する(各ゲームが実装)。
   void _newRound();
@@ -244,6 +249,7 @@ class PuzzleGame with MistakeTracker, RoundGuessGame {
   }
 
   /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  @override
   bool guess(int choiceIndex) => _applyGuess(choices[choiceIndex] == target);
 }
 
@@ -440,6 +446,7 @@ class OddOneGame with MistakeTracker, RoundGuessGame {
   }
 
   /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  @override
   bool guess(int index) => _applyGuess(index == oddIndex);
 }
 
@@ -599,6 +606,7 @@ class CountGame with MistakeTracker, RoundGuessGame {
   }
 
   /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす(数えなおし可)。
+  @override
   bool guess(int choiceIndex) => _applyGuess(choices[choiceIndex] == answer);
 }
 
@@ -699,6 +707,7 @@ class CompareGame with MistakeTracker, RoundGuessGame {
   }
 
   /// [side] 0=ひだり / 1=みぎ。正解なら true を返し次ラウンドへ。
+  @override
   bool guess(int side) => _applyGuess(side == moreSide);
 }
 
@@ -799,6 +808,7 @@ class MathGame with MistakeTracker, RoundGuessGame {
   }
 
   /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  @override
   bool guess(int choiceIndex) => _applyGuess(choices[choiceIndex] == answer);
 }
 
@@ -895,6 +905,7 @@ class StroopGame with MistakeTracker, RoundGuessGame {
   }
 
   /// [colorIndex] のいろパッドをタッチ。正解なら true を返し次ラウンドへ。
+  @override
   bool guess(int colorIndex) => _applyGuess(colorIndex == inkIndex);
 }
 
@@ -963,6 +974,7 @@ class KanaFindGame with MistakeTracker, RoundGuessGame {
   }
 
   /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  @override
   bool guess(int index) => _applyGuess(index == targetIndex);
 }
 
@@ -1037,6 +1049,7 @@ class KataMatchGame with MistakeTracker, RoundGuessGame {
   }
 
   /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  @override
   bool guess(int choiceIndex) => _applyGuess(choices[choiceIndex] == answer);
 }
 

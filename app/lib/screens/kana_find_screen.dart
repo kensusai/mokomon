@@ -22,26 +22,17 @@ class KanaFindScreen extends StatefulWidget {
 }
 
 class _KanaFindScreenState extends State<KanaFindScreen>
-    with TimerBagMixin<KanaFindScreen>, MistakeGameOverMixin<KanaFindScreen> {
+    with
+        TimerBagMixin<KanaFindScreen>,
+        MistakeGameOverMixin<KanaFindScreen>,
+        RoundGuessScreenMixin<KanaFindScreen> {
   late final _game = widget.game ?? KanaFindGame();
-  var _ended = false;
 
   @override
   GameController get controller => widget.controller;
 
   @override
-  void resetMistakes() => _game.continueAfterFail();
-
-  void _choose(int index) {
-    if (_ended || finishing || gameOver) return;
-    handleGuess(
-      correct: _game.guess(index),
-      failed: _game.failed,
-      finished: _game.finished,
-      reward: _game.reward,
-      onFinished: () => setState(() => _ended = true),
-    );
-  }
+  RoundGuessGame get game => _game;
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +40,11 @@ class _KanaFindScreenState extends State<KanaFindScreen>
       title: '🔤 もじさがし',
       topColor: const Color(0xFFEFF7DE),
       bottomColor: const Color(0xFFE3F2FF),
-      overlays: [
-        if (_ended)
-          GameEndOverlay(
-            emoji: '🔤',
-            result: 'ぜんぶ みつけた! +${_game.reward} コイン!',
-            onDone: () => Navigator.of(context).pop(),
-          ),
-        if (gameOver) buildGameOverOverlay(context),
-      ],
+      overlays: buildRoundGuessOverlays(
+        context,
+        emoji: '🔤',
+        result: 'ぜんぶ みつけた! +${_game.reward} コイン!',
+      ),
       children: [
         const SizedBox(height: 6),
         Text(
@@ -91,23 +78,17 @@ class _KanaFindScreenState extends State<KanaFindScreen>
     );
   }
 
-  Widget _cell(int i) => Material(
+  Widget _cell(int i) => ChoiceCard(
     key: ValueKey('kana-$i'),
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(18),
-    elevation: 3,
-    shadowColor: const Color(0x1F3A3F52),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () => _choose(i),
-      child: Center(
-        child: Text(
-          _game.cells[i],
-          style: const TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w800,
-            color: inkColor,
-          ),
+    radius: 18,
+    onTap: () => choose(i),
+    child: Center(
+      child: Text(
+        _game.cells[i],
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w800,
+          color: inkColor,
         ),
       ),
     ),
