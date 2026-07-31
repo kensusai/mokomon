@@ -9,3 +9,8 @@
 - 状況: Flutter アプリの画面実装で SKILL.md を参照したが、内容が Web フロントエンド(Lighthouse・DOM 仮想化・TanStack Query 等)前提で、Flutter に読み替える判断が必要だった。
 - 提案: フレームワーク非依存の原則(state 分離・テストファースト・a11y)と、Web 固有の節を分離する。Flutter/モバイル向けの対応表があるとよい。
 - ステータス: 反映済み(frontend-development スキル冒頭に「Web 専用ではない」注記と読み替え表 — セマンティックHTML→アクセシビリティAPI(Semantics)、レスポンシブ→画面サイズ対応、仮想化→ListView.builder 等、Lighthouse→Flutter DevTools 等 — を追加。performance プリセットの同フェーズ断片にも読み替え行を追加。ja/en)
+
+## 2026-08-01 | bug | agent-ready check(directory structure 検出)
+- 状況: ミニゲーム追加後の区切りで `agent-ready check` を実行したところ、「CLAUDE.md の directory structure が古い(actual [app, prototype])」と指摘されたが、実際にはリポジトリ直下に `docs/`・`skills/` が存在し CLAUDE.md の記述が正しい(誤検出。`update` に従うと正しい記述を壊す)。
+- 提案: 実ディレクトリ検出が `docs`/`skills` を除外している原因(除外リスト・ignore 判定)を修正するか、除外したディレクトリを乖離判定の比較対象からも除外する。
+- ステータス: 未回収
