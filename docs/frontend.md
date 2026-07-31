@@ -71,7 +71,9 @@ lib/
 | `showCelebrate` / `StartButton` | widgets/celebrate_overlay.dart | お祝いオーバーレイ・緑大ボタン |
 | `GameStartOverlay` / `GameEndOverlay` / `GameOverOverlay` / `GameCountdown` / `BackIconButton` / `GameHeaderBar` / `RoundProgressDots` | widgets/game_overlays.dart | ミニゲーム共通UI。`RoundProgressDots`(ラウンド進捗ドット)は新しいミニゲーム画面でも必ず使う。`GameHeaderBar` は通常 `MinigameScaffold` 経由で使う |
 | `MinigameScaffold(title:, topColor:, bottomColor:, children:, overlays:)` | widgets/minigame_scaffold.dart | ミニゲーム画面の外枠(縦グラデ背景+`SafeArea`+ヘッダー行)。`children` がヘッダー下の本体、`overlays` が全面に重ねるオーバーレイ。**新しいミニゲーム画面は `Scaffold` を直接書かずこれを使う**(catch/balloon/whack のアーケード系は `TimedArcadeGameMixin` 側の独自レイアウト) |
-| `MistakeGameOverMixin` | screens/mistake_game_over.dart | 正誤判定つきミニゲームの「ミス上限→ゲームオーバー→コインで続行」配線をまとめた mixin。`GameController get controller` と `void resetMistakes()` を実装して使う(例: puzzle/odd_one/order/count screen)。`TimerBagMixin` の上に乗るので `with TimerBagMixin<X>, MistakeGameOverMixin<X>` の順で付ける |
+| `MistakeGameOverMixin` / `RoundGuessScreenMixin` | screens/mistake_game_over.dart | 正誤判定つきミニゲームの「ミス上限→ゲームオーバー→コインで続行」配線と、正誤ラウンド系画面の共通配線(`ended`・`choose()`・`buildRoundGuessOverlays()`)。**新しい正誤ラウンド系画面は `with TimerBagMixin<X>, MistakeGameOverMixin<X>, RoundGuessScreenMixin<X>` で作り、`game` を返して選択肢のタップで `choose(i)` を呼ぶだけにする**(docs/review-findings.md #66) |
+| `ChoiceCard` | widgets/ui_kit.dart | 白い選択カード(3択ボタン・グリッドセル)。ミニゲームの選択肢は独自の Material+InkWell を書かずこれを使う(docs/review-findings.md #70) |
+| `gameRegistry` / `GameEntry` | screens/game_registry.dart, widgets/game_chooser.dart | あそぶ19種の一覧(表示+画面生成)。**ゲーム追加は registry に1行足すだけ**(選択モーダルと home の遷移が同じ定義を使う。docs/review-findings.md #69) |
 | `TimerBagMixin` | screens/timer_bag.dart | 遅延処理の `Timer` をまとめて持ち `dispose()` で自動キャンセルする mixin。`later(Duration, VoidCallback)` を使う(コールバックは `mounted` が false なら発火しない)。**画面で `Timer` を直接 new しない**(繰り返し発火する `Timer.periodic` のみ例外) |
 
 ## UI実装ルール

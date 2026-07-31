@@ -598,7 +598,7 @@
 - 問題: 8画面すべてが `_ended` フラグ+`_choose()`(handleGuess呼び出し)+`GameEndOverlay`+`RoundProgressDots`+`resetMistakes` override の同型コードを持つ。count/math/stroop/kana/kata は文字列以外ほぼ同一。ゲーム追加のたびに約40行の複製が増えている(#26 で採点ロジック側は集約済みだが、画面側が未集約)。
 - 根拠: 8ファイルの `_choose` を grep し、count/math/stroop/kana_find/kata_match の本体が同一であることを実読で確認。
 - 提案: `MistakeGameOverMixin` の上に「_ended 管理+_choose+終了/ゲームオーバーオーバーレイ組み立て」を持つ画面用 mixin(または共通スキャフォールド)を1枚足し、各画面は出題ウィジェットと文言だけを持つ。
-- ステータス: 未対応
+- ステータス: 対応済み(RoundGuessScreenMixin を新設し、7画面の _ended/_choose/resetMistakes/終了オーバーレイを集約。おなじのどれ?は独自演出を保ったまま ended とオーバーレイだけ共有。RoundGuessGame に guess(int) を抽象化)
 
 ## 67. きせかえ装備の引き継ぎ規則が「新しいたまご」と「名簿交代」で食い違っている
 - 重大度: 低
@@ -607,7 +607,7 @@
 - 問題: `_startEgg` は pattern/nickname/bg/kingSparkle をリセットするが `equipHead/equipFace` は残す(新しいたまごが前の子の帽子をかぶったまま)。一方 `switchToRoster` はスナップショットの装備で上書きする(いま装備中の帽子が交代で外れる)。「装備は種族をまたいで維持される」(§7、名簿導入前の記述)と個体別スナップショットのどちらの意図も中途半端に混ざっている。
 - 根拠: `_startEgg` のカスケードに equip が無いこと、`CreatureSnapshot`/`switchToRoster` が equip を保存・復元することを実読で確認。
 - 提案: 判断が必要: A) 個体別に統一(たまごでも装備をリセット) B) グローバルに統一(交代でも現在の装備を維持し、スナップショットから外す) C) 現状維持を仕様として docs に明記。おすすめは A(名簿=個体の記憶、という現行モデルに一致)。
-- ステータス: 未対応
+- ステータス: 対応済み(ユーザーが案Aを選択: _startEgg と adoptKing で equipHead/equipFace をリセット。旧仕様を固定していた collection_economy_test を新ルールへ更新し、roster_test に個体別テスト2件追加。docs §12 に明文化)
 
 ## 68. 孵化・交代の直後、いきものが軌道の初期位置へ瞬間移動する
 - 重大度: 低
@@ -616,7 +616,7 @@
 - 問題: たまご(固定 Alignment(0, 0.85))から孵化すると `enabled` が true になり Ticker が t=0 から始まるが、`at(0)` はホームポジションと無関係(例: 種族0は (0, 0.25))。孵化演出から戻った瞬間、いきものが空中へテレポートする。名簿交代(種族変更)でも軌道が切り替わり同様に跳ぶ。
 - 根拠: `CreatureMotion(0).at(0)` を式で確認(x=0, y=0.25)。`didUpdateWidget` に位置ブレンドが無いことを実読で確認。
 - 提案: ticker (再)開始から約2秒は `Alignment(0, 0.85)`(または直前位置)から軌道位置へ easeIn で補間する。
-- ステータス: 未対応
+- ステータス: 対応済み(CreatureWanderer に2秒の easeInOut ブレンドを追加。孵化はホームポジションから、種族交代は直前の表示位置から軌道へ合流。再現widget test 2件を先に追加して確認)
 
 ## 69. ゲーム追加のたびに chooser の一覧と home の switch の2箇所を触る構造になっている
 - 重大度: 低
@@ -625,7 +625,7 @@
 - 問題: ゲームのキーが chooser の表示リストと home の画面生成 switch に二重管理されている。追加漏れはコンパイルエラーにならず、キーのタイポは既定の `MemoryScreen` に落ちて気づきにくい(網羅性チェックが効かない裸の String マッチ)。
 - 根拠: 両ファイルを実読。'reverse' 等のキーは文字列としてのみ結ばれていることを確認。
 - 提案: `(key, emoji, title, gradient, builder)` を1つのレジストリ(リスト)に統合し、chooser と home が同じ定義を参照する。enum 化すれば switch の網羅性チェックも効く。
-- ステータス: 未対応
+- ステータス: 対応済み(GameEntry+screens/game_registry.dart に一覧を統合。chooser は List<GameEntry> を受け取り GameEntry を返し、home は entry.build(c) で画面生成。19分岐の switch と画面 import 18件を削除)
 
 ## 70. 3択ボタン・グリッドセルのウィジェットが5画面で重複(三度目の法則超え)
 - 重大度: 低
@@ -634,7 +634,7 @@
 - 問題: 白い Material+InkWell+中央テキストの選択ボタン/セルがほぼ同一実装で5箇所にある(角丸・elevation・shadowColor まで同値)。
 - 根拠: 各ファイルを実読し、差分がキー名とフォントサイズ程度であることを確認。
 - 提案: `ui_kit.dart` に `ChoiceCard(key, label/child, onTap)` を1つ切り出して置き換える(#66 と同時にやると差分が小さい)。
-- ステータス: 未対応
+- ステータス: 対応済み(ui_kit に ChoiceCard を新設し、count/math/odd/kana/kata/compare/puzzle の7箇所を置換。radius/elevation だけ引数化)
 
 ## 71. セリフの吹き出しが回遊中のいきものの位置と無関係な場所に出る
 - 重大度: 低
@@ -643,7 +643,7 @@
 - 問題: 吹き出しの表示位置は seed による3固定位置で、いきものが固定表示だった前提の設計。回遊導入後は、画面下にいる子のセリフが画面上端に出るなど「誰のセリフか」が分かりにくくなり得る。
 - 根拠: `_aligns` が const 3種でいきもの位置を参照していないことを実読で確認。
 - 提案: 判断が必要: A) `_creatureBoxKey` の現在位置の近く(上側)に出す B) 現状維持(6〜7歳には気にならない可能性もある。実機でこどもの反応を見てから決める)。
-- ステータス: 未対応
+- ステータス: 対応済み(ユーザーが案Aを選択: _hint 時点のいきものの頭上に表示する _speechAlign() を追加し、_SpeechText の固定3位置を廃止。縦長ビューポートのwidget testで位置を固定)
 
 ## 72. さかさまタッチ/ぴったりストップの「報酬ゼロ終了」分岐が widget test で未検証
 - 重大度: 低
@@ -652,4 +652,4 @@
 - 問題: reversed Simon とぴったりストップの画面テストは報酬ありの終了(やったー!)のみ通しており、報酬ゼロの「ざんねん!/つぎは がんばる!」分岐(simon_screen/stop_screen の GameEndOverlay 分岐)は順方向サイモンのテストでしか固定されていない。
 - 根拠: hard_game_screens_test.dart を実読(reverse は +4、stop は +20 で終了)。ゼロ報酬分岐は count_simon_screens_test の forward simon のみ。
 - 提案: reverse で初手ミス(reward 0)、stop で5回はずして終える各1ケースを追加し、励ましボタンのラベルを固定する。
-- ステータス: 未対応
+- ステータス: 対応済み(さかさまタッチ初手ミスと ぴったりストップ全はずれの2ケースを追加し、ざんねん文言と励ましボタン・コイン不変を固定)
