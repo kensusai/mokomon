@@ -6,14 +6,15 @@ import 'dart:math';
 
 import '../data/species.dart';
 
-/// 正誤のある4ゲーム(パズル/ちがうのどっち/じゅんばん/かぞえて)共通:
+/// 正誤のあるゲーム(パズル/ちがうのどっち/じゅんばん/かぞえて/
+/// どっちがおおい/けいさん/いろタッチ)共通:
 /// これだけ間違えるとゲームオーバー(報酬なし)。コインを払えば続けられる。
 const minigameMaxMistakes = 3;
 
 /// コインで続行するときのコスト。
 const minigameContinueCost = 5;
 
-/// 正誤のある4ゲーム共通のミス数管理(docs/review-findings.md #8)。
+/// 正誤のあるゲーム共通のミス数管理(docs/review-findings.md #8)。
 mixin MistakeTracker {
   var mistakes = 0;
 
@@ -607,33 +608,48 @@ const simonPads = 4;
 const simonMaxLen = 7;
 const simonRewardPerRound = 3;
 
+/// さかさまタッチ(reversed)は逆順入力のぶん短く・高報酬。
+const reverseMaxLen = 6;
+const reverseRewardPerRound = 4;
+
 enum SimonInput { progress, roundComplete, gameComplete, wrong }
 
 /// 「おぼえてタッチ」: 光ったじゅんばんを覚えてタッチ(サイモン)。
 /// 2連から始まり、クリアごとに1つ伸びて最大7連。間違えたらそこで終了
 /// (それまでのごほうびは持ち帰り)。
+///
+/// [reversed] は「さかさまタッチ」ルール: 光った順を**逆から**タッチする。
+/// 逆順の記憶ははるかに難しいため最大6連、1ラウンド+4コイン。
 class SimonGame {
-  SimonGame({Random? rng}) : _rng = rng ?? Random() {
+  SimonGame({Random? rng, this.reversed = false}) : _rng = rng ?? Random() {
     sequence = [_rng.nextInt(simonPads), _rng.nextInt(simonPads)];
   }
 
   final Random _rng;
+  final bool reversed;
   late final List<int> sequence;
   var _pos = 0;
   var reward = 0;
   var finished = false;
 
+  int get _maxLen => reversed ? reverseMaxLen : simonMaxLen;
+  int get _rewardPerRound =>
+      reversed ? reverseRewardPerRound : simonRewardPerRound;
+
   SimonInput input(int pad) {
     if (finished) return SimonInput.wrong;
-    if (pad != sequence[_pos]) {
+    final expected = reversed
+        ? sequence[sequence.length - 1 - _pos]
+        : sequence[_pos];
+    if (pad != expected) {
       finished = true;
       return SimonInput.wrong;
     }
     _pos++;
     if (_pos < sequence.length) return SimonInput.progress;
-    reward += simonRewardPerRound;
+    reward += _rewardPerRound;
     _pos = 0;
-    if (sequence.length >= simonMaxLen) {
+    if (sequence.length >= _maxLen) {
       finished = true;
       return SimonInput.gameComplete;
     }
@@ -726,4 +742,158 @@ class PikaGame {
     reactions.add(null);
     round++;
   }
+}
+
+// ---------- けいさんタッチ ----------
+
+const mathRounds = 6;
+const mathRewardPerRound = 3;
+
+/// 「けいさんタッチ」: たしざん・ひきざんの答えを3択から選ぶ。
+/// たしざん(答え10まで)→ ひきざん → 11〜15のミックスと難化する
+/// (docs/game-design.md §5)。3ミスでゲームオーバー(コインで続行可)。
+class MathGame with MistakeTracker, RoundGuessGame {
+  MathGame({Random? rng}) : _rng = rng ?? Random() {
+    _newRound();
+  }
+
+  final Random _rng;
+  late int a;
+  late int b;
+  late bool isAdd;
+  late int answer;
+  late List<int> choices;
+
+  @override
+  int get rounds => mathRounds;
+  @override
+  int get rewardPerRound => mathRewardPerRound;
+
+  @override
+  void _newRound() {
+    if (round < 2) {
+      // たしざん: 合計10まで
+      isAdd = true;
+      a = 1 + _rng.nextInt(8); // 1〜8
+      b = 1 + _rng.nextInt(10 - a); // 合計 ≤10
+    } else if (round < 4) {
+      // ひきざん: 10までから引く(答えは1以上)
+      isAdd = false;
+      a = 5 + _rng.nextInt(6); // 5〜10
+      b = 1 + _rng.nextInt(a - 1); // 1〜a-1
+    } else {
+      // ミックス: 11〜15の大きな数(1年生の「くり上がり・くり下がり」相当)
+      isAdd = _rng.nextBool();
+      if (isAdd) {
+        final sum = 11 + _rng.nextInt(5); // 11〜15
+        a = 2 + _rng.nextInt(8); // 2〜9
+        b = sum - a;
+      } else {
+        a = 11 + _rng.nextInt(5); // 11〜15
+        b = 2 + _rng.nextInt(8); // 2〜9
+      }
+    }
+    answer = isAdd ? a + b : a - b;
+    final base = answer - 1; // answer は最小1なので base >= 0
+    choices = [base, base + 1, base + 2]..shuffle(_rng);
+  }
+
+  /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  bool guess(int choiceIndex) => _applyGuess(choices[choiceIndex] == answer);
+}
+
+// ---------- ぴったりストップ ----------
+
+const stopRounds = 5;
+
+/// 「ぴったりストップ」: バーを走るマーカーをまとの上でタッチして止める。
+/// ラウンドごとに速くなり、まとは小さくなる(docs/game-design.md §5)。
+/// ぴったり+4 / まと内+2 / はずれ0でラウンドは進む(ミス制の対象外)。
+/// タイミング制御は画面側、位置計算と採点をここで持つ。
+class StopGame {
+  StopGame({Random? rng}) : _rng = rng ?? Random() {
+    _newRound();
+  }
+
+  final Random _rng;
+  var round = 0;
+  var reward = 0;
+
+  /// まとの中心(バー上の 0〜1 座標)。ラウンドごとにランダム。
+  late double zoneCenter;
+
+  bool get finished => round >= stopRounds;
+
+  /// マーカーの速さ(片道/秒)。0.55 → 1.35 と加速。
+  double get speed => 0.55 + 0.2 * round;
+
+  /// まとの半幅(バー座標)。0.13 → 0.058 と縮小。
+  double get zoneHalf => 0.13 - 0.018 * round;
+
+  void _newRound() => zoneCenter = 0.15 + _rng.nextDouble() * 0.7;
+
+  /// 経過 [seconds] でのマーカー位置。0〜1を三角波で往復する。
+  double positionAt(double seconds) {
+    final p = (seconds * speed) % 2.0;
+    return p < 1 ? p : 2 - p;
+  }
+
+  /// [pos] で止めた採点。まとの中心付近ぴったり+4 / まと内+2 / はずれ0。
+  /// いずれもラウンドを進め、獲得コインを返す。
+  int stopAt(double pos) {
+    if (finished) return 0;
+    final diff = (pos - zoneCenter).abs();
+    final c = diff <= zoneHalf * 0.35 ? 4 : (diff <= zoneHalf ? 2 : 0);
+    reward += c;
+    round++;
+    if (!finished) _newRound();
+    return c;
+  }
+}
+
+// ---------- いろタッチ ----------
+
+const stroopRounds = 6;
+const stroopRewardPerRound = 3;
+
+/// いろタッチの (ことば, 表示色)。
+const stroopColors = [
+  ('あか', 0xFFE85B5B),
+  ('あお', 0xFF54B9FF),
+  ('きいろ', 0xFFFFC24B),
+  ('みどり', 0xFF34C98E),
+];
+
+/// 「いろタッチ」(ストループ課題): 大きく出たことばの**いろ**をタッチ。
+/// 最初の2問はことばと色が一致するならし、3問目からは必ず食い違う
+/// (docs/game-design.md §5)。3ミスでゲームオーバー(コインで続行可)。
+class StroopGame with MistakeTracker, RoundGuessGame {
+  StroopGame({Random? rng}) : _rng = rng ?? Random() {
+    _newRound();
+  }
+
+  final Random _rng;
+
+  /// 表示することば([stroopColors] の添字)。
+  late int wordIndex;
+
+  /// ことばを塗る色 = 正解([stroopColors] の添字)。
+  late int inkIndex;
+
+  @override
+  int get rounds => stroopRounds;
+  @override
+  int get rewardPerRound => stroopRewardPerRound;
+
+  @override
+  void _newRound() {
+    wordIndex = _rng.nextInt(stroopColors.length);
+    inkIndex = round < 2
+        ? wordIndex
+        : (wordIndex + 1 + _rng.nextInt(stroopColors.length - 1)) %
+              stroopColors.length;
+  }
+
+  /// [colorIndex] のいろパッドをタッチ。正解なら true を返し次ラウンドへ。
+  bool guess(int colorIndex) => _applyGuess(colorIndex == inkIndex);
 }

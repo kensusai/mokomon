@@ -30,7 +30,10 @@ import 'balloon_screen.dart';
 import 'catch_screen.dart';
 import 'count_screen.dart';
 import 'compare_screen.dart';
+import 'math_screen.dart';
 import 'pika_screen.dart';
+import 'stop_screen.dart';
+import 'stroop_screen.dart';
 import 'simon_screen.dart';
 import 'memory_screen.dart';
 import 'odd_one_screen.dart';
@@ -395,8 +398,12 @@ class _HomeScreenState extends State<HomeScreen>
         'odd' => OddOneScreen(controller: c),
         'count' => CountScreen(controller: c),
         'simon' => SimonScreen(controller: c),
+        'reverse' => SimonScreen(controller: c, reversed: true),
         'compare' => CompareScreen(controller: c),
         'pika' => PikaScreen(controller: c),
+        'math' => MathScreen(controller: c),
+        'stop' => StopScreen(controller: c),
+        'stroop' => StroopScreen(controller: c),
         _ => MemoryScreen(controller: c),
       };
       await Navigator.of(

@@ -20,13 +20,22 @@ const _padColors = [
 ];
 
 /// おぼえてタッチ(docs/game-design.md §5)。光ったじゅんばんを覚えてタッチ。
+/// [reversed] で「さかさまタッチ」(逆順に入力・高難度)としても使う。
 class SimonScreen extends StatefulWidget {
   final GameController controller;
 
-  /// テストで seeded ゲームを注入するためのフック。
+  /// true なら逆順入力の「さかさまタッチ」ルールで遊ぶ。
+  final bool reversed;
+
+  /// テストで seeded ゲームを注入するためのフック(reversed より優先)。
   final SimonGame? game;
 
-  const SimonScreen({super.key, required this.controller, this.game});
+  const SimonScreen({
+    super.key,
+    required this.controller,
+    this.reversed = false,
+    this.game,
+  });
 
   @override
   State<SimonScreen> createState() => _SimonScreenState();
@@ -34,7 +43,7 @@ class SimonScreen extends StatefulWidget {
 
 class _SimonScreenState extends State<SimonScreen>
     with TimerBagMixin<SimonScreen> {
-  late final _game = widget.game ?? SimonGame();
+  late final _game = widget.game ?? SimonGame(reversed: widget.reversed);
   var _phase = _Phase.waiting;
   int? _lit; // お手本/タップで光っているパッド
   Timer? _stepper;
@@ -105,20 +114,20 @@ class _SimonScreenState extends State<SimonScreen>
 
   String get _hint => switch (_phase) {
     _Phase.showing => 'よーく みてて!',
-    _Phase.input => 'おなじ じゅんばんで タッチ!',
+    _Phase.input => _game.reversed ? 'さかさまの じゅんばんで タッチ!' : 'おなじ じゅんばんで タッチ!',
     _ => 'じゅんび…',
   };
 
   @override
   Widget build(BuildContext context) {
     return MinigameScaffold(
-      title: '💡 おぼえてタッチ',
+      title: _game.reversed ? '🔁 さかさまタッチ' : '💡 おぼえてタッチ',
       topColor: const Color(0xFFEFE9FF),
       bottomColor: const Color(0xFFE3F6FF),
       overlays: [
         if (_phase == _Phase.ended)
           GameEndOverlay(
-            emoji: _game.reward > 0 ? '💡' : '🙈',
+            emoji: _game.reward > 0 ? (_game.reversed ? '🔁' : '💡') : '🙈',
             result: _game.reward > 0
                 ? '+${_game.reward} コイン げっと!'
                 : 'ざんねん! また ちょうせんしてね',
