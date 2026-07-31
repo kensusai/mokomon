@@ -94,6 +94,52 @@ void main() {
     expect(c.state.coins, 30); // 10 + 20
   });
 
+  testWidgets('reverse: failing before any round shows encouragement', (
+    tester,
+  ) async {
+    // docs/review-findings.md #72: 報酬ゼロ終了の分岐を固定する
+    final c = stage1Controller();
+    final game = SimonGame(rng: Random(0), reversed: true);
+    await pumpScreen(tester, SimonScreen(controller: c, game: game));
+
+    await tester.pump(const Duration(milliseconds: 1000));
+    await tester.pump(const Duration(milliseconds: 2200));
+    // 順方向(先頭)タップ=まちがい → ごほうびゼロで終了
+    expect(game.sequence.first == game.sequence.last, isFalse);
+    await tester.tap(find.byKey(ValueKey('simon-${game.sequence.first}')));
+    await tester.pump(const Duration(milliseconds: 700));
+
+    expect(find.text('ざんねん! また ちょうせんしてね'), findsOneWidget);
+    expect(find.text('つぎは がんばる!'), findsOneWidget);
+    expect(c.state.coins, 10, reason: 'コインは増えない');
+  });
+
+  testWidgets('stop: missing every round ends with encouragement', (
+    tester,
+  ) async {
+    // docs/review-findings.md #72: 報酬ゼロ終了の分岐を固定する
+    final c = stage1Controller();
+    final game = StopGame(rng: Random(5));
+    await pumpScreen(tester, StopScreen(controller: c, game: game));
+    await tester.pump(Duration.zero);
+
+    for (var round = 0; round < stopRounds; round++) {
+      // まとから確実に外れる位置(中心から半幅の3倍離す)でタップ
+      final miss = game.zoneCenter > 0.5
+          ? game.zoneCenter - game.zoneHalf * 3
+          : game.zoneCenter + game.zoneHalf * 3;
+      final t = miss / game.speed;
+      await tester.pump(Duration(microseconds: (t * 1e6).round()));
+      await tester.tap(find.byKey(const ValueKey('stop-tap')));
+      await tester.pump(const Duration(milliseconds: 900));
+    }
+
+    expect(game.reward, 0);
+    expect(find.text('ざんねん! また ちょうせんしてね'), findsOneWidget);
+    expect(find.text('つぎは がんばる!'), findsOneWidget);
+    expect(c.state.coins, 10, reason: 'コインは増えない');
+  });
+
   testWidgets('stroop: tapping the ink color all 6 rounds pays 18', (
     tester,
   ) async {
