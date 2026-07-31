@@ -1,10 +1,10 @@
 # コードレビュー指摘一覧
 
-最終レビュー: 2026-07-21 / 対象: app/lib 配下 全体(models/logic/data/screens/widgets/audio)+ pubspec / analysis_options / テストカバレッジ
+最終レビュー: 2026-08-01 / 対象: app/lib 配下 全体(models/logic/data/screens/widgets/audio)+ pubspec / analysis_options / テストカバレッジ
 
 自動チェックは事前にクリーン(`dart format --set-exit-if-changed .` 差分なし、`flutter analyze` 指摘なし、`flutter test` 184件全パス)。以下は手動の2パスレビュー(正しさ→品質)で見つけ、実際のコードを読んで裏取りした指摘のみ。
 
-#1〜#16 は 2026-07-20 の初回レビュー、#17〜#42 は 2026-07-21 の第2ラウンド(いずれも全件対応済み)。#43 以降は 2026-07-21 の第3ラウンド(第2ラウンドの修正で入った変更の検証を重点)で追加。
+#1〜#16 は 2026-07-20 の初回レビュー、#17〜#42 は 2026-07-21 の第2ラウンド(いずれも全件対応済み)。#43 以降は 2026-07-21 の第3ラウンド(第2ラウンドの修正で入った変更の検証を重点)で追加。#66 以降は 2026-08-01 の第4ラウンド(7/21以降に追加されたミニゲーム11種・おえかき拡張・回遊・名簿/おみやげを重点。自動チェックは `dart analyze --fatal-infos` / `dart format` / `flutter test` 297件すべてクリーン)。
 
 ## 1. 壊れたセーブデータで名簿エントリが1件でも読めないと、全セーブデータが失われる
 - 重大度: 高
@@ -590,3 +590,66 @@
 - 根拠: pubspec / pubspec.lock / pub cache 内の flutter_lints 6.0.0 の environment を確認。
 - 提案: `environment: sdk` を実際の下限(最低 ^3.8.0)へ上げ、CLAUDE.md も同じ変更で更新する。
 - ステータス: 対応済み(pubspec の `sdk: ^3.8.0` へ更新、CLAUDE.md / docs/tech-stack.md の記載も同時修正。言語バージョン 3.7+ で Dart の新フォーマッタ(tall style)が有効になるため全ファイルを一括整形(別コミット)し、あわせて lint 指摘(ワイルドカード引数)2件を解消。全テストパス・analyze クリーン)
+
+## 66. 正誤ラウンド系8画面が同じ配線(_ended/_choose/終了オーバーレイ/進捗ドット)をコピペしている
+- 重大度: 中
+- 種別: リファクタ
+- 場所: `app/lib/screens/{puzzle,odd_one,count,compare,math,stroop,kana_find,kata_match}_screen.dart`
+- 問題: 8画面すべてが `_ended` フラグ+`_choose()`(handleGuess呼び出し)+`GameEndOverlay`+`RoundProgressDots`+`resetMistakes` override の同型コードを持つ。count/math/stroop/kana/kata は文字列以外ほぼ同一。ゲーム追加のたびに約40行の複製が増えている(#26 で採点ロジック側は集約済みだが、画面側が未集約)。
+- 根拠: 8ファイルの `_choose` を grep し、count/math/stroop/kana_find/kata_match の本体が同一であることを実読で確認。
+- 提案: `MistakeGameOverMixin` の上に「_ended 管理+_choose+終了/ゲームオーバーオーバーレイ組み立て」を持つ画面用 mixin(または共通スキャフォールド)を1枚足し、各画面は出題ウィジェットと文言だけを持つ。
+- ステータス: 未対応
+
+## 67. きせかえ装備の引き継ぎ規則が「新しいたまご」と「名簿交代」で食い違っている
+- 重大度: 低
+- 種別: 設計
+- 場所: `app/lib/logic/game_controller.dart:218-232`(`_startEgg`)、`:281-302`(`switchToRoster`)
+- 問題: `_startEgg` は pattern/nickname/bg/kingSparkle をリセットするが `equipHead/equipFace` は残す(新しいたまごが前の子の帽子をかぶったまま)。一方 `switchToRoster` はスナップショットの装備で上書きする(いま装備中の帽子が交代で外れる)。「装備は種族をまたいで維持される」(§7、名簿導入前の記述)と個体別スナップショットのどちらの意図も中途半端に混ざっている。
+- 根拠: `_startEgg` のカスケードに equip が無いこと、`CreatureSnapshot`/`switchToRoster` が equip を保存・復元することを実読で確認。
+- 提案: 判断が必要: A) 個体別に統一(たまごでも装備をリセット) B) グローバルに統一(交代でも現在の装備を維持し、スナップショットから外す) C) 現状維持を仕様として docs に明記。おすすめは A(名簿=個体の記憶、という現行モデルに一致)。
+- ステータス: 未対応
+
+## 68. 孵化・交代の直後、いきものが軌道の初期位置へ瞬間移動する
+- 重大度: 低
+- 種別: バグ
+- 場所: `app/lib/widgets/creature_wanderer.dart:36-50`、`app/lib/logic/creature_motion.dart:70-`
+- 問題: たまご(固定 Alignment(0, 0.85))から孵化すると `enabled` が true になり Ticker が t=0 から始まるが、`at(0)` はホームポジションと無関係(例: 種族0は (0, 0.25))。孵化演出から戻った瞬間、いきものが空中へテレポートする。名簿交代(種族変更)でも軌道が切り替わり同様に跳ぶ。
+- 根拠: `CreatureMotion(0).at(0)` を式で確認(x=0, y=0.25)。`didUpdateWidget` に位置ブレンドが無いことを実読で確認。
+- 提案: ticker (再)開始から約2秒は `Alignment(0, 0.85)`(または直前位置)から軌道位置へ easeIn で補間する。
+- ステータス: 未対応
+
+## 69. ゲーム追加のたびに chooser の一覧と home の switch の2箇所を触る構造になっている
+- 重大度: 低
+- 種別: リファクタ
+- 場所: `app/lib/widgets/game_chooser.dart:6-`(`_games` 19件)、`app/lib/screens/home_screen.dart:394-`(19分岐の switch)
+- 問題: ゲームのキーが chooser の表示リストと home の画面生成 switch に二重管理されている。追加漏れはコンパイルエラーにならず、キーのタイポは既定の `MemoryScreen` に落ちて気づきにくい(網羅性チェックが効かない裸の String マッチ)。
+- 根拠: 両ファイルを実読。'reverse' 等のキーは文字列としてのみ結ばれていることを確認。
+- 提案: `(key, emoji, title, gradient, builder)` を1つのレジストリ(リスト)に統合し、chooser と home が同じ定義を参照する。enum 化すれば switch の網羅性チェックも効く。
+- ステータス: 未対応
+
+## 70. 3択ボタン・グリッドセルのウィジェットが5画面で重複(三度目の法則超え)
+- 重大度: 低
+- 種別: リファクタ
+- 場所: `count_screen.dart:101-`、`math_screen.dart:104-`、`odd_one_screen.dart:104-`、`kana_find_screen.dart:95-`、`kata_match_screen.dart:106-`
+- 問題: 白い Material+InkWell+中央テキストの選択ボタン/セルがほぼ同一実装で5箇所にある(角丸・elevation・shadowColor まで同値)。
+- 根拠: 各ファイルを実読し、差分がキー名とフォントサイズ程度であることを確認。
+- 提案: `ui_kit.dart` に `ChoiceCard(key, label/child, onTap)` を1つ切り出して置き換える(#66 と同時にやると差分が小さい)。
+- ステータス: 未対応
+
+## 71. セリフの吹き出しが回遊中のいきものの位置と無関係な場所に出る
+- 重大度: 低
+- 種別: 設計
+- 場所: `app/lib/screens/home_screen.dart:765-`(`_SpeechText._aligns`: 上/左/右の3固定)、回遊は `creature_wanderer.dart`
+- 問題: 吹き出しの表示位置は seed による3固定位置で、いきものが固定表示だった前提の設計。回遊導入後は、画面下にいる子のセリフが画面上端に出るなど「誰のセリフか」が分かりにくくなり得る。
+- 根拠: `_aligns` が const 3種でいきもの位置を参照していないことを実読で確認。
+- 提案: 判断が必要: A) `_creatureBoxKey` の現在位置の近く(上側)に出す B) 現状維持(6〜7歳には気にならない可能性もある。実機でこどもの反応を見てから決める)。
+- ステータス: 未対応
+
+## 72. さかさまタッチ/ぴったりストップの「報酬ゼロ終了」分岐が widget test で未検証
+- 重大度: 低
+- 種別: リファクタ(テスト不足)
+- 場所: `app/test/hard_game_screens_test.dart`
+- 問題: reversed Simon とぴったりストップの画面テストは報酬ありの終了(やったー!)のみ通しており、報酬ゼロの「ざんねん!/つぎは がんばる!」分岐(simon_screen/stop_screen の GameEndOverlay 分岐)は順方向サイモンのテストでしか固定されていない。
+- 根拠: hard_game_screens_test.dart を実読(reverse は +4、stop は +20 で終了)。ゼロ報酬分岐は count_simon_screens_test の forward simon のみ。
+- 提案: reverse で初手ミス(reward 0)、stop で5回はずして終える各1ケースを追加し、励ましボタンのラベルを固定する。
+- ステータス: 未対応
