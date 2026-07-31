@@ -228,7 +228,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: PaintScreen(controller: c)));
 
     // 体の中心あたりをなぞる
-    final canvas = find.byType(CustomPaint).first;
+    final canvas = find.byKey(const ValueKey('paint-canvas'));
     final center = tester.getCenter(canvas);
     final gesture = await tester.startGesture(center);
     await gesture.moveBy(const Offset(40, 10));
@@ -258,7 +258,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('💩')); // おもしろスタンプを選ぶ
     await tester.pump();
-    final canvas = find.byType(CustomPaint).first;
+    final canvas = find.byKey(const ValueKey('paint-canvas'));
     final gesture = await tester.startGesture(tester.getCenter(canvas));
     await gesture.up();
     await tester.pump();
@@ -278,7 +278,7 @@ void main() {
 
     await tester.tap(find.text('ぬりつぶし'));
     await tester.pump();
-    final canvas = find.byType(CustomPaint).first;
+    final canvas = find.byKey(const ValueKey('paint-canvas'));
     await tester.runAsync(() async {
       await tester.tap(canvas); // 体の中をタップ → 全面ぬりつぶし
       await Future<void>.delayed(const Duration(milliseconds: 400));
@@ -317,7 +317,7 @@ void main() {
 
     await tester.tap(find.text('ぬりつぶし'));
     await tester.pump();
-    final canvas = find.byType(CustomPaint).first;
+    final canvas = find.byKey(const ValueKey('paint-canvas'));
     await tester.runAsync(() async {
       await tester.tap(canvas);
       await Future<void>.delayed(const Duration(milliseconds: 400));
@@ -363,7 +363,7 @@ void main() {
     await tester.pump();
 
     // fill を開始した直後(最初の await で中断中)に画面を破棄する
-    await tester.tap(find.byType(CustomPaint).first);
+    await tester.tap(find.byKey(const ValueKey('paint-canvas')));
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
 
     // 中断していた fill の async 処理を完走させる
@@ -408,7 +408,7 @@ void main() {
     await tester.pump();
 
     // fill を開始し、最初の await で中断している間に「ぜんぶけす」をタップ
-    await tester.tap(find.byType(CustomPaint).first);
+    await tester.tap(find.byKey(const ValueKey('paint-canvas')));
     await tester.tap(find.text('ぜんぶけす'), warnIfMissed: false);
 
     // fill を完走させる
@@ -477,7 +477,7 @@ void main() {
 
       await tester.tap(find.text('ぬりつぶし'));
       await tester.pump();
-      final canvas = find.byType(CustomPaint).first;
+      final canvas = find.byKey(const ValueKey('paint-canvas'));
 
       for (var i = 0; i < 2; i++) {
         await tester.runAsync(() async {

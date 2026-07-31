@@ -58,6 +58,11 @@ const _stampFontSize = 46.0;
 
 enum _Tool { brush, stamp, bucket, eraser }
 
+/// 「もどす」で戻れるぬりつぶし/ぜんぶけすの世代数。1世代につき確定レイヤー
+/// (300x300 ≒ 360KB)を保持するため小さく抑える(線・スタンプは ops を
+/// 1つ戻すだけなので無制限)。
+const _undoDepth = 4;
+
 /// おえかき(もようがえ)。docs/game-design.md §6。
 /// ツール: ふで(3サイズ)/スタンプ/バケツぬりつぶし/けしごむ。
 /// パレット類は誤タップ防止のため画面下部に置く(手のひら対策)。
@@ -104,6 +109,10 @@ class _PaintScreenState extends State<PaintScreen> {
   var _filling = false;
   var _saving = false;
 
+  /// 「もどす」用のスナップショット(ぬりつぶし/ぜんぶけす直前の
+  /// 確定レイヤーと ops)。画像の所有権はスタックに移り、復元か破棄で返す。
+  final _undoStack = <(ui.Image?, List<_PaintOp>)>[];
+
   Uint8List? _bodyMask; // 300x300 体マスク(いまの子の体形に依存)
 
   /// いまの子の体形(種族×stage)。おえかきの下絵・クリップ・ぬりつぶし
@@ -135,6 +144,9 @@ class _PaintScreenState extends State<PaintScreen> {
   @override
   void dispose() {
     _baseImage?.dispose();
+    for (final (img, _) in _undoStack) {
+      img?.dispose();
+    }
     super.dispose();
   }
 
@@ -143,6 +155,36 @@ class _PaintScreenState extends State<PaintScreen> {
   void _setBaseImage(ui.Image? next) {
     if (!identical(_baseImage, next)) _baseImage?.dispose();
     _baseImage = next;
+  }
+
+  /// いまの確定レイヤーと ops を「もどす」スタックへ移す(dispose しない —
+  /// 所有権の移動)。呼び出し後、_baseImage は null・_ops は空になるので、
+  /// 呼び出し側が新しい状態を設定する。古すぎる世代は破棄する。
+  void _pushUndoSnapshot() {
+    _undoStack.add((_baseImage, List.of(_ops)));
+    _baseImage = null;
+    _ops.clear();
+    if (_undoStack.length > _undoDepth) {
+      _undoStack.removeAt(0).$1?.dispose();
+    }
+  }
+
+  bool get _canUndo => _ops.isNotEmpty || _undoStack.isNotEmpty;
+
+  /// 直前の操作を取り消す。線・スタンプは1つずつ、ぬりつぶし・ぜんぶけすは
+  /// 直前のスナップショットごと戻す。fill 中は #47 と同じ理由で無視。
+  void _undo() {
+    if (_filling || _saving || !_canUndo) return;
+    widget.controller.sfx.play(Sfx.pop);
+    if (_ops.isNotEmpty) {
+      setState(() => _ops.removeLast());
+      return;
+    }
+    final (base, ops) = _undoStack.removeLast();
+    setState(() {
+      _setBaseImage(base);
+      _ops.addAll(ops);
+    });
   }
 
   Offset _toBodyCoords(Offset local, double canvasSize) =>
@@ -272,8 +314,8 @@ class _PaintScreenState extends State<PaintScreen> {
       }
       widget.controller.sfx.play(Sfx.pop);
       setState(() {
-        _setBaseImage(newLayer);
-        _ops.clear();
+        _pushUndoSnapshot(); // ぬりつぶし前のレイヤーへ「もどす」で戻れる
+        _baseImage = newLayer;
       });
     } finally {
       _filling = false;
@@ -304,10 +346,9 @@ class _PaintScreenState extends State<PaintScreen> {
     // fill 完了時の _ops.clear()/_setBaseImage() に巻き戻されて
     // 「消したはずの絵が復活」するのを防ぐ(docs/review-findings.md #47)
     if (_filling) return;
-    setState(() {
-      _ops.clear();
-      _setBaseImage(null);
-    });
+    // うっかり全消しは「もどす」で救済できる(保存済みデータは消えるが、
+    // 復元してもう一度「できた!」すれば再保存される)
+    setState(_pushUndoSnapshot);
     widget.controller.clearPattern();
   }
 
@@ -343,7 +384,7 @@ class _PaintScreenState extends State<PaintScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48),
+                    _undoButton(),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -356,8 +397,10 @@ class _PaintScreenState extends State<PaintScreen> {
                         box.maxHeight - 216,
                       ).clamp(120.0, 400.0);
                       return Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
+                          // キャンバス上部の余白は、描きかけの模様を着た
+                          // 本人のライブプレビューが埋める(こどもFB起点)
+                          Expanded(child: _preview()),
                           _canvas(canvasSize),
                           const SizedBox(height: 16),
                           _toolRow(),
@@ -408,6 +451,43 @@ class _PaintScreenState extends State<PaintScreen> {
     );
   }
 
+  /// ヘッダー右の「もどす」。戻せるものが無いあいだは薄くする。
+  Widget _undoButton() => Opacity(
+    opacity: _canUndo ? 1 : 0.35,
+    child: CircleIconButton(
+      key: const ValueKey('paint-undo'),
+      onTap: _undo,
+      child: const Text('↩️', style: TextStyle(fontSize: 22)),
+    ),
+  );
+
+  /// 描きかけの模様をリアルタイムで着た本人(いまの子)のプレビュー。
+  /// ops を画像化せず CreaturePainter の patternOverlay でそのまま描くので
+  /// 1ストロークごとの追従でも重くならない。余白が無い端末では縮む。
+  Widget _preview() => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: ListenableBuilder(
+        listenable: widget.controller,
+        builder: (context, _) => CustomPaint(
+          key: const ValueKey('paint-preview'),
+          size: const Size.square(110),
+          painter: CreaturePainter(
+            speciesIndex: widget.controller.state.species,
+            stage: widget.controller.state.stage,
+            sad: false,
+            bodyColor: Color(widget.controller.state.color),
+            equipHead: widget.controller.state.equipHead,
+            equipFace: widget.controller.state.equipFace,
+            patternOverlay: (canvas) =>
+                _paintOps(canvas, _bodyShape, _baseImage, _ops),
+          ),
+        ),
+      ),
+    ),
+  );
+
   Widget _canvas(double canvasSize) {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -426,6 +506,7 @@ class _PaintScreenState extends State<PaintScreen> {
         width: canvasSize,
         height: canvasSize,
         child: GestureDetector(
+          key: const ValueKey('paint-canvas'),
           onPanStart: (d) =>
               _onPanStart(_toBodyCoords(d.localPosition, canvasSize)),
           onPanUpdate: (d) =>

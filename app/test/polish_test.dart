@@ -221,7 +221,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      final canvas = find.byType(CustomPaint).first;
+      final canvas = find.byKey(const ValueKey('paint-canvas'));
       final gesture = await tester.startGesture(tester.getCenter(canvas));
       await gesture.moveBy(const Offset(30, 20));
       await gesture.up();

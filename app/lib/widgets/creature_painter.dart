@@ -25,6 +25,11 @@ class CreaturePainter extends CustomPainter {
   /// お絵かき模様(300x300、体パスでクリップして重ねる)
   final ui.Image? pattern;
 
+  /// 描きかけの模様を直接描くフック(300x300座標系・体パスでクリップ済み)。
+  /// おえかき画面のライブプレビュー用: 保存前の ops を画像化せずそのまま
+  /// 重ねられる。[pattern] と併用時は pattern の上に描かれる。
+  final void Function(Canvas canvas)? patternOverlay;
+
   CreaturePainter({
     required this.speciesIndex,
     required this.stage,
@@ -34,6 +39,7 @@ class CreaturePainter extends CustomPainter {
     this.equipHead,
     this.equipFace,
     this.pattern,
+    this.patternOverlay,
   }) : bodyColor = bodyColor ?? speciesList[speciesIndex].color;
 
   /// 体形(輪郭)。ベビーは共通素体、stage2 以降は種族ごとの
@@ -124,6 +130,13 @@ class CreaturePainter extends CustomPainter {
       canvas.restore();
     }
 
+    if (patternOverlay != null) {
+      canvas.save();
+      canvas.clipPath(body);
+      patternOverlay!(canvas);
+      canvas.restore();
+    }
+
     // 手(腕)は stage2 から生える(体形に手足を含む種族は描かない)
     if (stage >= 2 && (spec?.arms ?? true)) {
       final arm = Paint()..color = shade(bodyColor, -18);
@@ -203,7 +216,8 @@ class CreaturePainter extends CustomPainter {
       old.bodyColor != bodyColor ||
       old.equipHead != equipHead ||
       old.equipFace != equipFace ||
-      old.pattern != pattern;
+      old.pattern != pattern ||
+      old.patternOverlay != patternOverlay;
 }
 
 /// 体色を amt(-255..255)ぶん明るく/暗くする(輪郭・手足・装飾の影用)。
