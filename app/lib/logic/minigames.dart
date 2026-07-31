@@ -897,3 +897,247 @@ class StroopGame with MistakeTracker, RoundGuessGame {
   /// [colorIndex] のいろパッドをタッチ。正解なら true を返し次ラウンドへ。
   bool guess(int colorIndex) => _applyGuess(colorIndex == inkIndex);
 }
+
+// ---------- もじさがし ----------
+
+const kanaFindRounds = 8;
+const kanaFindRewardPerRound = 2;
+
+/// にた字グループ(まちがえやすいひらがな)。後半のまぎれものに使う。
+const kanaGroups = [
+  ['わ', 'ね', 'れ'],
+  ['ぬ', 'め', 'あ'],
+  ['る', 'ろ'],
+  ['き', 'さ', 'ち'],
+  ['は', 'ほ'],
+  ['い', 'り'],
+  ['う', 'つ'],
+  ['こ', 'に'],
+];
+
+/// 「もじさがし」: おだいのひらがなをグリッドから探してタッチ。
+/// 最初はぜんぜん違う字にまぎれ、3ラウンド目からは**にた字だけ**が並ぶ。
+/// 枚数も 8→20 と増える(docs/game-design.md §5)。3ミスでゲームオーバー。
+class KanaFindGame with MistakeTracker, RoundGuessGame {
+  KanaFindGame({Random? rng}) : _rng = rng ?? Random() {
+    _newRound();
+  }
+
+  final Random _rng;
+
+  /// 探すおだいの字。
+  late String target;
+  late List<String> cells;
+  late int targetIndex;
+
+  @override
+  int get rounds => kanaFindRounds;
+  @override
+  int get rewardPerRound => kanaFindRewardPerRound;
+
+  int get _gridSize => switch (round) {
+    < 2 => 8,
+    < 4 => 12,
+    < 6 => 16,
+    _ => 20,
+  };
+
+  @override
+  void _newRound() {
+    final group = kanaGroups[_rng.nextInt(kanaGroups.length)];
+    target = group[_rng.nextInt(group.length)];
+    final List<String> pool;
+    if (round < 2) {
+      // ならし: にた字グループの外からまぎれものを出す
+      pool = [
+        for (final g in kanaGroups)
+          if (!identical(g, group)) ...g,
+      ];
+    } else {
+      // ここから同グループのにた字だけ
+      pool = [...group]..remove(target);
+    }
+    cells = List.generate(_gridSize, (_) => pool[_rng.nextInt(pool.length)]);
+    targetIndex = _rng.nextInt(_gridSize);
+    cells[targetIndex] = target;
+  }
+
+  /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  bool guess(int index) => _applyGuess(index == targetIndex);
+}
+
+// ---------- ペアもじ ----------
+
+const kataRounds = 8;
+const kataRewardPerRound = 2;
+
+/// (ひらがな, カタカナ)。1プレイで8組を重複なく出題する。
+const kataPairs = [
+  ('あ', 'ア'),
+  ('い', 'イ'),
+  ('う', 'ウ'),
+  ('か', 'カ'),
+  ('き', 'キ'),
+  ('さ', 'サ'),
+  ('し', 'シ'),
+  ('す', 'ス'),
+  ('つ', 'ツ'),
+  ('と', 'ト'),
+  ('な', 'ナ'),
+  ('ぬ', 'ヌ'),
+  ('ね', 'ネ'),
+  ('ふ', 'フ'),
+  ('へ', 'ヘ'),
+  ('も', 'モ'),
+  ('や', 'ヤ'),
+  ('ら', 'ラ'),
+  ('わ', 'ワ'),
+  ('ん', 'ン'),
+];
+
+/// 「ペアもじ」: ひらがな↔カタカナの対応を4択で答える。
+/// 前半4問はひらがな→カタカナ、後半4問はカタカナ→ひらがなに反転して難化
+/// (docs/game-design.md §5)。3ミスでゲームオーバー(コインで続行可)。
+class KataMatchGame with MistakeTracker, RoundGuessGame {
+  KataMatchGame({Random? rng}) : _rng = rng ?? Random() {
+    _deck = [...kataPairs]..shuffle(_rng);
+    _newRound();
+  }
+
+  final Random _rng;
+  late final List<(String, String)> _deck;
+  late (String, String) _pair;
+  late List<String> choices;
+
+  /// 後半はカタカナを出題してひらがなを選ぶ。
+  bool get showKata => round >= 4;
+
+  /// 大きく表示する出題の字。
+  String get prompt => showKata ? _pair.$2 : _pair.$1;
+
+  /// 正解の選択肢。
+  String get answer => showKata ? _pair.$1 : _pair.$2;
+
+  @override
+  int get rounds => kataRounds;
+  @override
+  int get rewardPerRound => kataRewardPerRound;
+
+  @override
+  void _newRound() {
+    _pair = _deck[round];
+    final opts = <String>[answer];
+    while (opts.length < 4) {
+      final p = _deck[_rng.nextInt(_deck.length)];
+      final o = showKata ? p.$1 : p.$2;
+      if (!opts.contains(o)) opts.add(o);
+    }
+    opts.shuffle(_rng);
+    choices = opts;
+  }
+
+  /// 正解なら true を返し次ラウンドへ。不正解はミスを1つ増やす。
+  bool guess(int choiceIndex) => _applyGuess(choices[choiceIndex] == answer);
+}
+
+// ---------- ことばづくり ----------
+
+const wordRounds = 6;
+const wordRewardPerRound = 3;
+
+/// (えもじ, ことば)。2文字 → 3文字 → 4文字の3段階。
+const wordSets2 = [
+  ('🐶', 'いぬ'),
+  ('🐱', 'ねこ'),
+  ('🌊', 'うみ'),
+  ('⭐', 'ほし'),
+  ('🌸', 'はな'),
+  ('🐻', 'くま'),
+];
+const wordSets3 = [
+  ('🍎', 'りんご'),
+  ('🍌', 'ばなな'),
+  ('🍉', 'すいか'),
+  ('🐟', 'さかな'),
+  ('🥚', 'たまご'),
+  ('🚗', 'くるま'),
+];
+const wordSets4 = [
+  ('🍙', 'おにぎり'),
+  ('🧦', 'くつした'),
+  ('🌻', 'ひまわり'),
+  ('✏️', 'えんぴつ'),
+  ('🎈', 'ふうせん'),
+  ('⚡', 'かみなり'),
+];
+
+/// ダミー文字の母集団(基本のひらがな)。
+const _kanaAll = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわん';
+
+enum WordTap { progress, wordComplete, gameComplete, wrong, ignored }
+
+/// 「ことばづくり」: えもじを見て、ことばの文字を順番にタッチして作る。
+/// 2文字→3文字→4文字と伸び、同数のダミー文字がまざる
+/// (docs/game-design.md §5)。3ミスでゲームオーバー(コインで続行可)。
+class WordBuildGame with MistakeTracker {
+  WordBuildGame({Random? rng}) : _rng = rng ?? Random() {
+    _deck2 = [...wordSets2]..shuffle(_rng);
+    _deck3 = [...wordSets3]..shuffle(_rng);
+    _deck4 = [...wordSets4]..shuffle(_rng);
+    _newRound();
+  }
+
+  final Random _rng;
+  late final List<(String, String)> _deck2;
+  late final List<(String, String)> _deck3;
+  late final List<(String, String)> _deck4;
+
+  var round = 0;
+  var reward = 0;
+  late String emoji;
+  late String word;
+  late List<String> cells;
+
+  /// タッチ済みのセル。
+  final used = <int>{};
+
+  /// 次に必要な文字位置(`word[nextIndex]` が正解の字)。
+  var nextIndex = 0;
+
+  bool get finished => round >= wordRounds || failed;
+
+  void _newRound() {
+    final (e, w) = switch (round) {
+      < 2 => _deck2[round],
+      < 4 => _deck3[round - 2],
+      _ => _deck4[round - 4],
+    };
+    emoji = e;
+    word = w;
+    final wordChars = w.split('');
+    // ダミーはことばの文字を除いた基本かなから同数(重複なし)
+    final pool = _kanaAll.split('')..removeWhere(wordChars.contains);
+    pool.shuffle(_rng);
+    cells = [...wordChars, ...pool.take(wordChars.length)]..shuffle(_rng);
+    used.clear();
+    nextIndex = 0;
+  }
+
+  /// [cellIndex] をタッチ。正しい字なら進み、ことばが完成したら報酬。
+  /// ちがう字はミス+1(3ミスでゲームオーバー)。使用済みセルは無視。
+  WordTap tap(int cellIndex) {
+    if (finished || used.contains(cellIndex)) return WordTap.ignored;
+    if (cells[cellIndex] != word[nextIndex]) {
+      mistakes++;
+      return WordTap.wrong;
+    }
+    used.add(cellIndex);
+    nextIndex++;
+    if (nextIndex < word.length) return WordTap.progress;
+    reward += wordRewardPerRound;
+    round++;
+    if (round >= wordRounds) return WordTap.gameComplete;
+    _newRound();
+    return WordTap.wordComplete;
+  }
+}

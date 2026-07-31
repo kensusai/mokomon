@@ -127,8 +127,8 @@ void main() {
     expect(c.state.coins, 10);
   });
 
-  testWidgets('game chooser lists all 16 games', (tester) async {
-    // 16種の2列グリッドが全部見えるよう縦長にする(モーダルのスクロール回避)
+  testWidgets('game chooser lists all 19 games', (tester) async {
+    // 19種の2列グリッドが全部見えるよう縦長にする(モーダルのスクロール回避)
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -146,7 +146,15 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pump(const Duration(milliseconds: 300));
 
-    for (final title in ['けいさんタッチ', 'さかさまタッチ', 'ぴったりストップ', 'いろタッチ']) {
+    for (final title in [
+      'けいさんタッチ',
+      'さかさまタッチ',
+      'ぴったりストップ',
+      'いろタッチ',
+      'もじさがし',
+      'ペアもじ',
+      'ことばづくり',
+    ]) {
       expect(find.text(title), findsOneWidget);
     }
     await tester.tap(find.text('ぴったりストップ'));

@@ -20,9 +20,12 @@ const _games = [
   ('reverse', '🔁', 'さかさまタッチ', [Color(0xFFDA8FDE), Color(0xFFA84BB0)]),
   ('stop', '🎯', 'ぴったりストップ', [Color(0xFFE8837A), Color(0xFFC24B42)]),
   ('stroop', '🌈', 'いろタッチ', [Color(0xFF64C8B4), Color(0xFF2E9B85)]),
+  ('kana', '🔤', 'もじさがし', [Color(0xFF9FCE63), Color(0xFF6B9E2E)]),
+  ('kata', '🔠', 'ペアもじ', [Color(0xFFE8A0B4), Color(0xFFC2607E)]),
+  ('word', '💬', 'ことばづくり', [Color(0xFF8FA8E8), Color(0xFF5B6BC2)]),
 ];
 
-/// ミニゲーム選択モーダル。2列グリッドで16種(必要なら本文だけスクロール)。
+/// ミニゲーム選択モーダル。2列グリッドで19種(必要なら本文だけスクロール)。
 Future<String?> showGameChooser(BuildContext context) {
   return showDialog<String>(
     context: context,

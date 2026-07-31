@@ -30,7 +30,10 @@ import 'balloon_screen.dart';
 import 'catch_screen.dart';
 import 'count_screen.dart';
 import 'compare_screen.dart';
+import 'kana_find_screen.dart';
+import 'kata_match_screen.dart';
 import 'math_screen.dart';
+import 'word_build_screen.dart';
 import 'pika_screen.dart';
 import 'stop_screen.dart';
 import 'stroop_screen.dart';
@@ -404,6 +407,9 @@ class _HomeScreenState extends State<HomeScreen>
         'math' => MathScreen(controller: c),
         'stop' => StopScreen(controller: c),
         'stroop' => StroopScreen(controller: c),
+        'kana' => KanaFindScreen(controller: c),
+        'kata' => KataMatchScreen(controller: c),
+        'word' => WordBuildScreen(controller: c),
         _ => MemoryScreen(controller: c),
       };
       await Navigator.of(
