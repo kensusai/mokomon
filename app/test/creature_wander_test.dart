@@ -94,6 +94,43 @@ void main() {
     );
   });
 
+  testWidgets('speech bubble appears near the wandering creature', (
+    tester,
+  ) async {
+    // docs/review-findings.md #71: 固定3箇所ではなく、いきものの頭の近くに出す。
+    // 標準のテスト画面はステージが縦に狭く位置差が出ないため縦長にする。
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await bootApp(tester, state: GameState()..stage = 1, rng: NoPuffRandom());
+    await tester.pump(const Duration(seconds: 1)); // 回遊で少し移動
+
+    final creature = tester.getRect(find.byType(CreatureView));
+    await tester.tap(find.byType(CreatureView)); // なでなで(おなか)
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // セリフの文言はホーム側の非シードRandomで選ばれるため、
+    // おなかゾーンの4種のうち出ているものを探す
+    const bellyLines = ['くすぐったい〜!', 'ぽんぽん だいすき', 'ぷにぷに でしょ?', 'ぽかぽか する〜'];
+    final line = bellyLines.firstWhere(
+      (l) => find.text(l).evaluate().isNotEmpty,
+    );
+    // 白フチ+本文の2枚重ねなので first を取る
+    final bubble = tester.getCenter(find.text(line).first);
+    expect(
+      (bubble.dx - creature.center.dx).abs(),
+      lessThan(creature.width),
+      reason: 'よこ方向: いきものの近く',
+    );
+    expect(bubble.dy, lessThan(creature.center.dy), reason: 'いきものの上側');
+    expect(
+      (bubble.dy - creature.top).abs(),
+      lessThan(220),
+      reason: 'たて方向: あたまの近く',
+    );
+    await drainTimers(tester);
+  });
+
   testWidgets('egg stays put at the home position', (tester) async {
     await bootApp(tester, rng: NoPuffRandom()); // stage 0 = たまご
     final before = tester.getRect(find.byType(CreatureView));

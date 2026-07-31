@@ -130,6 +130,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   final _creatureKey = GlobalKey<CreatureViewState>();
   final _creatureBoxKey = GlobalKey();
+  final _stageKey = GlobalKey();
   final _particleKey = GlobalKey<ParticleFieldState>();
   final _rng = Random();
 
@@ -276,12 +277,35 @@ class _HomeScreenState extends State<HomeScreen>
     _patternImage = img;
   }
 
+  /// セリフの表示位置: 回遊中のいきものの頭の少し上(docs/review-findings.md #71)。
+  /// 表示中は追従させず、ヒント発生時点の位置に固定する(ゆっくり回遊なので
+  /// 2.6秒の表示中に大きくは離れない)。
+  Alignment _speechAlign() {
+    final stage = _stageKey.currentContext?.findRenderObject() as RenderBox?;
+    final box =
+        _creatureBoxKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stage == null || box == null || !stage.hasSize) {
+      return const Alignment(0, -1);
+    }
+    final center = stage.globalToLocal(
+      box.localToGlobal(box.size.center(Offset.zero)),
+    );
+    final headY = center.dy - box.size.height * 0.62;
+    return Alignment(
+      ((center.dx / stage.size.width) * 2 - 1).clamp(-0.85, 0.85),
+      ((headY / stage.size.height) * 2 - 1).clamp(-1.0, 0.6),
+    );
+  }
+
+  Alignment _hintAlign = const Alignment(0, -1);
+
   void _hint(String msg) {
     if (!mounted) return;
     setState(() {
       _hintMsg = msg;
       _hintVisible = true;
       _hintSeq++;
+      _hintAlign = _speechAlign();
     });
     _hintTimer?.cancel();
     _hintTimer = Timer(const Duration(milliseconds: 2600), () {
@@ -632,6 +656,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _stage() {
     final creatureSize = min(MediaQuery.sizeOf(context).width * 0.64, 300.0);
     return Stack(
+      key: _stageKey,
       clipBehavior: Clip.none,
       children: [
         ...bgDecor(bgThemes[s.effectiveBg].key),
@@ -669,7 +694,11 @@ class _HomeScreenState extends State<HomeScreen>
               child: AnimatedOpacity(
                 opacity: _hintVisible ? 1 : 0,
                 duration: const Duration(milliseconds: 250),
-                child: _SpeechText(message: _hintMsg, seed: _hintSeq),
+                child: _SpeechText(
+                  message: _hintMsg,
+                  seed: _hintSeq,
+                  align: _hintAlign,
+                ),
               ),
             ),
           ),
@@ -765,7 +794,15 @@ class _HomeScreenState extends State<HomeScreen>
 class _SpeechText extends StatelessWidget {
   final String message;
   final int seed;
-  const _SpeechText({required this.message, required this.seed});
+
+  /// 表示位置(回遊中のいきものの頭上。docs/review-findings.md #71)。
+  final Alignment align;
+
+  const _SpeechText({
+    required this.message,
+    required this.seed,
+    required this.align,
+  });
 
   static const _colors = [
     Color(0xFFFF4F96), // ピンク
@@ -776,17 +813,9 @@ class _SpeechText extends StatelessWidget {
     Color(0xFF8A78F5), // むらさき
   ];
 
-  /// 上・左・右(左右はいきものの顔の高さあたり)
-  static const _aligns = [
-    Alignment(0, -1),
-    Alignment(-0.95, -0.5),
-    Alignment(0.95, -0.5),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final color = _colors[(seed * 5) % _colors.length];
-    final align = _aligns[seed % _aligns.length];
     final angle = ((seed * 37) % 9 - 4) * pi / 180; // -4°〜+4°
 
     const style = TextStyle(
