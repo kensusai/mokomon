@@ -120,10 +120,11 @@ void main() {
       sfx: rec.sfx,
     );
 
-    final rect = tester.getRect(find.byType(CreatureView));
     final synth = SoundSynth();
 
     Future<void> tapAtFraction(double fx, double fy) async {
+      // いきものは回遊しているので、タップのたびに現在位置を取り直す
+      final rect = tester.getRect(find.byType(CreatureView));
       await tester.tapAt(
         Offset(rect.left + rect.width * fx, rect.top + rect.height * fy),
       );

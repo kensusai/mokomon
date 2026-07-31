@@ -17,6 +17,7 @@ import '../widgets/celebrate_overlay.dart';
 import '../widgets/creature_faces.dart';
 import '../widgets/code_dialog.dart';
 import '../widgets/creature_view.dart';
+import '../widgets/creature_wanderer.dart';
 import '../widgets/evolution_overlay.dart';
 import '../widgets/food_sheet.dart';
 import '../widgets/game_chooser.dart';
@@ -636,10 +637,13 @@ class _HomeScreenState extends State<HomeScreen>
         ...bgDecor(bgThemes[s.effectiveBg].key),
         // 地面の影は描かない(こどもFB「いきものの下にうすいゲージが
         // 出てる」: 横長ピルが空のメーターに見えていた)
-        // 下寄せ: 大きく育った耳や王冠が上部のボタン列にかぶらないように
-        // (こどもFB)。上に余白を残して装飾のはみ出しを受け止める
-        Align(
-          alignment: const Alignment(0, 0.85),
+        // ステージ全体をふわふわ回遊する(こどもFB「全然動かない」)。
+        // 軌道は種族ごとに違う(logic/creature_motion.dart)。たまごは
+        // 従来のホームポジション(下寄せ: 耳や王冠が上のボタン列に
+        // かぶらない位置)に固定される。
+        CreatureWanderer(
+          species: s.species,
+          enabled: s.stage > 0,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapDown: _onCreatureTap,
