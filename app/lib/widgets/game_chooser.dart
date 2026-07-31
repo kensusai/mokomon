@@ -1,33 +1,32 @@
 import 'package:flutter/material.dart';
 
+import '../logic/game_controller.dart';
 import 'ui_kit.dart';
 
-/// ゲーム一覧(key, 絵文字, 名前, グラデ)。
-const _games = [
-  ('catch', '🍎', 'フルーツキャッチ', blueGradient),
-  ('balloon', '🎈', 'ふうせんわり', pinkGradient),
-  ('whack', '🔨', 'もぐらたたき', greenGradient),
-  ('trace', '✏️', 'なぞってかこう', orangeGradient),
-  ('puzzle', '🧩', 'おなじの どれ?', purpleGradient),
-  ('odd', '👀', 'ちがうの どっち?', [Color(0xFF5BC8E8), Color(0xFF2E9BC0)]),
-  ('memory', '🃏', 'ペアさがし', [Color(0xFF9B8CFF), Color(0xFF6B5BD6)]),
-  ('order', '🔢', 'じゅんばんタッチ', [Color(0xFF7ED6A5), Color(0xFF4CAF7D)]),
-  ('count', '🧮', 'かぞえてタッチ', [Color(0xFFFFB65C), Color(0xFFE8892A)]),
-  ('simon', '💡', 'おぼえてタッチ', [Color(0xFFB78CFF), Color(0xFF7E5BD6)]),
-  ('compare', '⚖️', 'どっちが おおい?', [Color(0xFF8FD48A), Color(0xFF4C9F55)]),
-  ('pika', '🔆', 'ぴかっとタッチ', [Color(0xFFFFD26B), Color(0xFFE8A02A)]),
-  ('math', '➕', 'けいさんタッチ', [Color(0xFF7FB8F0), Color(0xFF3D7BC8)]),
-  ('reverse', '🔁', 'さかさまタッチ', [Color(0xFFDA8FDE), Color(0xFFA84BB0)]),
-  ('stop', '🎯', 'ぴったりストップ', [Color(0xFFE8837A), Color(0xFFC24B42)]),
-  ('stroop', '🌈', 'いろタッチ', [Color(0xFF64C8B4), Color(0xFF2E9B85)]),
-  ('kana', '🔤', 'もじさがし', [Color(0xFF9FCE63), Color(0xFF6B9E2E)]),
-  ('kata', '🔠', 'ペアもじ', [Color(0xFFE8A0B4), Color(0xFFC2607E)]),
-  ('word', '💬', 'ことばづくり', [Color(0xFF8FA8E8), Color(0xFF5B6BC2)]),
-];
+/// ミニゲーム1件の定義(docs/review-findings.md #69)。
+/// 選択モーダルの表示(絵文字・名前・グラデ)と画面生成を1箇所で持ち、
+/// キー文字列の二重管理(chooser の一覧と home の switch)をなくす。
+/// 一覧の実体は screens/game_registry.dart。
+class GameEntry {
+  /// テスト・識別用のキー(保存はしない)。
+  final String key;
+  final String emoji;
+  final String title;
+  final List<Color> colors;
 
-/// ミニゲーム選択モーダル。2列グリッドで19種(必要なら本文だけスクロール)。
-Future<String?> showGameChooser(BuildContext context) {
-  return showDialog<String>(
+  /// このゲームの画面を作る。
+  final Widget Function(GameController controller) build;
+
+  const GameEntry(this.key, this.emoji, this.title, this.colors, this.build);
+}
+
+/// ミニゲーム選択モーダル。2列グリッド(必要なら本文だけスクロール)。
+/// [games] には screens/game_registry.dart の一覧をそのまま渡す。
+Future<GameEntry?> showGameChooser(
+  BuildContext context,
+  List<GameEntry> games,
+) {
+  return showDialog<GameEntry>(
     context: context,
     builder: (dialogContext) => MokoModalShell(
       header: const [ModalTitle('どれで あそぶ?')],
@@ -40,21 +39,21 @@ Future<String?> showGameChooser(BuildContext context) {
           crossAxisSpacing: 8,
           childAspectRatio: 2.15,
           children: [
-            for (final (key, emoji, title, colors) in _games)
+            for (final g in games)
               PressableGradient(
-                colors: colors,
+                colors: g.colors,
                 radius: 18,
-                onTap: () => Navigator.of(dialogContext).pop(key),
+                onTap: () => Navigator.of(dialogContext).pop(g),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(emoji, style: const TextStyle(fontSize: 26)),
+                      Text(g.emoji, style: const TextStyle(fontSize: 26)),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          title,
+                          g.title,
                           maxLines: 1,
                           style: const TextStyle(
                             fontSize: 13,

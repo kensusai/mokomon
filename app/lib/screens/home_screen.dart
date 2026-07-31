@@ -27,26 +27,9 @@ import '../widgets/shop_sheet.dart';
 import '../widgets/stat_meter.dart';
 import '../widgets/toast.dart';
 import '../widgets/ui_kit.dart';
-import 'balloon_screen.dart';
-import 'catch_screen.dart';
-import 'count_screen.dart';
-import 'compare_screen.dart';
-import 'kana_find_screen.dart';
-import 'kata_match_screen.dart';
-import 'math_screen.dart';
-import 'word_build_screen.dart';
-import 'pika_screen.dart';
-import 'stop_screen.dart';
-import 'stroop_screen.dart';
-import 'simon_screen.dart';
-import 'memory_screen.dart';
-import 'odd_one_screen.dart';
-import 'order_screen.dart';
+import 'game_registry.dart';
 import 'paint_screen.dart';
-import 'puzzle_screen.dart';
 import 'timer_bag.dart';
-import 'trace_screen.dart';
-import 'whack_screen.dart';
 
 /// 💨の吹き出し(docs/game-design.md §9)。UIに説明は一切出さない。
 const _puffLines = [
@@ -412,34 +395,13 @@ class _HomeScreenState extends State<HomeScreen>
     if (_navigating) return;
     _navigating = true;
     try {
-      final key = await showGameChooser(context);
-      if (key == null || !mounted) return;
+      final entry = await showGameChooser(context, gameRegistry);
+      if (entry == null || !mounted) return;
       // ゲーム中は専用BGM(2曲からランダムでメリハリ)
       c.sfx.playOverrideBgm(_rng.nextBool() ? Sfx.bgmGame : Sfx.bgmGame2);
-      final screen = switch (key) {
-        'catch' => CatchScreen(controller: c),
-        'puzzle' => PuzzleScreen(controller: c),
-        'whack' => WhackScreen(controller: c),
-        'balloon' => BalloonScreen(controller: c),
-        'order' => OrderScreen(controller: c),
-        'trace' => TraceScreen(controller: c),
-        'odd' => OddOneScreen(controller: c),
-        'count' => CountScreen(controller: c),
-        'simon' => SimonScreen(controller: c),
-        'reverse' => SimonScreen(controller: c, reversed: true),
-        'compare' => CompareScreen(controller: c),
-        'pika' => PikaScreen(controller: c),
-        'math' => MathScreen(controller: c),
-        'stop' => StopScreen(controller: c),
-        'stroop' => StroopScreen(controller: c),
-        'kana' => KanaFindScreen(controller: c),
-        'kata' => KataMatchScreen(controller: c),
-        'word' => WordBuildScreen(controller: c),
-        _ => MemoryScreen(controller: c),
-      };
       await Navigator.of(
         context,
-      ).push(MaterialPageRoute<void>(builder: (_) => screen));
+      ).push(MaterialPageRoute<void>(builder: (_) => entry.build(c)));
       c.sfx.clearOverrideBgm(); // ホームBGMへ戻す(勝利曲中なら曲側が戻す)
       if (!mounted) return;
       c.sfx.playBabble(s.species);

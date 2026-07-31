@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mokomon/logic/minigames.dart';
 import 'package:mokomon/screens/math_screen.dart';
+import 'package:mokomon/screens/game_registry.dart';
 import 'package:mokomon/screens/simon_screen.dart';
 import 'package:mokomon/screens/stop_screen.dart';
 import 'package:mokomon/screens/stroop_screen.dart';
@@ -178,12 +179,13 @@ void main() {
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    String? picked;
+    GameEntry? picked;
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
           builder: (context) => TextButton(
-            onPressed: () async => picked = await showGameChooser(context),
+            onPressed: () async =>
+                picked = await showGameChooser(context, gameRegistry),
             child: const Text('open'),
           ),
         ),
@@ -205,6 +207,6 @@ void main() {
     }
     await tester.tap(find.text('ぴったりストップ'));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(picked, 'stop');
+    expect(picked?.key, 'stop');
   });
 }
