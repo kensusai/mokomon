@@ -52,6 +52,25 @@ const bgThemes = <BgTheme>[
     Color(0xFFFFD3E8),
     20,
   ),
+  // ---- 高額シリーズ(憧れ枠。きせかえのべらぼう帯 300〜500 に相当) ----
+  BgTheme('hanabi', 'はなびたいかい', '🎆', Color(0xFF141031), Color(0xFF3A1E4D), 300),
+  BgTheme(
+    'kyoryu',
+    'きょうりゅうじだい',
+    '🦖',
+    Color(0xFF2C4A24),
+    Color(0xFFE0BD6B),
+    350,
+  ),
+  BgTheme('ryugu', 'りゅうぐうじょう', '🐚', Color(0xFF06304A), Color(0xFF1FA08C), 400),
+  BgTheme(
+    'kinpika',
+    'きんぴかのくに',
+    '👑',
+    Color(0xFFE8B923),
+    Color(0xFFFFF3C4),
+    500,
+  ),
 ];
 
 /// 種族ごとのデフォルト背景(bgThemes の index)。

@@ -280,6 +280,131 @@ List<Widget> bgDecor(String themeKey) {
           child: Text('🌼', style: TextStyle(fontSize: 26)),
         ),
       ];
+    // ---- 高額シリーズ(憧れ枠なので飾りは特別に豪華にする。§13) ----
+    case 'hanabi':
+      return [
+        const Positioned(
+          top: 24,
+          left: 30,
+          child: Text('🎆', style: TextStyle(fontSize: 54)),
+        ),
+        const Positioned(
+          top: 70,
+          right: 26,
+          child: Text('🎇', style: TextStyle(fontSize: 44)),
+        ),
+        const Positioned(
+          top: 150,
+          left: 110,
+          child: Text('🎆', style: TextStyle(fontSize: 30)),
+        ),
+        const Positioned(
+          top: 40,
+          right: 130,
+          child: Text('✨', style: TextStyle(fontSize: 18)),
+        ),
+        for (final q in const [
+          (60.0, 120.0),
+          (200.0, 40.0),
+          (280.0, 90.0),
+          (330.0, 150.0),
+        ])
+          _dot(q.$1, q.$2, 4, Colors.white70),
+      ];
+    case 'kyoryu':
+      return const [
+        Positioned(bottom: 12, left: 6, child: Text('🦕', style: deco)),
+        Positioned(
+          bottom: 40,
+          right: 10,
+          child: Text('🌋', style: TextStyle(fontSize: 34)),
+        ),
+        Positioned(
+          bottom: 14,
+          right: 70,
+          child: Text('🌴', style: TextStyle(fontSize: 30)),
+        ),
+        Positioned(
+          top: 60,
+          right: 50,
+          child: Text('🦅', style: TextStyle(fontSize: 18)),
+        ),
+        Positioned(
+          top: 110,
+          left: 40,
+          child: Text('🦖', style: TextStyle(fontSize: 24)),
+        ),
+      ];
+    case 'ryugu':
+      return [
+        const Positioned(
+          top: 30,
+          right: 24,
+          child: Text('🏮', style: TextStyle(fontSize: 30)),
+        ),
+        const Positioned(
+          bottom: 18,
+          left: 12,
+          child: Text('🐚', style: TextStyle(fontSize: 32)),
+        ),
+        const Positioned(
+          bottom: 24,
+          right: 60,
+          child: Text('🪸', style: TextStyle(fontSize: 26)),
+        ),
+        const Positioned(
+          top: 100,
+          left: 50,
+          child: Text('🐠', style: TextStyle(fontSize: 22)),
+        ),
+        const Positioned(
+          top: 60,
+          left: 130,
+          child: Text('🐡', style: TextStyle(fontSize: 18)),
+        ),
+        for (final b in const [
+          (40.0, 50.0, 12.0),
+          (280.0, 60.0, 16.0),
+          (200.0, 130.0, 10.0),
+          (330.0, 120.0, 12.0),
+        ])
+          _dot(b.$1, b.$2, b.$3, Colors.white.withValues(alpha: 0.4)),
+      ];
+    case 'kinpika':
+      return [
+        const Positioned(
+          top: 24,
+          left: 26,
+          child: Text('👑', style: TextStyle(fontSize: 44)),
+        ),
+        const Positioned(
+          top: 60,
+          right: 30,
+          child: Text('💎', style: TextStyle(fontSize: 30)),
+        ),
+        const Positioned(
+          top: 140,
+          right: 100,
+          child: Text('🏆', style: TextStyle(fontSize: 24)),
+        ),
+        const Positioned(
+          top: 100,
+          left: 110,
+          child: Text('✨', style: TextStyle(fontSize: 22)),
+        ),
+        const Positioned(
+          top: 170,
+          left: 40,
+          child: Text('✨', style: TextStyle(fontSize: 16)),
+        ),
+        for (final q in const [
+          (70.0, 60.0),
+          (220.0, 30.0),
+          (300.0, 110.0),
+          (160.0, 150.0),
+        ])
+          _dot(q.$1, q.$2, 5, const Color(0xAAFFFFFF)),
+      ];
     default: // sora
       return const [
         Positioned(top: 40, left: 30, child: Cloud(width: 70)),

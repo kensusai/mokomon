@@ -145,8 +145,30 @@ void main() {
       expect(restored.equipFace, 'starcheeks');
     });
 
+    test('premium background series is priced 300-500 at the tail', () {
+      // docs/game-design.md §13: 高額シリーズ4種(憧れ枠)。末尾追加ルール。
+      final premium = ['hanabi', 'kyoryu', 'ryugu', 'kinpika'];
+      final tail = bgThemes.sublist(bgThemes.length - 4);
+      expect(tail.map((t) => t.key), premium, reason: '追加は必ず末尾');
+      for (final t in tail) {
+        expect(t.cost, inInclusiveRange(300, 500), reason: '${t.key} は高額帯');
+      }
+      expect(tail.last.cost, 500, reason: '最高額はきんぴかのくに');
+    });
+
+    test('the 500-coin palace can be bought and reselected for free', () {
+      final kinpika = bgThemes.indexWhere((t) => t.key == 'kinpika');
+      final rich = fresh(GameState()..coins = 520);
+      expect(rich.tapBackground(kinpika), BgTapOutcome.bought);
+      expect(rich.state.coins, 20);
+      expect(rich.state.effectiveBg, kinpika);
+      rich.tapBackground(0);
+      expect(rich.tapBackground(kinpika), BgTapOutcome.selected);
+      expect(rich.state.coins, 20);
+    });
+
     test('background defaults per species and per-creature override', () {
-      expect(bgThemes, hasLength(19));
+      expect(bgThemes, hasLength(23));
       expect(speciesDefaultBg, hasLength(speciesList.length));
       final c = fresh(GameState()..species = 14); // obake
       expect(c.state.effectiveBg, 2); // よぞら
