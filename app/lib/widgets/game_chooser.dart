@@ -20,7 +20,8 @@ class GameEntry {
   const GameEntry(this.key, this.emoji, this.title, this.colors, this.build);
 }
 
-/// ミニゲーム選択モーダル。2列グリッド(必要なら本文だけスクロール)。
+/// ミニゲーム選択モーダル。3列グリッド(20種で縦に伸びすぎないように。
+/// 必要なら本文だけスクロール)。
 /// [games] には screens/game_registry.dart の一覧をそのまま渡す。
 Future<GameEntry?> showGameChooser(
   BuildContext context,
@@ -32,12 +33,12 @@ Future<GameEntry?> showGameChooser(
       header: const [ModalTitle('どれで あそぶ?')],
       body: [
         GridView.count(
-          crossAxisCount: 2,
+          crossAxisCount: 3,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
-          childAspectRatio: 2.15,
+          childAspectRatio: 1.45,
           children: [
             for (final g in games)
               PressableGradient(
@@ -45,18 +46,18 @@ Future<GameEntry?> showGameChooser(
                 radius: 18,
                 onTap: () => Navigator.of(dialogContext).pop(g),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(g.emoji, style: const TextStyle(fontSize: 26)),
+                      Text(g.emoji, style: const TextStyle(fontSize: 22)),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
                           g.title,
                           maxLines: 1,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),

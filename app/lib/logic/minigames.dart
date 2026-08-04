@@ -1154,3 +1154,59 @@ class WordBuildGame with MistakeTracker {
     return WordTap.wordComplete;
   }
 }
+
+// ---------- リズムタッチ ----------
+
+const rhythmBeats = 20;
+const rhythmPads = 4;
+
+enum RhythmTap { perfect, hit, wrongPad, ignored }
+
+/// 「リズムタッチ」: ビートに合わせて光るパッドをタッチ(docs/game-design.md §5)。
+/// ビートの進行(いつ光らせるか)は画面側の Timer が持ち、採点と
+/// パッド列・テンポの定義をここで持つ。あたり1回=1コイン(最大20)。
+/// 反射系なのでミス制(3ミスでゲームオーバー)の対象外。
+class RhythmGame {
+  RhythmGame({Random? rng}) {
+    final r = rng ?? Random();
+    // 同じパッドが連続すると「置きっぱなし連打」で取れてしまうため避ける
+    final list = <int>[r.nextInt(rhythmPads)];
+    while (list.length < rhythmBeats) {
+      final p = r.nextInt(rhythmPads);
+      if (p != list.last) list.add(p);
+    }
+    pads = list;
+  }
+
+  /// 各ビートで光るパッド。
+  late final List<int> pads;
+
+  /// いま光っている(受付中の)ビート。
+  var beat = 0;
+  var hits = 0;
+  var _consumed = false;
+
+  bool get finished => beat >= rhythmBeats;
+
+  /// 報酬コイン(あたり1回=1コイン)。
+  int get reward => hits;
+
+  /// ビート [i] の間隔(ms)。600ms から 420ms まで直線的に加速する。
+  static int intervalMsAt(int i) => 600 - (180 * i) ~/ (rhythmBeats - 1);
+
+  /// 光ってから [msSinceLit] ms 後に [pad] をタッチ。
+  /// 正しいパッドなら得点(±150msは perfect)。1ビートにつき1回だけ。
+  RhythmTap tap(int pad, int msSinceLit) {
+    if (finished || _consumed) return RhythmTap.ignored;
+    if (pad != pads[beat]) return RhythmTap.wrongPad;
+    _consumed = true;
+    hits++;
+    return msSinceLit <= 150 ? RhythmTap.perfect : RhythmTap.hit;
+  }
+
+  /// 次のビートへ(画面側の Timer が呼ぶ)。
+  void nextBeat() {
+    beat++;
+    _consumed = false;
+  }
+}

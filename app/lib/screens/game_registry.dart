@@ -14,6 +14,7 @@ import 'odd_one_screen.dart';
 import 'order_screen.dart';
 import 'pika_screen.dart';
 import 'puzzle_screen.dart';
+import 'rhythm_screen.dart';
 import 'simon_screen.dart';
 import 'stop_screen.dart';
 import 'stroop_screen.dart';
@@ -21,7 +22,7 @@ import 'trace_screen.dart';
 import 'whack_screen.dart';
 import 'word_build_screen.dart';
 
-/// あそぶ19種の一覧(表示順)。docs/game-design.md §5。
+/// あそぶ20種の一覧(表示順)。docs/game-design.md §5。
 /// ゲームを追加するときはここに1行足すだけでよい(選択モーダルの表示と
 /// 画面生成の両方がこの定義を使う。docs/review-findings.md #69)。
 final gameRegistry = <GameEntry>[
@@ -116,4 +117,8 @@ final gameRegistry = <GameEntry>[
     Color(0xFF8FA8E8),
     Color(0xFF5B6BC2),
   ], (c) => WordBuildScreen(controller: c)),
+  GameEntry('rhythm', '🎵', 'リズムタッチ', [
+    Color(0xFFED87C8),
+    Color(0xFFB84A96),
+  ], (c) => RhythmScreen(controller: c)),
 ];

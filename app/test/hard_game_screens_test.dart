@@ -174,8 +174,8 @@ void main() {
     expect(c.state.coins, 10);
   });
 
-  testWidgets('game chooser lists all 19 games', (tester) async {
-    // 19種の2列グリッドが全部見えるよう縦長にする(モーダルのスクロール回避)
+  testWidgets('game chooser lists all 20 games', (tester) async {
+    // 20種の3列グリッドが全部見えるよう縦長にする(モーダルのスクロール回避)
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -202,6 +202,7 @@ void main() {
       'もじさがし',
       'ペアもじ',
       'ことばづくり',
+      'リズムタッチ',
     ]) {
       expect(find.text(title), findsOneWidget);
     }
