@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../logic/game_controller.dart';
@@ -20,13 +22,49 @@ class GameEntry {
   const GameEntry(this.key, this.emoji, this.title, this.colors, this.build);
 }
 
-/// ミニゲーム選択モーダル。3列グリッド(20種で縦に伸びすぎないように。
+/// ミニゲーム選択モーダル。3列グリッド(20種+おまかせで7行ちょうど。
 /// 必要なら本文だけスクロール)。
 /// [games] には screens/game_registry.dart の一覧をそのまま渡す。
+/// 先頭の「おまかせ🎲」をタップすると [games] からランダムに1つ選んで返す
+/// ([rng] はテストで抽選を固定するためのフック)。
 Future<GameEntry?> showGameChooser(
   BuildContext context,
-  List<GameEntry> games,
-) {
+  List<GameEntry> games, {
+  Random? rng,
+}) {
+  Widget tile(
+    BuildContext dialogContext, {
+    required String emoji,
+    required String title,
+    required List<Color> colors,
+    required GameEntry Function() pick,
+  }) => PressableGradient(
+    colors: colors,
+    radius: 18,
+    onTap: () => Navigator.of(dialogContext).pop(pick()),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 22)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              title,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
   return showDialog<GameEntry>(
     context: context,
     builder: (dialogContext) => MokoModalShell(
@@ -40,32 +78,20 @@ Future<GameEntry?> showGameChooser(
           crossAxisSpacing: 8,
           childAspectRatio: 1.45,
           children: [
+            tile(
+              dialogContext,
+              emoji: '🎲',
+              title: 'おまかせ',
+              colors: const [Color(0xFF8C9BFF), Color(0xFFFF8FB2)],
+              pick: () => games[(rng ?? Random()).nextInt(games.length)],
+            ),
             for (final g in games)
-              PressableGradient(
+              tile(
+                dialogContext,
+                emoji: g.emoji,
+                title: g.title,
                 colors: g.colors,
-                radius: 18,
-                onTap: () => Navigator.of(dialogContext).pop(g),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(g.emoji, style: const TextStyle(fontSize: 22)),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          g.title,
-                          maxLines: 1,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                pick: () => g,
               ),
           ],
         ),

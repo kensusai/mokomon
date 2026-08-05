@@ -210,4 +210,34 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(picked?.key, 'stop');
   });
+
+  testWidgets('omakase tile picks a random game from the registry', (
+    tester,
+  ) async {
+    // docs/game-design.md §6: おまかせ🎲。ランダム選択は seeded rng で固定する
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    GameEntry? picked;
+    final rng = Random(7);
+    final expected = gameRegistry[Random(7).nextInt(gameRegistry.length)];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async =>
+                picked = await showGameChooser(context, gameRegistry, rng: rng),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('おまかせ'), findsOneWidget, reason: '🎲タイルがある');
+    await tester.tap(find.text('おまかせ'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(picked?.key, expected.key);
+  });
 }
