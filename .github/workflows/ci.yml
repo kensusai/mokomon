@@ -82,7 +82,7 @@ jobs:
       # versionCode をビルドごとに増やす(同一番号だと端末が上書きを拒否するため)
       - run: flutter build apk --release --build-number=${{ github.run_number }}
       # 実機での動作確認用にAPKを成果物として保存(Actionsの実行ページからDL)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: mokomon-apk
           path: app/build/app/outputs/flutter-apk/app-release.apk
