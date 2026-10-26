@@ -83,6 +83,7 @@ lib/
 - モーダルは `ConstrainedBox(maxWidth: 360)`。縦に伸びるものは `SingleChildScrollView` で小画面に耐える。
 - 全画面 Stack でオーバーレイを条件表示する場合は `fit: StackFit.expand` を指定する(非positioned子だけになると Stack が収縮するバグを踏んだ)。
 - `pumpAndSettle` はテストで使わない(浮遊・グロー等の無限アニメーションがあるため)。固定時間の `pump` を使う。
+- **ホームは低い画面でもいきものがパネルに隠れない。** 高さ 740pt 未満(iPhone SE〜8 Plus、Safari 内の Web 版)では下パネルを compact(余白と `BigActionButton(dense: true)` を詰める)にし、さらにいきものの大きさをステージの高さで上限する(`home_screen.dart` の `_compact` / `_stage`)。`test/home_layout_test.dart` が SE と iPhone 16 の両サイズで固定している。
 - **アプリアイコンは画像ファイルを手で描かない。** `test/render_app_icon_test.dart` が CreaturePainter で「もこもん」(moko ステージ2)を「そら」背景に描き、`cd app && tool/gen_icons.sh` が Web / Android / iOS / macOS の全サイズへ配置する(macOS 標準の `sips` のみ使用)。いきものの見た目を変えたら再実行してアイコンも追随させる。
 
 ## エラーメッセージ

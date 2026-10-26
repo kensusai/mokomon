@@ -126,6 +126,10 @@ class BigActionButton extends StatelessWidget {
   final String? sub;
   final List<Color> colors;
   final VoidCallback onTap;
+
+  /// 低い画面向けに縦の余白と絵文字を詰める(ホームの compact パネル用)。
+  /// 文字サイズとタップ領域(44px 以上)は保つ。
+  final bool dense;
   const BigActionButton({
     super.key,
     required this.icon,
@@ -133,6 +137,7 @@ class BigActionButton extends StatelessWidget {
     this.sub,
     required this.colors,
     required this.onTap,
+    this.dense = false,
   });
 
   @override
@@ -141,10 +146,10 @@ class BigActionButton extends StatelessWidget {
       colors: colors,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
+        padding: EdgeInsets.symmetric(vertical: dense ? 6 : 11, horizontal: 10),
         child: Column(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 26)),
+            Text(icon, style: TextStyle(fontSize: dense ? 22 : 26)),
             Text(
               label,
               style: const TextStyle(

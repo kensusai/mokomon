@@ -615,8 +615,20 @@ class _HomeScreenState extends State<HomeScreen>
     child: Text(emoji, style: const TextStyle(fontSize: 24)),
   );
 
-  Widget _stage() {
-    final creatureSize = min(MediaQuery.sizeOf(context).width * 0.64, 300.0);
+  Widget _stage() => LayoutBuilder(
+    builder: (context, constraints) {
+      // 幅基準の大きさを、ステージの高さでも上限する。画面が低い端末
+      // (iPhone SE 等)でいきものが下のパネルにかぶらないための保険で、
+      // 通常は _compact のパネルで高さが足りるので効かない。
+      final creatureSize = min(
+        min(constraints.maxWidth * 0.64, 300.0),
+        constraints.maxHeight,
+      );
+      return _stageStack(creatureSize);
+    },
+  );
+
+  Widget _stageStack(double creatureSize) {
     return Stack(
       key: _stageKey,
       clipBehavior: Clip.none,
@@ -669,86 +681,100 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _bottomCard() => Container(
-    margin: const EdgeInsets.all(12),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24),
-    ),
-    child: Column(
-      children: [
-        // なまえ(タップで改名)
-        GestureDetector(
-          onTap: _onRenamePressed,
-          child: StatPill(s.displayName),
-        ),
-        const SizedBox(height: 10),
-        // きらきらゲージのメーターは出さない(こどもFB「増えないゲージが
-        // 気になる」。進化と同じサプライズ重視で、進捗は50%/85%の吹き出し
-        // だけで見せる。docs/game-design.md §14)
-        StatMeter(
-          icon: '🍖',
-          value: s.hunger,
-          colors: const [Color(0xFFFFC46B), Color(0xFFFF9A3D)],
-        ),
-        const SizedBox(height: 10),
-        StatMeter(
-          icon: '💖',
-          value: s.happy,
-          colors: const [Color(0xFFFF9CC2), Color(0xFFFF6EA6)],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: BigActionButton(
-                icon: '🍎',
-                label: 'ごはん',
-                sub: '3しゅるい',
-                colors: orangeGradient,
-                onTap: _onFeedPressed,
+  /// 画面が低い端末(iPhone SE: 667pt)ではパネルの余白とボタンを詰めて、
+  /// ステージにいきものの全身が収まる高さを残す(こどもFB: SE でたまごの
+  /// 下がパネルにかぶる)。iPhone 8 Plus(736pt)まで compact、それ以上は従来。
+  bool get _compact => MediaQuery.sizeOf(context).height < 740;
+
+  Widget _bottomCard() {
+    final compact = _compact;
+    final gap = SizedBox(height: compact ? 6 : 10);
+    return Container(
+      key: const ValueKey('home-card'),
+      margin: EdgeInsets.all(compact ? 8 : 12),
+      padding: EdgeInsets.all(compact ? 10 : 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          // なまえ(タップで改名)
+          GestureDetector(
+            onTap: _onRenamePressed,
+            child: StatPill(s.displayName),
+          ),
+          gap,
+          // きらきらゲージのメーターは出さない(こどもFB「増えないゲージが
+          // 気になる」。進化と同じサプライズ重視で、進捗は50%/85%の吹き出し
+          // だけで見せる。docs/game-design.md §14)
+          StatMeter(
+            icon: '🍖',
+            value: s.hunger,
+            colors: const [Color(0xFFFFC46B), Color(0xFFFF9A3D)],
+          ),
+          gap,
+          StatMeter(
+            icon: '💖',
+            value: s.happy,
+            colors: const [Color(0xFFFF9CC2), Color(0xFFFF6EA6)],
+          ),
+          SizedBox(height: compact ? 8 : 12),
+          Row(
+            children: [
+              Expanded(
+                child: BigActionButton(
+                  icon: '🍎',
+                  label: 'ごはん',
+                  sub: '3しゅるい',
+                  colors: orangeGradient,
+                  dense: compact,
+                  onTap: _onFeedPressed,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: BigActionButton(
-                icon: '🎮',
-                label: 'あそぶ',
-                sub: 'コインげっと',
-                colors: greenGradient,
-                onTap: _onPlayPressed,
+              const SizedBox(width: 10),
+              Expanded(
+                child: BigActionButton(
+                  icon: '🎮',
+                  label: 'あそぶ',
+                  sub: 'コインげっと',
+                  colors: greenGradient,
+                  dense: compact,
+                  onTap: _onPlayPressed,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: BigActionButton(
-                icon: '🎨',
-                label: 'おえかき',
-                sub: 'もようがえ',
-                colors: purpleGradient,
-                onTap: _onPaintPressed,
+            ],
+          ),
+          SizedBox(height: compact ? 8 : 10),
+          Row(
+            children: [
+              Expanded(
+                child: BigActionButton(
+                  icon: '🎨',
+                  label: 'おえかき',
+                  sub: 'もようがえ',
+                  colors: purpleGradient,
+                  dense: compact,
+                  onTap: _onPaintPressed,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: BigActionButton(
-                icon: '🛍️',
-                label: 'おみせ',
-                sub: 'きせかえ',
-                colors: blueGradient,
-                onTap: () => showShopModal(context, c),
+              const SizedBox(width: 10),
+              Expanded(
+                child: BigActionButton(
+                  icon: '🛍️',
+                  label: 'おみせ',
+                  sub: 'きせかえ',
+                  colors: blueGradient,
+                  dense: compact,
+                  onTap: () => showShopModal(context, c),
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// 枠なしのカラフルなセリフ表示。seed ごとに色(6色)と
