@@ -1,11 +1,11 @@
 {
-    "name": "mokomon",
-    "short_name": "mokomon",
+    "name": "もこもん",
+    "short_name": "もこもん",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#BDE3FF",
+    "theme_color": "#BDE3FF",
+    "description": "6〜7歳向けいきもの育成ゲーム",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

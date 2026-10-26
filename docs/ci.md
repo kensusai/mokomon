@@ -11,7 +11,8 @@
 | ジョブ | 内容 | 依存 |
 |---|---|---|
 | check | `dart format --set-exit-if-changed` → `flutter analyze` → `flutter test` | — |
-| build-web | `flutter build web`(リリースビルド検証) | check |
+| build-web | `flutter build web --base-href /mokomon/`(リリースビルド検証)+ Pages 用成果物の保存 | check |
+| deploy-web | main への push 時のみ。build-web の成果物を GitHub Pages へ公開 | build-web |
 | build-android | `flutter build apk --release` + APKを成果物 `mokomon-apk` として保存(保持14日) | check |
 
 - **トリガー**: `main` への push、およびすべての pull request
@@ -66,6 +67,14 @@ GitHub にリポジトリを作成したら、`main` に以下を設定する:
 - `key.properties` が無い環境(フォークPR等)はデバッグ鍵にフォールバックしてビルドだけ検証する
 - **versionCode はビルドごとに自動増加**(`--build-number=github.run_number`)。同一 versionCode だと端末が上書きインストールを拒否するため。ローカルビルド(versionCode=1)をCI版の上に入れる場合はダウングレード扱いになるので一度アンインストールする
 - ストア配布時はこのCI用鍵ではなく、Play App Signing を前提に別途鍵を用意する(`docs/store-release.md`)
+
+## Web 版の公開(GitHub Pages)
+
+- URL: **https://kensusai.github.io/mokomon/** 。main への push ごとに `deploy-web` ジョブが更新する(反映まで数分)
+- iPhone での動作確認は Safari でこの URL を開き、共有 → 「ホーム画面に追加」で全画面のアプリとして遊べる(署名・Apple ID・Developer Program いずれも不要)。これが現状の iOS 向け配布手段
+- Pages はリポジトリ設定で `build_type=workflow`(Actions からのデプロイ)に設定済み。`/mokomon/` 配下で配信されるため `--base-href /mokomon/` が必須で、これを外すと JS/アセットが 404 になる
+- iOS Safari の制約: 効果音は最初のタップ後にしか鳴らない。セーブは Safari のサイトデータに入るので、Safari のデータ削除で消える(「あいことば」でのバックアップを案内する)
+- 本番の iOS ネイティブ確認は Developer Program 登録後に TestFlight で行う(下記)
 
 ## iOS の実機配布について
 

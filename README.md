@@ -16,6 +16,9 @@ mokomon/
 
 ## クイックスタート
 
+### ブラウザで遊ぶ(Web版)
+https://kensusai.github.io/mokomon/ を開くだけ(main の最新を自動公開)。iPhone では Safari の共有メニューから「ホーム画面に追加」すると全画面で遊べる。
+
 ### プロトタイプを遊ぶ
 `prototype/mokomon.html` をブラウザで開くだけ。
 
