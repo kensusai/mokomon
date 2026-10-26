@@ -73,6 +73,20 @@ GitHub にリポジトリを作成したら、`main` に以下を設定する:
 - 実機配布は Apple Developer Program(有料)+ TestFlight が現実的。導入時に macOS ランナー(分単価10倍)+ 証明書の Secrets 管理(fastlane match 等)を追加する
 - それまでの iOS 動作確認は、ローカル Mac の Xcode から実機に直接 `flutter run` する(無料Apple IDで7日間有効の署名が可能。要 Xcode 15+)
 
+### ローカルでの iOS 動作確認(2026-10-26 にシミュレータで起動確認済み)
+
+- 必要なもの: Xcode 16.2 以上 + 同バージョンの Command Line Tools、iOS シミュレータランタイム(`xcodebuild -downloadPlatform iOS`)、CocoaPods
+- macOS 14 では Homebrew が CocoaPods のバイナリ配布を終えており、`brew install cocoapods` は llvm/rust のソースビルドを始めてしまう。代わりに mise の Ruby に gem で入れる:
+
+```bash
+mise use -g ruby@3.4
+gem install cocoapods --no-document
+cd app && flutter doctor    # CocoaPods の警告が消えていること
+```
+
+- 起動: `open -a Simulator` のあと `cd app && flutter run -d iphone`(シミュレータが複数ある場合は `flutter devices` の ID を指定)
+- `ios/Podfile.lock` と `pod install` が書き換えた `Runner.xcodeproj` はコミット対象。`ios/Pods/` は gitignore 済み
+
 ## デプロイトリガー
 
 - 現時点で CD なし。将来は `v*` タグでストア向けビルド(署名付き)を行うジョブを追加する想定(`docs/store-release.md` 参照)

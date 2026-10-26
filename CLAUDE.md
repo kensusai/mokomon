@@ -22,7 +22,7 @@
 ```bash
 cd app
 flutter pub get       # 依存取得
-flutter run           # 起動(-d macos / -d chrome / 実機)
+flutter run           # 起動(-d macos / -d chrome / -d iphone(シミュレータ) / 実機)
 flutter analyze       # 静的解析
 ```
 
